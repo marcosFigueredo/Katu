@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SincronizarOrcidDocenteJob;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
@@ -53,6 +54,7 @@ class UsuarioController extends Controller
                 'titulacao',
                 'instituicao_origem',
                 'instituicao_sigla',
+                'orcid_url',
             ]);
         }
 
@@ -61,6 +63,7 @@ class UsuarioController extends Controller
                 'matricula',
                 'nivel',
                 'linha_pesquisa_id',
+                'orcid_url',
             ]);
         }
 
@@ -148,6 +151,7 @@ class UsuarioController extends Controller
             ],
 
             'orcid_url' => [
+                'required_unless:categoria,sec',
                 'nullable',
                 'string',
                 'max:255',
@@ -165,6 +169,7 @@ class UsuarioController extends Controller
             'data_ingresso' => ['nullable', 'date'],
         ], [
             'lattes_url.regex' => 'Informe uma URL válida do Lattes. Exemplo: http://lattes.cnpq.br/1234567890123456',
+            'orcid_url.required_unless' => 'O ORCID é obrigatório para docentes e discentes.',
             'orcid_url.regex' => 'Informe uma URL válida do ORCID. Exemplo: https://orcid.org/0000-0000-0000-0000',
         ]);
 
@@ -266,6 +271,14 @@ class UsuarioController extends Controller
             }
             return $usuario;
         });
+
+        if ($usuarioCriado->categoria === 'docente' && ! empty($dados['orcid_url'])) {
+            $usuarioCriado->load('docenteProfile');
+            if ($usuarioCriado->docenteProfile) {
+                SincronizarOrcidDocenteJob::dispatch($usuarioCriado->docenteProfile);
+            }
+        }
+
         if ($usuarioCriado->cadastro_status === 'completo') {
             Mail::to($usuarioCriado->email)->send(
                 new PrimeiroAcessoUsuarioMail(
@@ -357,6 +370,7 @@ class UsuarioController extends Controller
             ],
 
             'orcid_url' => [
+                'required_unless:categoria,sec',
                 'nullable',
                 'string',
                 'max:255',
@@ -374,6 +388,7 @@ class UsuarioController extends Controller
             'data_ingresso' => ['nullable', 'date'],
         ], [
             'lattes_url.regex' => 'Informe uma URL válida do Lattes. Exemplo: http://lattes.cnpq.br/1234567890123456',
+            'orcid_url.required_unless' => 'O ORCID é obrigatório para docentes e discentes.',
             'orcid_url.regex' => 'Informe uma URL válida do ORCID. Exemplo: https://orcid.org/0000-0000-0000-0000',
         ]);
 
@@ -478,6 +493,13 @@ class UsuarioController extends Controller
 
             return $usuario->fresh();
         });
+
+        if ($usuarioAtualizado->categoria === 'docente' && ! empty($dados['orcid_url'])) {
+            $usuarioAtualizado->load('docenteProfile');
+            if ($usuarioAtualizado->docenteProfile) {
+                SincronizarOrcidDocenteJob::dispatch($usuarioAtualizado->docenteProfile);
+            }
+        }
 
         if (
             $statusAnterior === 'pendente'

@@ -350,6 +350,22 @@
             </div>
         </div>
 
+        @if ($banca->exists)
+            @if ($indicadores)
+                @include('bancas._indicadores', compact('indicadores'))
+            @else
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="alert alert-info small mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            O índice de composição da banca está sendo calculado em segundo plano.
+                            Recarregue a página em instantes para visualizá-lo.
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endif
+
     </div>
 
     {{-- Modal: horário fora do padrão — apenas aviso, não bloqueia --}}

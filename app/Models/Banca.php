@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Banca extends Model
 {
@@ -55,5 +57,15 @@ class Banca extends Model
     public function avaliacoes()
     {
         return $this->hasMany(BancaAvaliacao::class);
+    }
+
+    public function indicadores(): HasOne
+    {
+        return $this->hasOne(BancaIndicador::class);
+    }
+
+    public function orientacaoAvaliacoes()
+    {
+        return $this->hasMany(OrientacaoAvaliacao::class);
     }
 }

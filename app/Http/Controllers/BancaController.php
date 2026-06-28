@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SincronizarOrcidBancaJob;
 use App\Mail\BancaCadastradaMail;
 use App\Models\Banca;
+use App\Models\BancaIndicador;
 use App\Models\BancaMembro;
 use App\Models\DocenteProgramaVinculo;
 use App\Models\TrabalhoAcademico;
@@ -74,7 +76,8 @@ class BancaController extends Controller
         $avaliadoresAtuais = collect();
         $banca = new Banca(['tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => true]);
 
-        return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais));
+        return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais)
+            + ['indicadores' => null]);
     }
 
     public function store(Request $request)
@@ -118,6 +121,8 @@ class BancaController extends Controller
             return $banca;
         });
 
+        SincronizarOrcidBancaJob::dispatch($banca);
+
         if ($request->boolean('enviar_email_participantes')) {
             $this->enviarEmailParticipantes($banca);
         }
@@ -149,7 +154,10 @@ class BancaController extends Controller
             ->where('papel', 'avaliador')
             ->pluck('docente_programa_vinculo_id');
 
-        return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais));
+        $indicadores = BancaIndicador::where('banca_id', $banca->id)->first();
+
+        return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais)
+            + compact('indicadores'));
     }
 
     public function update(Request $request, Banca $banca)
@@ -175,6 +183,8 @@ class BancaController extends Controller
             $banca->membros()->delete();
             $this->sincronizarAvaliadores($banca, collect($data['avaliadores'] ?? []));
         });
+
+        SincronizarOrcidBancaJob::dispatch($banca);
 
         if ($request->boolean('enviar_email_participantes')) {
             $this->enviarEmailParticipantes($banca);

@@ -16,6 +16,13 @@ use App\Http\Controllers\OrientacaoController;
 use App\Http\Controllers\TrabalhoDocumentoController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\BancaController;
+use App\Http\Controllers\SwaraSessaoController;
+use App\Http\Controllers\MabacController;
+use App\Http\Controllers\BibliometriaController;
+use App\Http\Controllers\AutoavaliacaoController;
+use App\Http\Controllers\OrientacaoAvaliacaoController;
+use App\Http\Controllers\TrabalhoImpactoController;
+use App\Http\Controllers\RelatorioController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -65,23 +72,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // linhas de pesquisa rotas
-Route::get('/areas-concentracao/{areaConcentracao}/linhas', [LinhaPesquisaController::class, 'index'])
-    ->name('areas.linhas.index');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/areas-concentracao/{areaConcentracao}/linhas', [LinhaPesquisaController::class, 'index'])
+        ->name('areas.linhas.index');
 
-Route::get('/areas-concentracao/{areaConcentracao}/linhas/create', [LinhaPesquisaController::class, 'create'])
-    ->name('areas.linhas.create');
+    Route::get('/areas-concentracao/{areaConcentracao}/linhas/create', [LinhaPesquisaController::class, 'create'])
+        ->name('areas.linhas.create');
 
-Route::post('/areas-concentracao/{areaConcentracao}/linhas', [LinhaPesquisaController::class, 'store'])
-    ->name('areas.linhas.store');
+    Route::post('/areas-concentracao/{areaConcentracao}/linhas', [LinhaPesquisaController::class, 'store'])
+        ->name('areas.linhas.store');
 
-Route::get('/linhas-pesquisa/{linhaPesquisa}/edit', [LinhaPesquisaController::class, 'edit'])
-    ->name('linhas-pesquisa.edit');
+    Route::get('/linhas-pesquisa/{linhaPesquisa}/edit', [LinhaPesquisaController::class, 'edit'])
+        ->name('linhas-pesquisa.edit');
 
-Route::put('/linhas-pesquisa/{linhaPesquisa}', [LinhaPesquisaController::class, 'update'])
-    ->name('linhas-pesquisa.update');
+    Route::put('/linhas-pesquisa/{linhaPesquisa}', [LinhaPesquisaController::class, 'update'])
+        ->name('linhas-pesquisa.update');
 
-Route::delete('/linhas-pesquisa/{linhaPesquisa}', [LinhaPesquisaController::class, 'destroy'])
-    ->name('linhas-pesquisa.destroy');
+    Route::delete('/linhas-pesquisa/{linhaPesquisa}', [LinhaPesquisaController::class, 'destroy'])
+        ->name('linhas-pesquisa.destroy');
+});
 
 // usuarios rotas
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -195,11 +204,82 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/meu-trabalho/enviar-banca/{documento}', [TrabalhoDocumentoController::class, 'enviarParaBanca'])
         ->name('meu-trabalho.enviar-banca');
+
+    Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
+        ->name('trabalho-impacto.edit');
+
+    Route::put('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'update'])
+        ->name('trabalho-impacto.update');
+});
+
+// IEO – Avaliação de orientação pelo discente
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/bancas/{banca}/orientacao-avaliacao/create', [OrientacaoAvaliacaoController::class, 'create'])
+        ->name('orientacao-avaliacao.create');
+
+    Route::post('/bancas/{banca}/orientacao-avaliacao', [OrientacaoAvaliacaoController::class, 'store'])
+        ->name('orientacao-avaliacao.store');
+
+    Route::get('/orientacao-avaliacao', [OrientacaoAvaliacaoController::class, 'index'])
+        ->name('orientacao-avaliacao.index');
 });
 
 // Download via URL assinada (fora do grupo auth para validar assinatura antes)
 Route::get('/meu-trabalho/download/{documento}', [TrabalhoDocumentoController::class, 'download'])
     ->name('meu-trabalho.download')
     ->middleware('auth');
+
+// SWARA – calibração de pesos dos critérios do barema
+Route::middleware(['auth', 'verified'])->prefix('baremas/{barema}/swara')->name('swara.')->group(function () {
+    Route::get('/', [SwaraSessaoController::class, 'index'])->name('index');
+    Route::get('/create', [SwaraSessaoController::class, 'create'])->name('create');
+    Route::post('/', [SwaraSessaoController::class, 'store'])->name('store');
+    Route::get('/{sessao}', [SwaraSessaoController::class, 'show'])->name('show');
+    Route::post('/{sessao}/aplicar', [SwaraSessaoController::class, 'aplicar'])->name('aplicar');
+});
+
+// MABAC – análise multicritério comparativa
+Route::middleware(['auth', 'verified'])->prefix('mabac')->name('mabac.')->group(function () {
+    Route::get('/', [MabacController::class, 'index'])->name('index');
+    Route::get('/create', [MabacController::class, 'create'])->name('create');
+    Route::post('/', [MabacController::class, 'store'])->name('store');
+    Route::get('/{mabac}', [MabacController::class, 'show'])->name('show');
+    Route::delete('/{mabac}', [MabacController::class, 'destroy'])->name('destroy');
+});
+
+// Bibliometria – indicadores por trabalho acadêmico
+Route::middleware(['auth', 'verified'])->prefix('bibliometria')->name('bibliometria.')->group(function () {
+    Route::get('/trabalhos/{trabalho}', [BibliometriaController::class, 'show'])->name('show');
+    Route::post('/trabalhos/{trabalho}/sincronizar', [BibliometriaController::class, 'sincronizar'])->name('sincronizar');
+});
+
+// Autoavaliação – períodos e indicadores institucionais
+Route::middleware(['auth', 'verified'])->prefix('autoavaliacao')->name('autoavaliacao.')->group(function () {
+    Route::get('/', [AutoavaliacaoController::class, 'index'])->name('index');
+    Route::get('/create', [AutoavaliacaoController::class, 'create'])->name('create');
+    Route::post('/', [AutoavaliacaoController::class, 'store'])->name('store');
+    Route::get('/{autoavaliacao}', [AutoavaliacaoController::class, 'show'])->name('show');
+    Route::post('/{autoavaliacao}/calcular', [AutoavaliacaoController::class, 'calcular'])->name('calcular');
+    Route::delete('/{autoavaliacao}', [AutoavaliacaoController::class, 'destroy'])->name('destroy');
+});
+
+// Relatórios — secretaria
+Route::middleware(['auth', 'verified'])->prefix('relatorios')->name('relatorios.')->group(function () {
+    Route::get('/', [RelatorioController::class, 'index'])->name('index');
+    Route::get('/bancas', [RelatorioController::class, 'bancas'])->name('bancas');
+    Route::get('/composicao', [RelatorioController::class, 'composicao'])->name('composicao');
+    Route::get('/docentes', [RelatorioController::class, 'docentes'])->name('docentes');
+    Route::get('/percurso', [RelatorioController::class, 'percurso'])->name('percurso');
+    Route::get('/orientacao', [RelatorioController::class, 'orientacao'])->name('orientacao');
+    Route::get('/impacto', [RelatorioController::class, 'impacto'])->name('impacto');
+    Route::get('/discentes', [RelatorioController::class, 'discentes'])->name('discentes');
+    Route::get('/documentos', [RelatorioController::class, 'documentos'])->name('documentos');
+    Route::get('/autoavaliacao', [RelatorioController::class, 'autoavaliacaoRelatorio'])->name('autoavaliacao');
+    Route::get('/mabac', [RelatorioController::class, 'mabacRelatorio'])->name('mabac');
+    Route::get('/swara', [RelatorioController::class, 'swaraRelatorio'])->name('swara');
+    Route::get('/corpo-docente', [RelatorioController::class, 'corpoDocente'])->name('corpo-docente');
+    Route::get('/dashboard', [RelatorioController::class, 'dashboard'])->name('dashboard');
+    Route::get('/exportar', [RelatorioController::class, 'exportar'])->name('exportar');
+});
 
 require __DIR__ . '/auth.php';

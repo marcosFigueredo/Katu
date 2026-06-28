@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Sistema de Avaliação de Bancas</title>
+    <title>Katu — Autoavaliação e Qualidade de TCC</title>
+
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('katu-icon-16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('katu-icon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('katu-icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('katu-icon-192.png') }}">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -26,9 +32,14 @@
         elseif (request()->routeIs('orientacoes.*'))                          $secaoAtual = 'Orientações';
         elseif (request()->routeIs('bancas.*'))                               $secaoAtual = 'Bancas';
         elseif (request()->routeIs('baremas.*', 'barema-secoes.*', 'barema-itens.*')) $secaoAtual = 'Baremas';
-        elseif (request()->routeIs('meu-trabalho.*'))                         $secaoAtual = 'Meu Trabalho';
+        elseif (request()->routeIs('meu-trabalho.*', 'trabalho-impacto.*'))    $secaoAtual = 'Meu Trabalho';
+        elseif (request()->routeIs('orientacao-avaliacao.*'))                 $secaoAtual = 'Avaliação da Orientação';
         elseif (request()->routeIs('avaliacoes.*'))                           $secaoAtual = 'Avaliações';
-        elseif (request()->routeIs('profile.*'))                              $secaoAtual = 'Perfil do Usuário';
+        elseif (request()->routeIs('swara.*'))                               $secaoAtual = 'SWARA';
+        elseif (request()->routeIs('mabac.*'))                               $secaoAtual = 'MABAC';
+        elseif (request()->routeIs('bibliometria.*'))                        $secaoAtual = 'Bibliometria';
+        elseif (request()->routeIs('autoavaliacao.*'))                       $secaoAtual = 'Autoavaliação';
+        elseif (request()->routeIs('profile.*'))                             $secaoAtual = 'Perfil do Usuário';
     @endphp
 
     <div class="min-h-screen flex flex-col">
@@ -46,14 +57,14 @@
                 {{-- Logo à esquerda --}}
                 <div style="display: flex; align-items: center; height: 80px;">
                     <img src="{{ asset('images/logoBranco.png') }}"
-                        alt="PPGMSB"
+                        alt="Katu"
                         style="height: 64px; max-height: 64px; width: auto; object-fit: contain;">
                 </div>
 
                 {{-- Título central --}}
                 <div style="display: flex; align-items: center; justify-content: center; height: 80px; text-align: center;">
                     <span style="color: white; font-weight: 700; font-size: 22px; line-height: 1;">
-                        Sistema de Avaliação de Bancas
+                        Katu — Autoavaliação e Qualidade de TCC
                     </span>
                 </div>
 
@@ -143,6 +154,27 @@
                     </div>
                 </div>
 
+                {{-- Relógio de sessão --}}
+                <div class="px-4 py-2 border-b border-gray-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-1" style="font-size: 11px; color: #6b7280;">
+                            <i class="bi bi-clock" id="session-clock-icon"></i>
+                            <span>Sessão expira em</span>
+                        </div>
+                        <span id="session-countdown"
+                              class="fw-bold"
+                              style="font-size: 13px; font-family: monospace; color: #00303A;">
+                            30:00
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 3px; background: #e5e7eb;">
+                        <div id="session-progress"
+                             class="progress-bar"
+                             style="width: 100%; background: #00303A; transition: width 1s linear;">
+                        </div>
+                    </div>
+                </div>
+
                 <nav class="flex-1 p-4 space-y-4">
 
                     <div>
@@ -180,7 +212,9 @@
                     @php
                         $configAberto = request()->routeIs('instituicao.*', 'programas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
                         $usuariosAberto = request()->routeIs('usuarios.*');
-                        $bancasAberto = request()->routeIs('bancas.*', 'orientacoes.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*');
+                        $bancasAberto = request()->routeIs('bancas.*', 'orientacoes.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*');
+                        $avaliaAberto = request()->routeIs('mabac.*', 'bibliometria.*', 'autoavaliacao.*', 'orientacao-avaliacao.*');
+                        $relatoriosAberto = request()->routeIs('relatorios.*');
                     @endphp
 
                     {{-- CONFIGURAÇÕES --}}
@@ -284,9 +318,119 @@
 
                             <a href="{{ route('baremas.index') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
-                                      {{ request()->routeIs('baremas.*', 'barema-secoes.*', 'barema-itens.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                      {{ request()->routeIs('baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-clipboard2-check-fill" style="font-size: 15px; flex-shrink:0;"></i>
-                                Barema
+                                Baremas
+                            </a>
+
+                        </div>
+                    </div>
+
+                    {{-- AVALIA KATU --}}
+                    <div>
+                        <button type="button"
+                                class="w-100 flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-0 bg-transparent"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#menu-avalia"
+                                aria-expanded="{{ $avaliaAberto ? 'true' : 'false' }}"
+                                aria-controls="menu-avalia">
+                            <span class="flex items-center gap-2">
+                                <i class="bi bi-graph-up-arrow" style="font-size: 15px; flex-shrink:0;"></i>
+                                Avalia Katu
+                            </span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </button>
+
+                        <div id="menu-avalia" class="collapse {{ $avaliaAberto ? 'show' : '' }} mt-1 ms-3 space-y-1">
+
+                            <a href="{{ route('mabac.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('mabac.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-bar-chart-steps" style="font-size: 15px; flex-shrink:0;"></i>
+                                MABAC
+                            </a>
+
+                            <a href="{{ route('autoavaliacao.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('autoavaliacao.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-clipboard2-data" style="font-size: 15px; flex-shrink:0;"></i>
+                                Autoavaliação
+                            </a>
+
+                            <a href="{{ route('orientacao-avaliacao.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('orientacao-avaliacao.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-person-heart" style="font-size: 15px; flex-shrink:0;"></i>
+                                IEO
+                            </a>
+
+                        </div>
+                    </div>
+
+                    {{-- RELATÓRIOS --}}
+                    <div>
+                        <button type="button"
+                                class="w-100 flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-0 bg-transparent"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#menu-relatorios"
+                                aria-expanded="{{ $relatoriosAberto ? 'true' : 'false' }}"
+                                aria-controls="menu-relatorios">
+                            <span class="flex items-center gap-2">
+                                <i class="bi bi-file-bar-graph-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Relatórios
+                            </span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </button>
+
+                        <div id="menu-relatorios" class="collapse {{ $relatoriosAberto ? 'show' : '' }} mt-1 ms-3 space-y-1">
+
+                            <a href="{{ route('relatorios.dashboard') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.dashboard') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-speedometer2" style="font-size: 15px; flex-shrink:0;"></i>
+                                Dashboard
+                            </a>
+
+                            <a href="{{ route('relatorios.bancas') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.bancas') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-bar-chart-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Desempenho
+                            </a>
+
+                            <a href="{{ route('relatorios.composicao') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.composicao') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-shield-check" style="font-size: 15px; flex-shrink:0;"></i>
+                                Composição B1–B8
+                            </a>
+
+                            <a href="{{ route('relatorios.docentes') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.docentes') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-person-badge" style="font-size: 15px; flex-shrink:0;"></i>
+                                Bibliometria Docentes
+                            </a>
+
+                            <a href="{{ route('relatorios.percurso') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.percurso') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-clock-history" style="font-size: 15px; flex-shrink:0;"></i>
+                                Percurso
+                            </a>
+
+                            <a href="{{ route('relatorios.orientacao') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.orientacao') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-award-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                IEO
+                            </a>
+
+                            <a href="{{ route('relatorios.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('relatorios.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-grid-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Ver todos
                             </a>
 
                         </div>
@@ -308,13 +452,118 @@
         {{-- Rodapé --}}
         <footer class="py-3 text-center text-sm text-white"
             style="background-color: #00303A;">
-            PPGMSB - Sistema de Avaliação de Bancas
+            Katu - Autoavaliação e Qualidade de TCC
         </footer>
 
     </div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {{-- Modal: aviso de sessão expirando --}}
+    <div class="modal fade" id="modalSessaoExpirando" tabindex="-1"
+         data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-body text-center py-4 px-4">
+                    <div class="mb-3" style="font-size: 2.5rem; color: #e07b39;">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1" style="color:#00303A;">Sua sessão vai expirar</h6>
+                    <p class="text-muted small mb-3">
+                        Você será desconectado em
+                        <span id="modal-countdown" class="fw-bold" style="color:#c03a2b; font-family:monospace;">05:00</span>
+                        por inatividade.
+                    </p>
+                    <button type="button"
+                            class="btn btn-primary w-100 fw-semibold"
+                            onclick="katuSession.reset()">
+                        <i class="bi bi-hand-thumbs-up-fill me-2"></i>Estou aqui!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Formulário oculto para logout --}}
+    <form id="form-logout-automatico" method="POST" action="{{ route('logout') }}" style="display:none;">
+        @csrf
+    </form>
+
+    <script>
+    const katuSession = (() => {
+        const TOTAL     = 30 * 60;       // 30 minutos em segundos
+        const AVISO_EM  = 5  * 60;       // mostrar aviso nos últimos 5 min
+        let restante    = TOTAL;
+        let modal       = null;
+        let modalAberto = false;
+
+        const elContador  = document.getElementById('session-countdown');
+        const elProgress  = document.getElementById('session-progress');
+        const elIcon      = document.getElementById('session-clock-icon');
+        const elModal     = document.getElementById('modal-countdown');
+
+        function fmt(s) {
+            const m = String(Math.floor(s / 60)).padStart(2, '0');
+            const r = String(s % 60).padStart(2, '0');
+            return `${m}:${r}`;
+        }
+
+        function atualizar() {
+            const pct = (restante / TOTAL) * 100;
+
+            elContador.textContent = fmt(restante);
+            elProgress.style.width = pct + '%';
+
+            // Cor do relógio conforme urgência
+            if (restante <= AVISO_EM) {
+                elContador.style.color = restante <= 60 ? '#c03a2b' : '#e07b39';
+                elProgress.style.background = restante <= 60 ? '#c03a2b' : '#e07b39';
+                elIcon.className = 'bi bi-hourglass-split';
+                elIcon.style.color = elContador.style.color;
+            } else {
+                elContador.style.color = '#00303A';
+                elProgress.style.background = '#00303A';
+                elIcon.className = 'bi bi-clock';
+                elIcon.style.color = '#6b7280';
+            }
+
+            // Modal de aviso
+            if (restante <= AVISO_EM && !modalAberto) {
+                modal = modal || new bootstrap.Modal(document.getElementById('modalSessaoExpirando'));
+                modal.show();
+                modalAberto = true;
+            }
+
+            if (modalAberto && elModal) {
+                elModal.textContent = fmt(restante);
+            }
+
+            if (restante <= 0) {
+                document.getElementById('form-logout-automatico').submit();
+                return;
+            }
+
+            restante--;
+            setTimeout(atualizar, 1000);
+        }
+
+        function reset() {
+            restante    = TOTAL;
+            modalAberto = false;
+            if (modal) modal.hide();
+        }
+
+        // Reinicia o timer em qualquer atividade do usuário
+        const eventos = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+        eventos.forEach(ev => document.addEventListener(ev, () => { reset(); }, { passive: true }));
+
+        // Inicia
+        atualizar();
+
+        return { reset };
+    })();
+    </script>
 </body>
 
 </html>

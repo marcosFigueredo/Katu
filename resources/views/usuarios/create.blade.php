@@ -259,11 +259,14 @@
                                 placeholder="http://lattes.cnpq.br/0000000000000000">
                         </div>
 
-                        <div class="col-md-6">
+                        <div id="campo-orcid" class="col-md-6">
                             <label for="orcid_url" class="form-label fw-semibold">ORCID</label>
                             <input type="text" id="orcid_url" name="orcid_url" class="form-control"
                                 value="{{ old('orcid_url') }}"
                                 placeholder="https://orcid.org/0000-0000-0000-0000">
+                            @error('orcid_url')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="col-md-6">
@@ -326,6 +329,10 @@
                 'd-none',
                 categoria !== 'docente' || tipoVinculo !== 'interno'
             );
+
+            const orcidObrigatorio = categoria !== '' && categoria !== 'sec';
+            document.getElementById('campo-orcid').classList.toggle('d-none', categoria === 'sec');
+            document.getElementById('orcid_url').required = orcidObrigatorio;
         }
 
         document.getElementById('categoria').addEventListener('change', atualizarBlocosUsuario);

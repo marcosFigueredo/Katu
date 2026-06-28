@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DocenteProfile extends Model
 {
@@ -41,5 +42,15 @@ class DocenteProfile extends Model
     public function vinculosPrograma(): HasMany
     {
         return $this->hasMany(DocenteProgramaVinculo::class);
+    }
+
+    public function orcidSnapshot(): HasOne
+    {
+        return $this->hasOne(OrcidSnapshot::class);
+    }
+
+    public function orcidWorks(): HasMany
+    {
+        return $this->hasMany(OrcidWork::class);
     }
 }

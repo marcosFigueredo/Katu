@@ -25,3 +25,6 @@ Thumbs.db
 
 /database/*.sqlite
 /database/*.sqlite-*
+
+# Documentos de pesquisa / rascunhos locais
+paper-rbpg-estrutura.md

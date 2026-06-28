@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TrabalhoAcademico extends Model
 {
@@ -58,6 +59,16 @@ class TrabalhoAcademico extends Model
     public function bancas()
     {
         return $this->hasMany(Banca::class);
+    }
+
+    public function indicador(): HasOne
+    {
+        return $this->hasOne(TrabalhoIndicador::class);
+    }
+
+    public function impacto(): HasOne
+    {
+        return $this->hasOne(TrabalhoImpacto::class);
     }
 
     public function bancaQualificacao()

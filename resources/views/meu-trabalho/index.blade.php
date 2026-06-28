@@ -330,6 +330,51 @@
             </div>
 
         </div>
+
+        {{-- ── Ações pós-banca ─────────────────────────────────────────────── --}}
+        @php $bancaAtiva = $bancas->first(fn($b) => in_array($b->status, ['cadastrada', 'em_avaliacao'])); @endphp
+        @if ($bancaAtiva)
+        <div class="mt-4">
+            <h2 class="h6 fw-bold text-uppercase text-muted mb-3">
+                <i class="bi bi-stars me-2"></i>Avalie sua orientação
+            </h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1" style="color:#00303A;">
+                                <i class="bi bi-person-check-fill me-2"></i>Avaliação da Orientação (IEO)
+                            </h6>
+                            <p class="text-muted small mb-3">
+                                Avalie a orientação recebida. As respostas são confidenciais e agrupadas.
+                                Disponível enquanto a banca não for finalizada.
+                            </p>
+                            <a href="{{ route('orientacao-avaliacao.create', $bancaAtiva) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-fill me-1"></i>Responder questionário
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1" style="color:#00303A;">
+                                <i class="bi bi-lightbulb-fill me-2"></i>Impacto da Dissertação
+                            </h6>
+                            <p class="text-muted small mb-3">
+                                Descreva as dimensões de impacto do seu trabalho (científico, social, ambiental etc.).
+                            </p>
+                            <a href="{{ route('trabalho-impacto.edit') }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-fill me-1"></i>Preencher impactos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 
     {{-- ── Modal de carregamento ──────────────────────────────────────── --}}

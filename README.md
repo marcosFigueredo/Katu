@@ -94,7 +94,7 @@ php artisan queue:listen --tries=1
 ### Aplicação
 
 ```env
-APP_NAME="Defesas PPGMSB"
+APP_NAME=Katu
 APP_ENV=production          # local | production
 APP_KEY=                    # gerado automaticamente
 APP_DEBUG=false             # true somente em local
@@ -162,7 +162,7 @@ O campo `categoria` na tabela `users` controla o acesso:
 | `sec` | Secretaria | Gestão completa: programas, usuários, bancas, baremas, relatórios, ata |
 | `docente` | Docente (avaliador / orientador) | Dashboard de bancas, formulários de avaliação, finalização (orientador), ata (orientador) |
 | `discente` | Discente | Dados pessoais, acompanhamento de bancas, envio de documentos |
-| `admin` | Administrador | Acesso administrativo ao sistema |
+| `admin` | Administrador | Reservado para uso futuro — não há lógica de autorização implementada atualmente |
 
 O primeiro acesso de cada usuário é feito via link enviado por e-mail pela secretaria, que exige troca imediata de senha.
 
@@ -263,9 +263,12 @@ Documento HTML imprimível (via `Ctrl+P` → salvar como PDF) no formato PPGMSB,
 
 | Gatilho | Destinatário | Classe Mail |
 | --- | --- | --- |
-| Novo usuário criado | Usuário cadastrado | `PrimeiroAcessoMail` |
-| Todos os avaliadores enviaram | Orientador | `BancaProntaParaFinalizarMail` |
+| Novo usuário criado pela secretaria | Usuário cadastrado | `PrimeiroAcessoUsuarioMail` |
+| Banca cadastrada | Avaliadores da banca | `BancaCadastradaMail` |
+| Discente envia trabalho para a banca | Avaliadores da banca | `TrabalhoEnviadoBancaMail` |
+| Todos os avaliadores enviaram avaliações | Orientador | `BancaProntaParaFinalizarMail` |
 | Banca finalizada | Discente | `BancaFinalizadaDiscenteMail` |
+| Solicitação de recuperação de senha | Usuário solicitante | `RecuperacaoSenhaTemporariaMail` |
 
 ---
 

@@ -8,7 +8,7 @@
                     Painel da Secretaria
                 </h1>
                 <p class="text-muted mb-0">
-                    Gerencie os módulos do Sistema de Avaliação de Bancas — PPGMSB/UNEB.
+                    Gerencie os módulos do Katu — Autoavaliação e Qualidade de TCC · PPGMSB/UNEB.
                 </p>
             </div>
             <div class="text-muted small text-end d-none d-md-block">
