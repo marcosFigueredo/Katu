@@ -1,6 +1,13 @@
-# Sistema de Gestão de Defesas — PPGMSB/UNEB
+# Katu — Academic Quality & Self-Assessment Platform
 
-Sistema web para gerenciamento do ciclo completo de qualificações e defesas de dissertações/teses do Programa de Pós-Graduação em Modelagem em Saúde da Bahia (PPGMSB), vinculado à Universidade do Estado da Bahia (UNEB).
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21011690.svg)](https://doi.org/10.5281/zenodo.21011690)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-purple.svg)](https://php.net)
+
+Sistema web para gerenciamento do ciclo completo de qualificações e defesas de dissertações/teses do Programa de Pós-Graduação em Modelagem em Saúde da Bahia (PPGMSB), vinculado à Universidade do Estado da Bahia (UNEB). Incorpora métodos de decisão multicritério (MABAC/SWARA), bibliometria automatizada via ORCID/OpenAlex, Índice de Excelência da Orientação (IEO) e relatórios de autoavaliação do PPG.
+
+> **Cite como:** Figueredo, M. (2026). *Katu — Academic Quality & Self-Assessment Platform for Graduate Programs* (v1.0.0). Zenodo. [https://doi.org/10.5281/zenodo.21011690](https://doi.org/10.5281/zenodo.21011690)
 
 ---
 
