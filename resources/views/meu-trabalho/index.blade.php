@@ -1,0 +1,430 @@
+<x-app-layout>
+    <div class="container-fluid">
+
+        <div class="d-flex align-items-start justify-content-between mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1" style="color: #00303A;">Meu Trabalho</h1>
+                <p class="text-muted mb-0">Acompanhe sua banca e envie seu documento para análise.</p>
+            </div>
+        </div>
+
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        {{-- ── Bancas agendadas ─────────────────────────────────────────── --}}
+        @if ($bancas->isNotEmpty())
+            <h2 class="h6 fw-bold text-uppercase text-muted mb-3">
+                <i class="bi bi-person-workspace me-2"></i>Minha(s) Banca(s)
+            </h2>
+            <div class="row g-3 mb-4">
+                @foreach ($bancas as $banca)
+                    @php
+                        $tipoCor   = $banca->tipo === 'qualificacao' ? 'info'      : 'primary';
+                        $tipoLabel = $banca->tipo === 'qualificacao' ? 'Qualificação' : 'Defesa';
+                        $statusCor = match($banca->status) {
+                            'cadastrada'   => 'secondary',
+                            'em_avaliacao' => 'warning',
+                            'finalizada'   => 'success',
+                            'cancelada'    => 'danger',
+                            default        => 'secondary',
+                        };
+                        $statusLabel = match($banca->status) {
+                            'cadastrada'   => 'Agendada',
+                            'em_avaliacao' => 'Em avaliação',
+                            'finalizada'   => 'Finalizada',
+                            'cancelada'    => 'Cancelada',
+                            default        => $banca->status,
+                        };
+                        $orientador = $trabalho?->orientacoes?->firstWhere('tipo', 'orientador');
+                        $coorientadores = $trabalho?->orientacoes?->where('tipo', 'coorientador') ?? collect();
+                    @endphp
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <span class="badge text-bg-{{ $tipoCor }} fs-6 px-3 py-2">
+                                        {{ $tipoLabel }}
+                                    </span>
+                                    <span class="badge text-bg-{{ $statusCor }}">{{ $statusLabel }}</span>
+                                </div>
+
+                                <dl class="row small mb-0">
+                                    @if ($banca->data_hora)
+                                        <dt class="col-5 text-muted fw-normal">Data e hora</dt>
+                                        <dd class="col-7 fw-semibold mb-2">
+                                            {{ $banca->data_hora->format('d/m/Y') }}
+                                            às {{ $banca->data_hora->format('H:i') }}
+                                        </dd>
+                                    @else
+                                        <dt class="col-5 text-muted fw-normal">Data e hora</dt>
+                                        <dd class="col-7 mb-2 text-muted">A definir</dd>
+                                    @endif
+
+                                    @if ($banca->local)
+                                        <dt class="col-5 text-muted fw-normal">Local</dt>
+                                        <dd class="col-7 mb-2">{{ $banca->local }}</dd>
+                                    @endif
+
+                                    @if ($orientador)
+                                        <dt class="col-5 text-muted fw-normal">Orientador</dt>
+                                        <dd class="col-7 mb-2">
+                                            {{ $orientador->docenteProgramaVinculo?->docenteProfile?->user?->name ?? '—' }}
+                                        </dd>
+                                    @endif
+
+                                    @if ($coorientadores->isNotEmpty())
+                                        <dt class="col-5 text-muted fw-normal">Coorientador(es)</dt>
+                                        <dd class="col-7 mb-0">
+                                            @foreach ($coorientadores as $co)
+                                                <div>{{ $co->docenteProgramaVinculo?->docenteProfile?->user?->name ?? '—' }}</div>
+                                            @endforeach
+                                        </dd>
+                                    @endif
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="alert alert-warning mb-4">
+                <i class="bi bi-hourglass-split me-2"></i>
+                Nenhuma banca cadastrada ainda. O envio do trabalho será liberado após a secretaria registrar sua banca.
+            </div>
+        @endif
+
+        {{-- ── Envio + Histórico ────────────────────────────────────────── --}}
+        <div class="row g-4">
+
+            {{-- Formulário de envio --}}
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-3">
+                        <h2 class="h6 fw-bold mb-0">
+                            <i class="bi bi-cloud-upload-fill me-2" style="color:#00303A;"></i>Enviar Documento
+                        </h2>
+                    </div>
+                    <div class="card-body">
+
+                        @if (! $bancaLiberada)
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-lock-fill me-2"></i>
+                                O envio será liberado após a secretaria cadastrar a banca do seu trabalho.
+                            </div>
+                        @else
+
+                        <form id="form-envio-documento"
+                              method="POST"
+                              action="{{ route('meu-trabalho.store') }}"
+                              enctype="multipart/form-data">
+                            @csrf
+
+                            <div class="mb-3">
+                                <label for="tipo_documento" class="form-label fw-semibold">Tipo de documento</label>
+                                <select id="tipo_documento"
+                                        name="tipo_documento"
+                                        class="form-select @error('tipo_documento') is-invalid @enderror"
+                                        required>
+                                    <option value="" disabled selected>Selecione…</option>
+                                    <option value="qualificacao" {{ old('tipo_documento') === 'qualificacao' ? 'selected' : '' }}>
+                                        Exame de Qualificação
+                                    </option>
+                                    <option value="dissertacao" {{ old('tipo_documento') === 'dissertacao' ? 'selected' : '' }}>
+                                        Dissertação
+                                    </option>
+                                    <option value="tese" {{ old('tipo_documento') === 'tese' ? 'selected' : '' }}>
+                                        Tese
+                                    </option>
+                                </select>
+                                @error('tipo_documento')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="titulo" class="form-label fw-semibold">Título do trabalho</label>
+                                <input type="text"
+                                       id="titulo"
+                                       name="titulo"
+                                       value="{{ old('titulo') }}"
+                                       class="form-control @error('titulo') is-invalid @enderror"
+                                       placeholder="Título completo da dissertação ou tese"
+                                       maxlength="500"
+                                       required>
+                                @error('titulo')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="resumo" class="form-label fw-semibold">Resumo</label>
+                                <textarea id="resumo"
+                                          name="resumo"
+                                          rows="5"
+                                          class="form-control @error('resumo') is-invalid @enderror"
+                                          placeholder="Resumo do trabalho (Abstract)"
+                                          required>{{ old('resumo') }}</textarea>
+                                @error('resumo')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="palavras_chave" class="form-label fw-semibold">Palavras-chave</label>
+                                <input type="text"
+                                       id="palavras_chave"
+                                       name="palavras_chave"
+                                       value="{{ old('palavras_chave') }}"
+                                       class="form-control @error('palavras_chave') is-invalid @enderror"
+                                       placeholder="Ex.: saúde pública; epidemiologia; gestão"
+                                       maxlength="500"
+                                       required>
+                                <div class="form-text">Separe as palavras-chave por ponto e vírgula (;).</div>
+                                @error('palavras_chave')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pdf" class="form-label fw-semibold">Arquivo PDF</label>
+                                <input type="file"
+                                       id="pdf"
+                                       name="pdf"
+                                       accept="application/pdf"
+                                       class="form-control @error('pdf') is-invalid @enderror"
+                                       required>
+                                <div class="form-text">Tamanho máximo: 30 MB.</div>
+                                @error('pdf')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="alert alert-info small py-2 mb-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                A análise pode levar alguns minutos. Aguarde o redirecionamento após o envio.
+                            </div>
+
+                            <button type="submit" id="btn-enviar" class="btn btn-primary w-100 fw-semibold">
+                                <i class="bi bi-cloud-upload-fill me-2"></i>Enviar e Analisar
+                            </button>
+                        </form>
+
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Histórico de envios --}}
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-3">
+                        <h2 class="h6 fw-bold mb-0">
+                            <i class="bi bi-clock-history me-2" style="color:#00303A;"></i>Histórico de Envios
+                        </h2>
+                    </div>
+                    <div class="card-body p-0">
+
+                        @if ($documentos->isEmpty())
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-file-earmark-pdf fs-1 d-block mb-2 opacity-30"></i>
+                                Nenhum documento enviado ainda.
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Tipo</th>
+                                            <th>Versão</th>
+                                            <th>Enviado em</th>
+                                            <th class="text-center">Status</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($documentos as $doc)
+                                            @php
+                                                $analise = $doc->ultimaAnalise;
+                                                $statusCor = match($analise?->status_geral) {
+                                                    'conforme'       => 'success',
+                                                    'com_alertas'    => 'warning',
+                                                    'com_pendencias' => 'danger',
+                                                    'falha'          => 'secondary',
+                                                    default          => 'light',
+                                                };
+                                                $statusLabel = match($analise?->status_geral) {
+                                                    'conforme'       => 'Conforme',
+                                                    'com_alertas'    => 'Com alertas',
+                                                    'com_pendencias' => 'Com pendências',
+                                                    'falha'          => 'Falhou',
+                                                    default          => 'Aguardando',
+                                                };
+                                            @endphp
+                                            <tr>
+                                                <td class="ps-4">
+                                                    <span class="fw-semibold">
+                                                        {{ match($doc->tipo_documento) {
+                                                            'qualificacao' => 'Qualificação',
+                                                            'dissertacao'  => 'Dissertação',
+                                                            'tese'         => 'Tese',
+                                                            default        => $doc->tipo_documento,
+                                                        } }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-muted">v{{ str_pad($doc->versao, 2, '0', STR_PAD_LEFT) }}</td>
+                                                <td class="text-muted small">
+                                                    {{ $doc->enviado_em?->format('d/m/Y H:i') ?? '—' }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge text-bg-{{ $statusCor }}">
+                                                        {{ $statusLabel }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end pe-3">
+                                                    <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                                        @if ($analise)
+                                                            <a href="{{ route('meu-trabalho.analise', $analise) }}"
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                Ver análise
+                                                            </a>
+                                                        @else
+                                                            <span class="text-muted small">Processando…</span>
+                                                        @endif
+
+                                                        @if ($bancaLiberada)
+                                                            <form method="POST"
+                                                                  action="{{ route('meu-trabalho.enviar-banca', $doc) }}"
+                                                                  onsubmit="return confirm('Enviar este trabalho por e-mail para os avaliadores da banca?')">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                                    <i class="bi bi-envelope-fill me-1"></i>Enviar à banca
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ── Modal de carregamento ──────────────────────────────────────── --}}
+    <div class="modal fade" id="modalCarregando" tabindex="-1"
+         data-bs-backdrop="static" data-bs-keyboard="false"
+         aria-labelledby="modalCarregandoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-body text-center py-4 px-4">
+
+                    <div class="loader-con mx-auto mb-3">
+                        <div style="--i: 0;" class="pfile"></div>
+                        <div style="--i: 1;" class="pfile"></div>
+                        <div style="--i: 2;" class="pfile"></div>
+                        <div style="--i: 3;" class="pfile"></div>
+                        <div style="--i: 4;" class="pfile"></div>
+                        <div style="--i: 5;" class="pfile"></div>
+                    </div>
+
+                    <p id="loading-msg" class="fw-semibold mb-1" style="color:#00303A; font-size:.95rem;"></p>
+                    <p class="text-muted small mb-0">Isso pode levar alguns instantes&hellip;</p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .loader-con {
+            position: relative;
+            width: 100%;
+            height: 70px;
+            overflow: hidden;
+        }
+        .pfile {
+            position: absolute;
+            bottom: 10px;
+            width: 36px;
+            height: 44px;
+            background: linear-gradient(90deg, #b324db, #ac8dcb);
+            border-radius: 4px;
+            animation: flyRight 3s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.6s);
+            opacity: 0;
+        }
+        .pfile::before {
+            content: "";
+            position: absolute;
+            top: 6px; left: 6px;
+            width: 24px; height: 4px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        .pfile::after {
+            content: "";
+            position: absolute;
+            top: 13px; left: 6px;
+            width: 16px; height: 4px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        @keyframes flyRight {
+            0%   { left: -10%; transform: scale(0);   opacity: 0; }
+            50%  { left:  45%; transform: scale(1.2); opacity: 1; }
+            100% { left: 100%; transform: scale(0);   opacity: 0; }
+        }
+    </style>
+
+    <script>
+        (function () {
+            const form  = document.getElementById('form-envio-documento');
+            const msgEl = document.getElementById('loading-msg');
+            if (!form || !msgEl) return;
+
+            const mensagens = [
+                'Enviando documento…',
+                'Extraindo texto do PDF…',
+                'Verificando estrutura e elementos…',
+                'Avaliando com inteligência artificial…',
+                'Gerando relatório de análise…',
+            ];
+
+            let idx = 0;
+
+            form.addEventListener('submit', function () {
+                msgEl.textContent = mensagens[0];
+                bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById('modalCarregando')
+                ).show();
+
+                setInterval(function () {
+                    idx = (idx + 1) % mensagens.length;
+                    msgEl.textContent = mensagens[idx];
+                }, 3500);
+            });
+        })();
+    </script>
+</x-app-layout>
