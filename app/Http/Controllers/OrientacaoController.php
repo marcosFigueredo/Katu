@@ -7,6 +7,7 @@ use App\Models\Orientacao;
 use App\Models\TrabalhoAcademico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrientacaoController extends Controller
 {
@@ -70,7 +71,7 @@ class OrientacaoController extends Controller
     {
         $this->autorizarSecretaria();
 
-        $request->validate([
+        $dados = $request->validate([
             'orientador_vinculo_id'   => ['nullable', 'exists:docente_programa_vinculos,id'],
             'coorientadores'          => ['nullable', 'array'],
             'coorientadores.*'        => ['exists:docente_programa_vinculos,id'],
@@ -79,26 +80,46 @@ class OrientacaoController extends Controller
             'coorientadores.*.exists'      => 'Um ou mais coorientadores inválidos.',
         ]);
 
-        DB::transaction(function () use ($request, $trabalho) {
+        $docenteIds = collect([
+            $dados['orientador_vinculo_id'] ?? null,
+            ...($dados['coorientadores'] ?? []),
+        ])->filter()->map(fn ($id) => (int) $id)->unique()->values();
+
+        $docentesValidos = DocenteProgramaVinculo::query()
+            ->where('programa_id', $trabalho->programa_id)
+            ->where('pode_orientar', true)
+            ->where('ativo', true)
+            ->whereIn('id', $docenteIds)
+            ->pluck('id');
+
+        if ($docentesValidos->count() !== $docenteIds->count()) {
+            throw ValidationException::withMessages([
+                'orientador_vinculo_id' => 'Selecione apenas docentes orientáveis e vinculados ao programa do discente.',
+            ]);
+        }
+
+        DB::transaction(function () use ($dados, $trabalho) {
             $trabalho->orientacoes()->delete();
 
-            if ($request->filled('orientador_vinculo_id')) {
+            if (! empty($dados['orientador_vinculo_id'])) {
                 Orientacao::create([
                     'trabalho_academico_id'       => $trabalho->id,
-                    'docente_programa_vinculo_id'  => $request->orientador_vinculo_id,
+                    'discente_programa_vinculo_id' => $trabalho->discente_programa_vinculo_id,
+                    'docente_programa_vinculo_id'  => $dados['orientador_vinculo_id'],
                     'tipo'                        => 'orientador',
                     'ordem'                       => 1,
                     'ativo'                       => true,
                 ]);
             }
 
-            $coorientadores = collect($request->coorientadores ?? [])
-                ->reject(fn ($id) => $id == $request->orientador_vinculo_id)
+            $coorientadores = collect($dados['coorientadores'] ?? [])
+                ->reject(fn ($id) => $id == ($dados['orientador_vinculo_id'] ?? null))
                 ->values();
 
             foreach ($coorientadores as $ordem => $vinculoId) {
                 Orientacao::create([
                     'trabalho_academico_id'       => $trabalho->id,
+                    'discente_programa_vinculo_id' => $trabalho->discente_programa_vinculo_id,
                     'docente_programa_vinculo_id'  => $vinculoId,
                     'tipo'                        => 'coorientador',
                     'ordem'                       => $ordem + 1,

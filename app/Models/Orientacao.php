@@ -10,6 +10,7 @@ class Orientacao extends Model
 
     protected $fillable = [
         'trabalho_academico_id',
+        'discente_programa_vinculo_id',
         'docente_programa_vinculo_id',
         'tipo',
         'ordem',
@@ -26,6 +27,11 @@ class Orientacao extends Model
     public function trabalhoAcademico()
     {
         return $this->belongsTo(TrabalhoAcademico::class);
+    }
+
+    public function discenteVinculo()
+    {
+        return $this->belongsTo(DiscenteProgramaVinculo::class, 'discente_programa_vinculo_id');
     }
 
     public function docenteProgramaVinculo()

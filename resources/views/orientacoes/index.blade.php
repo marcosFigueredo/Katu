@@ -5,7 +5,7 @@
             <div>
                 <h1 class="h3 fw-bold mb-1" style="color: #00303A;">Orientações</h1>
                 <p class="text-muted mb-0">
-                    Vínculo entre discentes, orientadores e coorientadores do programa.
+                    Vínculo acadêmico do discente com orientador e coorientadores do programa.
                 </p>
             </div>
         </div>

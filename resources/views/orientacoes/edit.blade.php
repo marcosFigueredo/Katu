@@ -14,7 +14,7 @@
         <div class="mb-4">
             <h1 class="h3 fw-bold mb-1" style="color: #00303A;">Gerenciar Orientação</h1>
             <p class="text-muted mb-0">
-                Atribua ou altere o orientador e coorientadores do trabalho acadêmico.
+                Atribua ou altere o orientador e coorientadores do vínculo acadêmico do discente.
             </p>
         </div>
 
