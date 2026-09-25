@@ -59,6 +59,11 @@ class Banca extends Model
         return $this->hasMany(BancaAvaliacao::class);
     }
 
+    public function evidencias()
+    {
+        return $this->hasMany(BancaEvidencia::class);
+    }
+
     public function indicadores(): HasOne
     {
         return $this->hasOne(BancaIndicador::class);
@@ -68,4 +73,5 @@ class Banca extends Model
     {
         return $this->hasMany(OrientacaoAvaliacao::class);
     }
+
 }

@@ -52,9 +52,14 @@ public function trabalhosAcademicos()
     return $this->hasMany(TrabalhoAcademico::class);
 }
 
-public function documentoChecklists()
-{
-    return $this->hasMany(DocumentoChecklist::class);
-}
+    public function documentoChecklists()
+    {
+        return $this->hasMany(DocumentoChecklist::class);
+    }
+
+    public function criteriosCpa(): HasMany
+    {
+        return $this->hasMany(CriterioCpa::class);
+    }
 
 }

@@ -25,6 +25,7 @@ use App\Http\Controllers\OrientacaoAvaliacaoController;
 use App\Http\Controllers\TrabalhoImpactoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
+use App\Http\Controllers\CriterioCpaController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -61,6 +62,10 @@ Route::resource('programas', ProgramaController::class)
     ->middleware(['auth', 'verified']);
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('criterios-cpa', CriterioCpaController::class)
+        ->parameters(['criterios-cpa' => 'criterioCpa'])
+        ->except(['show']);
+
     Route::get('/membros-externos', [MembroExternoController::class, 'index'])
         ->name('membros-externos.index');
     Route::get('/membros-externos/create', [MembroExternoController::class, 'create'])

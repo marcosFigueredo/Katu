@@ -105,6 +105,14 @@
                 </a>
             </div>
 
+            {{-- Critérios CPA --}}
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ route('criterios-cpa.index') }}" class="card border-0 shadow-sm h-100 text-decoration-none module-card">
+                    <div class="card-body p-4"><div class="d-flex align-items-start justify-content-between mb-3"><div class="rounded-3 p-3" style="background:rgba(0,48,58,.10);"><i class="bi bi-list-check fs-3" style="color:#00303A;"></i></div><span class="badge text-bg-success">Ativo</span></div><h5 class="fw-bold mb-1 text-dark">Critérios da CPA</h5><p class="text-muted small mb-0">Configure os requisitos e evidências obrigatórias de cada etapa.</p></div>
+                    <div class="card-footer bg-transparent border-top-0 px-4 pb-3"><span class="small fw-semibold" style="color:#00303A;">Acessar <i class="bi bi-arrow-right ms-1"></i></span></div>
+                </a>
+            </div>
+
             {{-- Instituição --}}
             <div class="col-md-6 col-xl-4">
                 <a href="{{ route('instituicao.edit') }}"
