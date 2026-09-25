@@ -19,6 +19,10 @@ class DocenteProfile extends Model
         'telefone',
         'telefone_whatsapp',
         'instituicao_sigla',
+        'diploma_doutorado_path',
+        'diploma_doutorado_nome',
+        'diploma_doutorado_enviado_em',
+        'diploma_doutorado_verificado',
         'lattes_verificado',
         'orcid_verificado',
         'ativo',
@@ -30,6 +34,8 @@ class DocenteProfile extends Model
             'telefone_whatsapp' => 'boolean',
             'lattes_verificado' => 'boolean',
             'orcid_verificado' => 'boolean',
+            'diploma_doutorado_enviado_em' => 'datetime',
+            'diploma_doutorado_verificado' => 'boolean',
             'ativo' => 'boolean',
         ];
     }

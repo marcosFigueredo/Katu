@@ -93,6 +93,18 @@
         {{-- Cards de módulos --}}
         <div class="row g-4">
 
+            {{-- Membros externos --}}
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ route('membros-externos.index') }}" class="card border-0 shadow-sm h-100 text-decoration-none module-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start justify-content-between mb-3"><div class="rounded-3 p-3" style="background:rgba(0,48,58,.10);"><i class="bi bi-person-vcard-fill fs-3" style="color:#00303A;"></i></div><span class="badge text-bg-success">Ativo</span></div>
+                        <h5 class="fw-bold mb-1 text-dark">Membros externos</h5>
+                        <p class="text-muted small mb-0">Envie convites, receba diplomas e valide os membros externos das bancas.</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 px-4 pb-3"><span class="small fw-semibold" style="color:#00303A;">Acessar <i class="bi bi-arrow-right ms-1"></i></span></div>
+                </a>
+            </div>
+
             {{-- Instituição --}}
             <div class="col-md-6 col-xl-4">
                 <a href="{{ route('instituicao.edit') }}"

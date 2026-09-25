@@ -20,12 +20,21 @@ use App\Http\Controllers\SwaraSessaoController;
 use App\Http\Controllers\MabacController;
 use App\Http\Controllers\BibliometriaController;
 use App\Http\Controllers\AutoavaliacaoController;
+use App\Http\Controllers\PerguntaEstrategicaController;
 use App\Http\Controllers\OrientacaoAvaliacaoController;
 use App\Http\Controllers\TrabalhoImpactoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\MembroExternoController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
+});
+
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/cadastro/membro-externo/{token}', [MembroExternoController::class, 'registro'])
+        ->name('membros-externos.registro');
+    Route::post('/cadastro/membro-externo/{token}', [MembroExternoController::class, 'registrar'])
+        ->name('membros-externos.registro.store');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -50,6 +59,23 @@ Route::put('/instituicao', [InstituicaoController::class, 'update'])
 
 Route::resource('programas', ProgramaController::class)
     ->middleware(['auth', 'verified']);
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/membros-externos', [MembroExternoController::class, 'index'])
+        ->name('membros-externos.index');
+    Route::get('/membros-externos/create', [MembroExternoController::class, 'create'])
+        ->name('membros-externos.create');
+    Route::post('/membros-externos/convites', [MembroExternoController::class, 'store'])
+        ->name('membros-externos.convites.store');
+    Route::post('/membros-externos/convites/{convite}/reenviar', [MembroExternoController::class, 'reenviar'])
+        ->name('membros-externos.convites.reenviar');
+    Route::post('/membros-externos/{usuario}/aprovar', [MembroExternoController::class, 'aprovar'])
+        ->name('membros-externos.aprovar');
+    Route::get('/membros-externos/{usuario}/diploma', [MembroExternoController::class, 'diploma'])
+        ->name('membros-externos.diploma');
+    Route::post('/membros-externos/{usuario}/devolver', [MembroExternoController::class, 'devolver'])
+        ->name('membros-externos.devolver');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/programas/{programa}/areas', [AreaConcentracaoController::class, 'index'])
@@ -186,6 +212,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/avaliacoes/{banca}/ata', [AvaliacaoController::class, 'ata'])
         ->name('avaliacoes.ata');
+
+    Route::get('/avaliacoes/{banca}/folha-aprovacao', [AvaliacaoController::class, 'folhaAprovacao'])
+        ->name('avaliacoes.folha-aprovacao');
 });
 
 // Área do discente – envio e análise de documentos
@@ -280,6 +309,16 @@ Route::middleware(['auth', 'verified'])->prefix('relatorios')->name('relatorios.
     Route::get('/corpo-docente', [RelatorioController::class, 'corpoDocente'])->name('corpo-docente');
     Route::get('/dashboard', [RelatorioController::class, 'dashboard'])->name('dashboard');
     Route::get('/exportar', [RelatorioController::class, 'exportar'])->name('exportar');
+});
+
+// Perguntas Estratégicas — painel de autoavaliação orientado a perguntas (CAPES + comissão)
+Route::middleware(['auth', 'verified'])->prefix('perguntas-estrategicas')->name('perguntas-estrategicas.')->group(function () {
+    Route::get('/', [PerguntaEstrategicaController::class, 'index'])->name('index');
+    Route::get('/create', [PerguntaEstrategicaController::class, 'create'])->name('create');
+    Route::post('/', [PerguntaEstrategicaController::class, 'store'])->name('store');
+    Route::get('/{pergunta}/edit', [PerguntaEstrategicaController::class, 'edit'])->name('edit');
+    Route::put('/{pergunta}', [PerguntaEstrategicaController::class, 'update'])->name('update');
+    Route::delete('/{pergunta}', [PerguntaEstrategicaController::class, 'destroy'])->name('destroy');
 });
 
 require __DIR__ . '/auth.php';
