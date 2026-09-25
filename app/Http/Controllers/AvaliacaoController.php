@@ -9,8 +9,10 @@ use App\Models\BancaAvaliacao;
 use App\Models\BancaAvaliacaoNota;
 use App\Models\Barema;
 use App\Models\Orientacao;
+use App\Services\FolhaAprovacaoLatexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class AvaliacaoController extends Controller
 {
@@ -166,6 +168,11 @@ class AvaliacaoController extends Controller
                 ->withErrors(['status' => 'Esta banca foi cancelada.']);
         }
 
+        if ($banca->homologacao_status !== 'homologada') {
+            return redirect()->route('avaliacoes.banca', $banca)
+                ->withErrors(['status' => 'A banca ainda não foi homologada pela Secretaria.']);
+        }
+
         $banca->load('trabalhoAcademico.discenteVinculo.discenteProfile.user');
         $barema->load(['secoes' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')
             ->with(['itens' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')])]);
@@ -201,6 +208,11 @@ class AvaliacaoController extends Controller
 
         if (! $meuMembro) {
             abort(403);
+        }
+
+        if ($banca->homologacao_status !== 'homologada') {
+            return redirect()->route('avaliacoes.banca', $banca)
+                ->withErrors(['status' => 'A banca ainda não foi homologada pela Secretaria.']);
         }
 
         if (in_array($banca->status, ['finalizada', 'cancelada'])) {
@@ -417,6 +429,22 @@ class AvaliacaoController extends Controller
         return view('avaliacoes.ata', compact('banca'));
     }
 
+    public function folhaAprovacao(Banca $banca, FolhaAprovacaoLatexService $service)
+    {
+        $this->autorizarAta($banca);
+
+        if ($banca->status !== 'finalizada') {
+            return back()->withErrors(['folha_aprovacao' => 'A folha de aprovação só pode ser gerada após a finalização da banca.']);
+        }
+
+        $path = $service->gerarPdf($banca);
+        $filename = 'folha-aprovacao-banca-' . $banca->id . '.pdf';
+
+        return response()->download(Storage::disk('local')->path($path), $filename, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
     // -------------------------------------------------------------------------
     // Relatório individual — avaliador vê seu barema preenchido (HTML imprimível)
     // -------------------------------------------------------------------------
@@ -532,6 +560,31 @@ class AvaliacaoController extends Controller
     {
         if ($user->categoria !== 'docente') {
             abort(403);
+        }
+    }
+
+    private function autorizarAta(Banca $banca): void
+    {
+        $user = auth()->user();
+
+        if ($user->categoria === 'sec') {
+            return;
+        }
+
+        if ($user->categoria !== 'docente') {
+            abort(403);
+        }
+
+        $user->load('docenteProfile.vinculosPrograma');
+        $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
+
+        $ehOrientador = $vinculo && $banca->trabalhoAcademico->orientacoes()
+            ->where('docente_programa_vinculo_id', $vinculo->id)
+            ->where('ativo', true)
+            ->exists();
+
+        if (! $ehOrientador) {
+            abort(403, 'Apenas o orientador (presidente da banca) e a secretaria podem acessar este documento.');
         }
     }
 }

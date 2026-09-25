@@ -94,11 +94,12 @@ class BancaController extends Controller
             ]);
         }
 
+        $qualificacao = $trabalho->bancas->where('tipo', 'qualificacao')->where('status', 'finalizada')->first();
         if ($data['tipo'] === 'defesa' &&
-            $trabalho->bancas->where('tipo', 'qualificacao')->where('status', 'finalizada')->isEmpty()
+            (! $qualificacao || ! in_array($qualificacao->resultado, ['aprovado', 'aprovado_modificacoes'], true))
         ) {
             throw ValidationException::withMessages([
-                'tipo' => 'A banca de defesa só pode ser cadastrada após o discente ter sido aprovado na qualificação (status: Finalizada).',
+                'tipo' => 'A banca de defesa só pode ser cadastrada após aprovação na qualificação.',
             ]);
         }
 
@@ -110,6 +111,9 @@ class BancaController extends Controller
                 'trabalho_academico_id' => $data['trabalho_academico_id'],
                 'tipo' => $data['tipo'],
                 'status' => $data['status'],
+                'homologacao_status' => 'homologada',
+                'homologada_por' => auth()->id(),
+                'homologada_em' => now(),
                 'data_hora' => $dataHora,
                 'local' => $data['local'] ?? null,
                 'observacoes' => $data['observacoes'] ?? null,
@@ -174,6 +178,9 @@ class BancaController extends Controller
             $banca->update([
                 'tipo' => $data['tipo'],
                 'status' => $data['status'],
+                'homologacao_status' => 'homologada',
+                'homologada_por' => auth()->id(),
+                'homologada_em' => now(),
                 'data_hora' => $dataHora,
                 'local' => $data['local'] ?? null,
                 'observacoes' => $data['observacoes'] ?? null,

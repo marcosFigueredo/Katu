@@ -26,6 +26,7 @@ use App\Http\Controllers\TrabalhoImpactoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\CriterioCpaController;
+use App\Http\Controllers\HomologacaoBancaController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -187,6 +188,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Bancas – composição da banca examinadora
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/bancas/homologacao', [HomologacaoBancaController::class, 'index'])
+        ->name('bancas.homologacao');
+    Route::post('/bancas/{banca}/homologar', [HomologacaoBancaController::class, 'homologar'])
+        ->name('bancas.homologar');
+    Route::post('/bancas/{banca}/devolver', [HomologacaoBancaController::class, 'devolver'])
+        ->name('bancas.devolver');
     Route::resource('bancas', BancaController::class)->except(['show']);
     Route::post('/bancas/{banca}/reabrir', [BancaController::class, 'reabrir'])
         ->name('bancas.reabrir');

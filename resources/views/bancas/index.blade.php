@@ -8,9 +8,9 @@
                     Composição da banca com orientador, coorientadores em ata e avaliadores habilitados.
                 </p>
             </div>
-            <a href="{{ route('bancas.create') }}" class="btn btn-primary fw-semibold">
+            <div class="d-flex gap-2"><a href="{{ route('bancas.homologacao') }}" class="btn btn-outline-warning fw-semibold"><i class="bi bi-check2-square me-1"></i>Homologação</a><a href="{{ route('bancas.create') }}" class="btn btn-primary fw-semibold">
                 <i class="bi bi-plus-lg me-1"></i>Nova banca
-            </a>
+            </a></div>
         </div>
 
         @if (session('success'))

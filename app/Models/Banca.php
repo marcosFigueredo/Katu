@@ -12,11 +12,17 @@ class Banca extends Model
         'trabalho_academico_id',
         'tipo',
         'status',
+        'homologacao_status',
         'resultado',
         'nota_media',
         'data_hora',
         'local',
         'observacoes',
+        'homologacao_observacoes',
+        'homologada_por',
+        'homologada_em',
+        'devolvida_por',
+        'devolvida_em',
         'libera_envio_trabalho',
     ];
 
@@ -26,6 +32,8 @@ class Banca extends Model
             'data_hora'             => 'datetime',
             'libera_envio_trabalho' => 'boolean',
             'nota_media'            => 'float',
+            'homologada_em'         => 'datetime',
+            'devolvida_em'          => 'datetime',
         ];
     }
 
