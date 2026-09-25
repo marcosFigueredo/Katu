@@ -185,6 +185,9 @@ O primeiro acesso de cada usuário é feito via link enviado por e-mail pela sec
 - **Usuários**: cadastro de secretaria, docentes e discentes com envio de acesso por e-mail
 - **Vínculos**: associação docente ↔ programa; discente ↔ programa + linha de pesquisa + matrícula
 - **Orientações**: definição de orientador e coorientadores por trabalho acadêmico
+- **Membros externos**: convite por link, cadastro público, diploma de doutorado em armazenamento privado e validação pela secretaria
+- **Critérios da CPA**: requisitos versionados por etapa, nível e tipo de evidência
+- **Homologação**: fila de bancas, conferência de evidências, aprovação ou devolução com justificativa
 
 ### Baremas (instrumentos de avaliação)
 
@@ -215,6 +218,16 @@ cadastrada → em_avaliacao → finalizada
                     ↑
           (secretaria pode reabrir)
 ```
+
+Além do status de avaliação, a banca possui o ciclo de homologação da Secretaria:
+
+```text
+aguardando → homologada → em_avaliacao → finalizada
+      ↓
+  devolvida → reenviada
+```
+
+Uma banca devolvida não libera o envio do trabalho. A homologação só é concluída quando as evidências obrigatórias ativas da CPA estiverem validadas ou justificadamente marcadas como não aplicáveis.
 
 ### Avaliação (docentes)
 
