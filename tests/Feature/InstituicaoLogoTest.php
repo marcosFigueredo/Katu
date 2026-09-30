@@ -115,4 +115,28 @@ class InstituicaoLogoTest extends TestCase
         $this->actingAs($sec)->get(route('instituicao.edit'))
             ->assertOk()->assertSee(route('instituicoes.logo', $inst), false);
     }
+
+    public function test_botao_envia_somente_o_logotipo_da_instituicao(): void
+    {
+        Storage::fake('local');
+        $sec = User::factory()->secretaria()->create(['primeiro_acesso' => false]);
+        $inst = Instituicao::create(['nome' => 'UNEB', 'sigla' => 'UNEB', 'logo_path' => 'images/logoUneb.png', 'ativo' => true]);
+        app(ContextoSecretaria::class)->vincular($sec, Programa::create(['nome' => 'PPG', 'instituicao_id' => $inst->id]));
+
+        $this->actingAs($sec)->get(route('instituicao.edit'))
+            ->assertOk()->assertSee(route('instituicao.logo.update'), false)->assertSee('Enviar logotipo');
+
+        $this->actingAs($sec)->post(route('instituicao.logo.update'), [
+            'logo' => UploadedFile::fake()->image('logo.png', 200, 200),
+        ])->assertRedirect(route('instituicao.edit'));
+
+        $inst->refresh();
+        $this->assertStringStartsWith('logos/', $inst->logo_path);
+        $this->assertSame('UNEB', $inst->nome);
+        Storage::disk('local')->assertExists($inst->logo_path);
+
+        $this->actingAs($sec)->post(route('instituicao.logo.update'), [])->assertSessionHasErrors('logo');
+        $this->actingAs(User::factory()->docente()->create())
+            ->post(route('instituicao.logo.update'), ['logo' => UploadedFile::fake()->image('x.png')])->assertForbidden();
+    }
 }

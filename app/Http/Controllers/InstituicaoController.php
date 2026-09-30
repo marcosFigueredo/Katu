@@ -105,4 +105,19 @@ class InstituicaoController extends Controller
 
         return redirect()->route('instituicao.edit')->with('status', 'Instituição atualizada com sucesso.');
     }
+
+    public function atualizarLogo(Request $request)
+    {
+        $this->autorizarSecretaria();
+        $instituicao = $this->contexto->exigirPrograma($request->user())->instituicao;
+        abort_unless($instituicao, 404);
+
+        $request->validate(['logo' => ['required', ...LogoController::REGRAS]], self::MENSAGENS);
+
+        $instituicao->update([
+            'logo_path' => LogoController::armazenar($request->file('logo'), $instituicao->logo_path),
+        ]);
+
+        return redirect()->route('instituicao.edit')->with('status', 'Logotipo atualizado.');
+    }
 }

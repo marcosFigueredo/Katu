@@ -42,6 +42,19 @@
                             @endunless
                         </div>
 
+                        @if ($instituicao)
+                            <form method="POST" action="{{ route('instituicao.logo.update') }}" enctype="multipart/form-data" class="mb-4" data-no-dirty-check>
+                                @csrf
+                                <input id="logo-rapido" name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="d-none"
+                                       onchange="if (this.files[0]) this.form.submit()">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="document.getElementById('logo-rapido').click()">
+                                    <i class="bi bi-upload me-1"></i>Enviar logotipo
+                                </button>
+                                <div class="form-text">PNG, JPG ou WebP, até 2 MB.</div>
+                            </form>
+                        @endif
+
                         <h2 class="h5 fw-bold mb-1" style="color:#00303A;">
                             {{ $instituicao?->nome ?? 'Instituição não cadastrada' }}
                         </h2>

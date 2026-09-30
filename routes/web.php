@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/instituicoes', [InstituicaoController::class, 'store'])->name('instituicoes.store');
     Route::get('/instituicao', [InstituicaoController::class, 'edit'])->name('instituicao.edit');
     Route::put('/instituicao', [InstituicaoController::class, 'update'])->name('instituicao.update');
+    Route::post('/instituicao/logo', [InstituicaoController::class, 'atualizarLogo'])->name('instituicao.logo.update');
     Route::get('/instituicoes/{instituicao}/logo', [LogoController::class, 'instituicao'])->name('instituicoes.logo');
     Route::get('/programas/{programa}/logo', [LogoController::class, 'programa'])->name('programas.logo');
     Route::get('/programa/cursos', [ProgramaCursoController::class, 'index'])->name('programa-cursos.index');
