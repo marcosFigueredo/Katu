@@ -19,6 +19,7 @@ class SwaraSessaoController extends Controller
     public function index(Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $sessoes = SwaraSessao::with('julgamentos.baremaItem')
             ->where('barema_id', $barema->id)
@@ -31,6 +32,7 @@ class SwaraSessaoController extends Controller
     public function create(Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $barema->loadMissing('itens');
         $itens = $barema->itens->where('ativo', true)->sortBy('ordem')->values();
@@ -41,6 +43,7 @@ class SwaraSessaoController extends Controller
     public function store(Request $request, Barema $barema, SwaraService $swaraService)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $data = $request->validate([
             'nome'         => ['required', 'string', 'max:200'],
@@ -71,6 +74,9 @@ class SwaraSessaoController extends Controller
     public function show(Barema $barema, SwaraSessao $sessao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
+
+        abort_unless($sessao->barema_id === $barema->id, 404);
 
         $sessao->loadMissing('julgamentos.baremaItem');
 
@@ -80,6 +86,7 @@ class SwaraSessaoController extends Controller
     public function aplicar(Barema $barema, SwaraSessao $sessao, SwaraService $swaraService)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         if ($sessao->barema_id !== $barema->id) {
             abort(404);

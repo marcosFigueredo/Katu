@@ -28,6 +28,10 @@ class AutoavaliacaoIndicadorService
             'membros.docenteProgramaVinculo.instituicao',
         ])
             ->where('status', 'finalizada')
+            ->when($periodo->programa_id, fn ($q) => $q->whereHas(
+                'trabalhoAcademico',
+                fn ($t) => $t->where('programa_id', $periodo->programa_id)
+            ))
             ->whereNotNull('data_hora')
             ->whereDate('data_hora', '>=', $inicio)
             ->whereDate('data_hora', '<=', $fim)

@@ -44,6 +44,28 @@ class RelatorioController extends Controller
         if (auth()->user()->categoria !== 'sec') {
             abort(403);
         }
+
+        $this->pid();
+    }
+
+    private ?int $programaId = null;
+
+    /** Programa da Secretaria logada (403 se não houver). */
+    private function pid(): int
+    {
+        return $this->programaId ??= $this->programaDaSecretaria()->id;
+    }
+
+    /** Restringe uma query de bancas ao programa da Secretaria. */
+    private function doPrograma($query)
+    {
+        return $query->whereHas('trabalhoAcademico', fn ($t) => $t->where('programa_id', $this->pid()));
+    }
+
+    /** Restringe uma query cujo modelo tem relação trabalhoAcademico (direta ou via caminho). */
+    private function doProgramaVia($query, string $relacao)
+    {
+        return $query->whereHas($relacao, fn ($t) => $t->where('programa_id', $this->pid()));
     }
 
     // ── Index ────────────────────────────────────────────────────────────────
@@ -61,7 +83,7 @@ class RelatorioController extends Controller
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
 
-        $bancas = Banca::with([
+        $bancas = $this->doPrograma(Banca::query())->with([
             'trabalhoAcademico.linhaPesquisa',
             'avaliacoes.membro.docenteProgramaVinculo.docenteProfile.user',
         ])
@@ -106,7 +128,7 @@ class RelatorioController extends Controller
         // 4. Desempenho por item de barema (aproveitamento %)
         $notasPorItem = BancaAvaliacaoNota::with('baremaItem')
             ->whereHas('avaliacao.banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->whereNotNull('nota')
             ->get()
@@ -125,7 +147,7 @@ class RelatorioController extends Controller
         // 5. Por seção do barema
         $notasPorSecao = BancaAvaliacaoNota::with('baremaItem.secao')
             ->whereHas('avaliacao.banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->whereNotNull('nota')
             ->get()
@@ -167,7 +189,7 @@ class RelatorioController extends Controller
         [$inicio, $fim] = $this->periodo($request);
 
         $indicadores = BancaIndicador::whereHas('banca', fn ($q) =>
-            $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+            $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
         )->with('banca.trabalhoAcademico.linhaPesquisa')->get();
 
         $total = $indicadores->count();
@@ -180,7 +202,7 @@ class RelatorioController extends Controller
 
         // 9. Evolução indice_banca por mês
         $evolucaoIndice = BancaIndicador::whereHas('banca', fn ($q) =>
-            $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+            $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
         )
             ->with('banca')
             ->get()
@@ -190,7 +212,7 @@ class RelatorioController extends Controller
 
         // 10. Correlação indice_banca × nota_media
         $correlacaoData = BancaIndicador::whereHas('banca', fn ($q) =>
-            $q->where('status', 'finalizada')
+            $this->doPrograma($q)->where('status', 'finalizada')
               ->whereNotNull('nota_media')
               ->whereBetween('data_hora', [$inicio, $fim])
         )->with('banca')->get()
@@ -227,7 +249,7 @@ class RelatorioController extends Controller
         // IDs de docente que atuaram como ORIENTADOR no período
         $idsOrientadores = Orientacao::where('tipo', 'orientador')
             ->whereHas('trabalhoAcademico.bancas', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->pluck('docente_programa_vinculo_id')
             ->unique();
@@ -236,7 +258,7 @@ class RelatorioController extends Controller
         $idsAvaliadores = BancaMembro::where('papel', 'avaliador')
             ->where('ativo', true)
             ->whereHas('banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->pluck('docente_programa_vinculo_id')
             ->unique();
@@ -307,7 +329,7 @@ class RelatorioController extends Controller
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
 
-        $bancasComIngresso = Banca::with('trabalhoAcademico.discenteVinculo.linhaPesquisa', 'trabalhoAcademico.discenteVinculo.programaCurso')
+        $bancasComIngresso = $this->doPrograma(Banca::query())->with('trabalhoAcademico.discenteVinculo.linhaPesquisa', 'trabalhoAcademico.discenteVinculo.programaCurso')
             ->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->whereHas('trabalhoAcademico.discenteVinculo', fn ($q) => $q->whereNotNull('data_ingresso'))
@@ -331,7 +353,7 @@ class RelatorioController extends Controller
         $eficienciaDefesa = $indicadores->percentualNoPrazo($bancasComIngresso, 'defesa');
 
         // 17. Funil de progresso (todos os trabalhos, não filtrado por período)
-        $funil = TrabalhoAcademico::select('status', DB::raw('count(*) as total'))
+        $funil = TrabalhoAcademico::where('programa_id', $this->pid())->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
 
@@ -344,12 +366,13 @@ class RelatorioController extends Controller
                 DB::raw('sum(case when EXISTS(select 1 from trabalhos_academicos ta join bancas b on b.trabalho_academico_id = ta.id where ta.discente_programa_vinculo_id = discente_programa_vinculos.id and b.tipo = "defesa" and b.status = "finalizada") then 1 else 0 end) as defendidos')
             )
             ->whereNotNull('data_ingresso')
+            ->where('programa_id', $this->pid())
             ->groupBy('ano_ingresso')
             ->orderBy('ano_ingresso')
             ->get();
 
         // 19. Trabalhos por linha de pesquisa
-        $porLinha = TrabalhoAcademico::with('linhaPesquisa', 'discenteVinculo')
+        $porLinha = TrabalhoAcademico::where('programa_id', $this->pid())->with('linhaPesquisa', 'discenteVinculo')
             ->get()
             ->groupBy(fn ($t) => $t->linhaPesquisa?->nome ?? 'Sem linha')
             ->map(fn ($g) => [
@@ -374,7 +397,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
 
-        $avaliacoes = OrientacaoAvaliacao::with([
+        $avaliacoes = $this->doProgramaVia(OrientacaoAvaliacao::query(), 'banca.trabalhoAcademico')->with([
             'docenteProgramaVinculo.docenteProfile.user',
             'banca.trabalhoAcademico.linhaPesquisa',
         ])
@@ -438,7 +461,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
 
-        $impactos = TrabalhoImpacto::with('trabalhoAcademico.linhaPesquisa')->get();
+        $impactos = $this->doProgramaVia(TrabalhoImpacto::query(), 'trabalhoAcademico')->with('trabalhoAcademico.linhaPesquisa')->get();
 
         $dimensoes = [
             'cientifico'    => 'Científico',
@@ -478,7 +501,7 @@ class RelatorioController extends Controller
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
 
-        $indicadores = TrabalhoIndicador::with([
+        $indicadores = $this->doProgramaVia(TrabalhoIndicador::query(), 'trabalhoAcademico')->with([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
             'trabalhoAcademico.linhaPesquisa',
             'trabalhoAcademico.bancas',
@@ -522,7 +545,7 @@ class RelatorioController extends Controller
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
 
-        $analises = DocumentoAnalise::with(['trabalhoDocumento.trabalhoAcademico.discenteVinculo.discenteProfile.user'])
+        $analises = $this->doProgramaVia(DocumentoAnalise::query(), 'trabalhoDocumento.trabalhoAcademico')->with(['trabalhoDocumento.trabalhoAcademico.discenteVinculo.discenteProfile.user'])
             ->whereBetween('analisado_em', [$inicio, $fim])
             ->get();
 
@@ -533,7 +556,7 @@ class RelatorioController extends Controller
 
         // Itens com mais pendências
         $itensPendentes = DocumentoAnaliseItem::whereIn('status', ['pendente', 'atencao'])
-            ->whereHas('analise', fn ($q) => $q->whereBetween('analisado_em', [$inicio, $fim]))
+            ->whereHas('analise', fn ($q) => $this->doProgramaVia($q, 'trabalhoDocumento.trabalhoAcademico')->whereBetween('analisado_em', [$inicio, $fim]))
             ->select('nome_item', 'status', DB::raw('count(*) as total'))
             ->groupBy('nome_item', 'status')
             ->orderByDesc('total')
@@ -564,7 +587,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
 
-        $periodos = AutoavaliacaoPeriodo::with('indicadores')
+        $periodos = AutoavaliacaoPeriodo::where('programa_id', $this->pid())->with('indicadores')
             ->where('status', 'concluido')
             ->orderByDesc('data_inicio')
             ->get();
@@ -593,7 +616,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
 
-        $analises = MabacAnalise::with([
+        $analises = MabacAnalise::whereHas('barema', fn ($q) => $q->where('programa_id', $this->pid()))->with([
             'resultados.banca.trabalhoAcademico.linhaPesquisa',
             'resultados.banca.trabalhoAcademico.discenteVinculo.discenteProfile.user',
             'barema',
@@ -620,7 +643,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
 
-        $sessoes = SwaraSessao::with([
+        $sessoes = SwaraSessao::whereHas('barema', fn ($q) => $q->where('programa_id', $this->pid()))->with([
             'barema',
             'julgamentos.baremaItem.secao',
         ])->orderByDesc('created_at')->get();
@@ -653,7 +676,7 @@ class RelatorioController extends Controller
         $participacao = BancaMembro::where('papel', 'avaliador')
             ->where('ativo', true)
             ->whereHas('banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->with('docenteProgramaVinculo.docenteProfile.user', 'banca')
             ->get()
@@ -671,7 +694,7 @@ class RelatorioController extends Controller
         $diversidadeInst = BancaMembro::where('papel', 'avaliador')
             ->where('ativo', true)
             ->whereHas('banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->with('docenteProgramaVinculo.docenteProfile')
             ->get()
@@ -683,7 +706,7 @@ class RelatorioController extends Controller
         $diversidadeArea = BancaMembro::where('papel', 'avaliador')
             ->where('ativo', true)
             ->whereHas('banca', fn ($q) =>
-                $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )
             ->with('docenteProgramaVinculo.docenteProfile')
             ->get()
@@ -704,28 +727,28 @@ class RelatorioController extends Controller
         [$inicio, $fim] = $this->periodo($request);
 
         // 38. KPIs principais
-        $totalBancas     = Banca::where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])->count();
-        $taxaAprovacao   = Banca::where('status', 'finalizada')
+        $totalBancas     = $this->doPrograma(Banca::query())->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])->count();
+        $taxaAprovacao   = $this->doPrograma(Banca::query())->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->whereIn('resultado', ['aprovado', 'aprovado_modificacoes'])
             ->count();
         $taxaAprovacaoPct = $totalBancas > 0 ? round($taxaAprovacao / $totalBancas * 100, 1) : null;
-        $notaMedia       = round(Banca::where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])->avg('nota_media'), 2);
+        $notaMedia       = round($this->doPrograma(Banca::query())->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])->avg('nota_media'), 2);
         $indiceComposicao = round(BancaIndicador::whereHas('banca', fn ($q) =>
-            $q->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+            $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
         )->avg('indice_banca'), 3);
-        $conformidade    = round(DocumentoAnalise::whereBetween('analisado_em', [$inicio, $fim])->avg('percentual_conformidade'), 1);
-        $ieoMedio        = round(OrientacaoAvaliacao::whereNotNull('ieo_final')->avg('ieo_final'), 1);
+        $conformidade    = round($this->doProgramaVia(DocumentoAnalise::query(), 'trabalhoDocumento.trabalhoAcademico')->whereBetween('analisado_em', [$inicio, $fim])->avg('percentual_conformidade'), 1);
+        $ieoMedio        = round($this->doProgramaVia(OrientacaoAvaliacao::query(), 'banca.trabalhoAcademico')->whereNotNull('ieo_final')->avg('ieo_final'), 1);
 
         // Tempo médio ao percurso
         $tempoMedioDefesa = BancaMembro::distinct()
             ->whereHas('banca', fn ($q) =>
-                $q->where('tipo', 'defesa')->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
+                $this->doPrograma($q)->where('tipo', 'defesa')->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
                   ->whereHas('trabalhoAcademico.discenteVinculo', fn ($q2) => $q2->whereNotNull('data_ingresso'))
             )
             ->get(); // Calculated separately in percurso, simplified here
 
-        $mesesDefesaMedia = Banca::with('trabalhoAcademico.discenteVinculo')
+        $mesesDefesaMedia = $this->doPrograma(Banca::query())->with('trabalhoAcademico.discenteVinculo')
             ->where('tipo', 'defesa')
             ->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
@@ -787,7 +810,7 @@ class RelatorioController extends Controller
         $alertas = [];
 
         // Bancas sem indicadores calculados
-        $semIndicadores = Banca::where('status', 'finalizada')
+        $semIndicadores = $this->doPrograma(Banca::query())->where('status', 'finalizada')
             ->doesntHave('indicadores')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->count();
@@ -802,7 +825,7 @@ class RelatorioController extends Controller
 
         // Discentes com prazo vencido
         $hoje = Carbon::today();
-        $atrasados = TrabalhoAcademico::whereNotNull('data_prevista_defesa')
+        $atrasados = TrabalhoAcademico::where('programa_id', $this->pid())->whereNotNull('data_prevista_defesa')
             ->where('data_prevista_defesa', '<', $hoje)
             ->where('status', '!=', 'concluido')
             ->count();
@@ -816,7 +839,7 @@ class RelatorioController extends Controller
         }
 
         // Docentes com ORCID com erro
-        $orcidErro = OrcidSnapshot::where('status_consulta', 'erro')->count();
+        $orcidErro = OrcidSnapshot::whereHas('docenteProfile.vinculosPrograma', fn ($q) => $q->where('programa_id', $this->pid()))->where('status_consulta', 'erro')->count();
         if ($orcidErro > 0) {
             $alertas[] = [
                 'tipo'    => 'warning',
@@ -827,7 +850,7 @@ class RelatorioController extends Controller
         }
 
         // Documentos com pendências não resolvidas
-        $docsPendentes = DocumentoAnalise::where('status_geral', 'com_pendencias')
+        $docsPendentes = $this->doProgramaVia(DocumentoAnalise::query(), 'trabalhoDocumento.trabalhoAcademico')->where('status_geral', 'com_pendencias')
             ->whereBetween('analisado_em', [$inicio, $fim])
             ->count();
         if ($docsPendentes > 0) {
@@ -848,7 +871,7 @@ class RelatorioController extends Controller
         fprintf($fh, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
         fputcsv($fh, ['Tipo', 'Status', 'Resultado', 'Nota Média', 'Data', 'Linha de Pesquisa']);
 
-        Banca::with('trabalhoAcademico.linhaPesquisa')
+        $this->doPrograma(Banca::query())->with('trabalhoAcademico.linhaPesquisa')
             ->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->chunk(100, function ($bancas) use ($fh) {
@@ -870,7 +893,7 @@ class RelatorioController extends Controller
         fprintf($fh, chr(0xEF) . chr(0xBB) . chr(0xBF));
         fputcsv($fh, ['Nome', 'Índice H', 'Citações', 'i10-index', 'Obras ORCID', 'Obras com DOI', 'Status ORCID']);
 
-        OrcidSnapshot::with('docenteProfile.user')->chunk(100, function ($snaps) use ($fh) {
+        OrcidSnapshot::whereHas('docenteProfile.vinculosPrograma', fn ($q) => $q->where('programa_id', $this->pid()))->with('docenteProfile.user')->chunk(100, function ($snaps) use ($fh) {
             foreach ($snaps as $s) {
                 fputcsv($fh, [
                     $s->docenteProfile?->user?->name ?? '',
@@ -890,7 +913,7 @@ class RelatorioController extends Controller
         fprintf($fh, chr(0xEF) . chr(0xBB) . chr(0xBF));
         fputcsv($fh, ['Discente', 'Ingresso', 'Tipo Banca', 'Data Banca', 'Meses', 'Resultado']);
 
-        Banca::with('trabalhoAcademico.discenteVinculo.discenteProfile.user')
+        $this->doPrograma(Banca::query())->with('trabalhoAcademico.discenteVinculo.discenteProfile.user')
             ->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->chunk(100, function ($bancas) use ($fh) {
@@ -917,7 +940,7 @@ class RelatorioController extends Controller
         fprintf($fh, chr(0xEF) . chr(0xBB) . chr(0xBF));
         fputcsv($fh, ['Período', 'Código', 'Indicador', 'Valor Numérico', 'Calculado em']);
 
-        AutoavaliacaoPeriodo::with('indicadores')->where('status', 'concluido')
+        AutoavaliacaoPeriodo::where('programa_id', $this->pid())->with('indicadores')->where('status', 'concluido')
             ->chunk(50, function ($periodos) use ($fh) {
                 foreach ($periodos as $p) {
                     foreach ($p->indicadores as $ind) {

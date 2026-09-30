@@ -21,7 +21,10 @@ class MabacController extends Controller
     {
         $this->autorizarSecretaria();
 
+        $programa = $this->programaDaSecretaria();
+
         $analises = MabacAnalise::with(['barema', 'linhaPesquisa'])
+            ->whereHas('barema', fn ($q) => $q->where('programa_id', $programa->id))
             ->withCount('resultados')
             ->orderByDesc('created_at')
             ->get();
@@ -33,8 +36,10 @@ class MabacController extends Controller
     {
         $this->autorizarSecretaria();
 
-        $baremas = Barema::where('ativo', true)->orderBy('nome')->get();
-        $linhas  = LinhaPesquisa::orderBy('nome')->get();
+        $programa = $this->programaDaSecretaria();
+        $baremas = Barema::where('programa_id', $programa->id)->where('ativo', true)->orderBy('nome')->get();
+        $linhas  = LinhaPesquisa::whereHas('areaConcentracao', fn ($q) => $q->where('programa_id', $programa->id))
+            ->orderBy('nome')->get();
 
         return view('mabac.create', compact('baremas', 'linhas'));
     }
@@ -45,7 +50,7 @@ class MabacController extends Controller
 
         $data = $request->validate([
             'nome'             => ['required', 'string', 'max:200'],
-            'barema_id'        => ['required', 'exists:baremas,id'],
+            'barema_id'        => ['required', \Illuminate\Validation\Rule::exists('baremas', 'id')->where('programa_id', $this->programaDaSecretaria()->id)],
             'tipo_banca'       => ['required', 'in:qualificacao,defesa,ambos'],
             'linha_pesquisa_id'=> ['nullable', 'exists:linhas_pesquisa,id'],
             'periodo_inicio'   => ['required', 'date'],
@@ -66,6 +71,7 @@ class MabacController extends Controller
     public function show(MabacAnalise $mabac)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($mabac->barema?->programa_id);
 
         $mabac->loadMissing([
             'barema',
@@ -80,6 +86,7 @@ class MabacController extends Controller
     public function destroy(MabacAnalise $mabac)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($mabac->barema?->programa_id);
 
         $mabac->delete();
 

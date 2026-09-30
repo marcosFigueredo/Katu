@@ -49,7 +49,7 @@ class AcessoControleTest extends TestCase
 
     public function test_secretaria_acessa_mabac(): void
     {
-        $sec = User::factory()->secretaria()->create();
+        $sec = $this->secretariaComPrograma();
 
         $this->actingAs($sec)->get('/mabac')->assertStatus(200);
     }

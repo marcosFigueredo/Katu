@@ -16,7 +16,7 @@
                 <h6 class="fw-bold mb-0" style="color:#00303A;"><i class="bi bi-sliders me-2"></i>{{ $sessao->nome ?? 'Sessão #'.$sessao->id }}</h6>
                 <div class="text-muted small">Barema: {{ $sessao->barema?->nome ?? '—' }} · {{ $sessao->created_at->format('d/m/Y') }}</div>
             </div>
-            <a href="{{ route('swara.show', $sessao) }}" class="btn btn-sm btn-outline-secondary">Ver sessão</a>
+            <a href="{{ route('swara.show', [$sessao->barema_id, $sessao]) }}" class="btn btn-sm btn-outline-secondary">Ver sessão</a>
         </div>
         <div class="card-body p-0">
             @if ($itens->isEmpty())

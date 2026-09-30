@@ -17,6 +17,7 @@ class BibliometriaController extends Controller
     public function show(TrabalhoAcademico $trabalho)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
         $trabalho->loadMissing([
             'discenteVinculo.discenteProfile.user',
@@ -32,6 +33,7 @@ class BibliometriaController extends Controller
     public function sincronizar(TrabalhoAcademico $trabalho, BibliometriaService $bibliometriaService)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
         $indicador = $bibliometriaService->sincronizar($trabalho);
 

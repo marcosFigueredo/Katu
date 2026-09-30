@@ -16,14 +16,9 @@ class AutoavaliacaoController extends Controller
         }
     }
 
-    private function programa(): ?Programa
+    private function programa(): Programa
     {
-        return auth()->user()
-            ->programaUsuarios()
-            ->where('ativo', true)
-            ->with('programa')
-            ->first()
-            ?->programa;
+        return $this->programaDaSecretaria();
     }
 
     public function index()
@@ -33,7 +28,7 @@ class AutoavaliacaoController extends Controller
         $programa = $this->programa();
 
         $periodos = AutoavaliacaoPeriodo::with('programa')
-            ->when($programa, fn ($q) => $q->where('programa_id', $programa->id))
+            ->where('programa_id', $programa->id)
             ->withCount('indicadores')
             ->orderByDesc('ano')
             ->orderByDesc('semestre')
@@ -67,7 +62,7 @@ class AutoavaliacaoController extends Controller
 
         $periodo = AutoavaliacaoPeriodo::create([
             ...$data,
-            'programa_id' => $programa?->id,
+            'programa_id' => $programa->id,
             'status'      => 'em_andamento',
         ]);
 
@@ -78,6 +73,7 @@ class AutoavaliacaoController extends Controller
     public function show(AutoavaliacaoPeriodo $autoavaliacao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($autoavaliacao->programa_id);
 
         $autoavaliacao->loadMissing(['programa', 'indicadores']);
 
@@ -87,6 +83,7 @@ class AutoavaliacaoController extends Controller
     public function calcular(AutoavaliacaoPeriodo $autoavaliacao, AutoavaliacaoIndicadorService $service)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($autoavaliacao->programa_id);
 
         $service->calcular($autoavaliacao);
 
@@ -97,6 +94,7 @@ class AutoavaliacaoController extends Controller
     public function destroy(AutoavaliacaoPeriodo $autoavaliacao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($autoavaliacao->programa_id);
 
         $autoavaliacao->delete();
 
