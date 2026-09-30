@@ -31,7 +31,7 @@ Hoje `instituicoes.logo_path` é sempre gravado como `images/logoUneb.png` e a a
 Novas colunas em `programas`:
 
 | Coluna | Tipo | Regra |
-|---|---|---|
+| --- | --- | --- |
 | `instituicao_id` | FK `instituicoes`, nullable | instituição sede do programa |
 | `conceito_capes` | tinyint, nullable | 1 a 7 |
 | `ano_inicio` | smallint, nullable | 4 dígitos, até o ano corrente |
@@ -113,7 +113,7 @@ Tela **Usuários → Importar discentes**, exclusiva da Secretaria, no programa 
 A tela mostra, em texto, as colunas esperadas e um exemplo de linha (não há arquivo-modelo para baixar).
 
 | Coluna | Obrigatória | Regra |
-|---|---|---|
+| --- | --- | --- |
 | `nome` | sim | até 255 caracteres |
 | `email` | sim | e-mail válido |
 | `matricula` | sim | até 255; única no programa |
