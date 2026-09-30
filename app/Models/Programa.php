@@ -89,4 +89,10 @@ public function trabalhosAcademicos()
         return $this->hasMany(CriterioCpa::class);
     }
 
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path && str_starts_with($this->logo_path, 'logos/')
+            ? route('programas.logo', $this)
+            : null;
+    }
 }

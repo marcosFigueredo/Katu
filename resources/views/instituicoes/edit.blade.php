@@ -32,15 +32,14 @@
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center">
-                        @php
-                            $logoPath = $instituicao?->logo_path ?: 'images/logoUneb.png';
-                        @endphp
-
                         <div class="border rounded bg-white p-4 mb-4">
-                            <img src="{{ asset($logoPath) }}"
-                                 alt="{{ $instituicao?->sigla ?? 'UNEB' }}"
-                                 class="img-fluid"
+                            <img id="logo-preview" src="{{ $instituicao?->logoUrl() }}"
+                                 alt="{{ $instituicao?->sigla ?? 'Logotipo' }}"
+                                 class="img-fluid {{ $instituicao ? '' : 'd-none' }}"
                                  style="max-height: 160px; object-fit: contain;">
+                            @unless ($instituicao)
+                                <p id="logo-vazio" class="text-muted small mb-0">O logotipo aparecerá aqui.</p>
+                            @endunless
                         </div>
 
                         <h2 class="h5 fw-bold mb-1" style="color:#00303A;">
@@ -77,9 +76,12 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('instituicao.update') }}">
+                        <form method="POST" enctype="multipart/form-data"
+                              action="{{ $instituicao ? route('instituicao.update') : route('instituicoes.store') }}">
                             @csrf
-                            @method('PUT')
+                            @if ($instituicao)
+                                @method('PUT')
+                            @endif
 
                             <div class="row g-3">
                                 <div class="col-md-8">
@@ -92,7 +94,7 @@
                                 <div class="col-md-4">
                                     <label for="sigla" class="form-label fw-semibold">Sigla</label>
                                     <input id="sigla" name="sigla" type="text" class="form-control @error('sigla') is-invalid @enderror"
-                                           value="{{ old('sigla', $instituicao->sigla ?? '') }}">
+                                           value="{{ old('sigla', $instituicao->sigla ?? '') }}" required>
                                     @error('sigla') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
@@ -157,6 +159,20 @@
                                     <input id="site" name="site" type="text" class="form-control @error('site') is-invalid @enderror"
                                            value="{{ old('site', $instituicao->site ?? '') }}">
                                     @error('site') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="logo" class="form-label fw-semibold">
+                                        Logotipo (PNG, JPG ou WebP, até 2 MB){{ $instituicao ? '' : ' — obrigatório' }}
+                                    </label>
+                                    <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp"
+                                           class="form-control @error('logo') is-invalid @enderror"
+                                           @if (! $instituicao) required @endif
+                                           onchange="if (this.files[0]) { const img = document.getElementById('logo-preview'); img.src = URL.createObjectURL(this.files[0]); img.classList.remove('d-none'); document.getElementById('logo-vazio')?.remove(); }">
+                                    @if ($instituicao)
+                                        <div class="form-text">Deixe em branco para manter o logotipo atual.</div>
+                                    @endif
+                                    @error('logo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
 

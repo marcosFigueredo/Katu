@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PrimeiroAcessoSenhaController;
 use App\Http\Controllers\InstituicaoController;
+use App\Http\Controllers\LogoController;
 use App\Http\Controllers\ProgramaController;
 use App\Http\Controllers\AreaConcentracaoController;
 use App\Http\Controllers\LinhaPesquisaController;
@@ -51,13 +52,14 @@ Route::put('/primeiro-acesso/senha', [PrimeiroAcessoSenhaController::class, 'upd
     ->middleware(['auth'])
     ->name('primeiro-acesso-senha.update');
 
-Route::get('/instituicao', [InstituicaoController::class, 'edit'])
-    ->middleware(['auth', 'verified'])
-    ->name('instituicao.edit');
-
-Route::put('/instituicao', [InstituicaoController::class, 'update'])
-    ->middleware(['auth', 'verified'])
-    ->name('instituicao.update');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/instituicoes/create', [InstituicaoController::class, 'create'])->name('instituicoes.create');
+    Route::post('/instituicoes', [InstituicaoController::class, 'store'])->name('instituicoes.store');
+    Route::get('/instituicao', [InstituicaoController::class, 'edit'])->name('instituicao.edit');
+    Route::put('/instituicao', [InstituicaoController::class, 'update'])->name('instituicao.update');
+    Route::get('/instituicoes/{instituicao}/logo', [LogoController::class, 'instituicao'])->name('instituicoes.logo');
+    Route::get('/programas/{programa}/logo', [LogoController::class, 'programa'])->name('programas.logo');
+});
 
 Route::resource('programas', ProgramaController::class)
     ->middleware(['auth', 'verified']);

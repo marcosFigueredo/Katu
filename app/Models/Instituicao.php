@@ -36,4 +36,13 @@ class Instituicao extends Model
     {
         return $this->hasMany(Programa::class);
     }
+
+    public function logoUrl(): string
+    {
+        if ($this->logo_path && str_starts_with($this->logo_path, 'logos/')) {
+            return route('instituicoes.logo', $this);
+        }
+
+        return asset($this->logo_path ?: 'images/logoUneb.png');
+    }
 }
