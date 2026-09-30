@@ -171,7 +171,7 @@ class TrabalhoDocumentoController extends Controller
             abort(403);
         }
 
-        $analise->load(['itens', 'ollama', 'trabalhoDocumento']);
+        $analise->load(['itens', 'ollama', 'trabalhoDocumento', 'conformidadeRag']);
 
         return view('meu-trabalho.analise', compact('analise'));
     }

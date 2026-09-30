@@ -332,6 +332,80 @@
                 </div>
             </div>
 
+            {{-- ── Conformidade com as Normas (IA) ─────────────────────────────── --}}
+            @php $conformidades = $analise->conformidadeRag ?? collect(); @endphp
+            @if ($conformidades->isNotEmpty())
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h2 class="h5 fw-bold text-dark mb-0">
+                                Conformidade com as Normas
+                                <span class="badge text-bg-secondary fw-normal ms-2" style="font-size: 11px;">IA</span>
+                            </h2>
+                            <p class="text-muted small mb-0">
+                                Avaliação automática à luz do manual de normas do programa. Não bloqueia o envio à banca.
+                            </p>
+                        </div>
+                        <div class="card-body">
+                            @php
+                                $titulos = [
+                                    'aderencia' => 'Seção "Aderência"',
+                                    'ods' => 'ODS do Trabalho',
+                                    'citacao_apa' => 'Padrão de citação (APA)',
+                                    'uso_ia' => 'Uso de Inteligência Artificial',
+                                ];
+                                $ordemChaves = array_keys($titulos);
+                                $ordenadas = $conformidades->sortBy(fn ($c) => array_search($c->verificacao, $ordemChaves) ?: 99);
+                                $processando = $conformidades->contains(fn ($c) => $c->status === 'processando');
+                            @endphp
+
+                            @if ($processando)
+                                <div class="alert alert-info small mb-3">
+                                    <i class="bi bi-hourglass-split me-2"></i>
+                                    Análise em processamento. Recarregue a página em instantes.
+                                </div>
+                            @endif
+
+                            <div class="row g-3">
+                                @foreach ($ordenadas as $c)
+                                    @php
+                                        $cor = match($c->veredito) {
+                                            'conforme' => 'success',
+                                            'parcial' => 'warning',
+                                            'nao_conforme' => 'danger',
+                                            default => 'secondary',
+                                        };
+                                        $label = match($c->veredito) {
+                                            'conforme' => 'Conforme',
+                                            'parcial' => 'Parcial',
+                                            'nao_conforme' => 'Não conforme',
+                                            default => $c->status === 'falhou' ? 'Não avaliado' : 'Processando…',
+                                        };
+                                    @endphp
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <span class="fw-semibold small">{{ $titulos[$c->verificacao] ?? $c->verificacao }}</span>
+                                                <span class="badge text-bg-{{ $cor }}">{{ $label }}</span>
+                                            </div>
+                                            @if ($c->justificativa)
+                                                <p class="small text-dark mb-1">{{ $c->justificativa }}</p>
+                                            @endif
+                                            @if ($c->trecho_norma_citado)
+                                                <p class="small text-muted fst-italic mb-0">"{{ $c->trecho_norma_citado }}"</p>
+                                            @endif
+                                            @if ($c->status === 'falhou' && $c->erro)
+                                                <p class="small text-danger mb-0">{{ $c->erro }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- ── Itens detalhados (colapsável) ────────────────────────────── --}}
             @php
                 $grupos = [
