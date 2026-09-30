@@ -420,7 +420,7 @@ class AvaliacaoController extends Controller
 
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
-            'trabalhoAcademico.programa',
+            'trabalhoAcademico.programa.instituicao',
             'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
             'membros' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')
                 ->with('docenteProgramaVinculo.docenteProfile.user'),

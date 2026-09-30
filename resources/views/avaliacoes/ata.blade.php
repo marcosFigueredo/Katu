@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ata — Banca PPGMSB</title>
+    <title>Ata — Banca {{ $banca->trabalhoAcademico?->programa?->sigla }}</title>
     <style>
         @page { size: A4 portrait; margin: 18mm 20mm 18mm 20mm; }
 
@@ -174,6 +174,15 @@
 <body>
 
 @php
+    $programa = $banca->trabalhoAcademico?->programa;
+    $instituicao = $programa?->instituicao;
+    $siglaPrograma = $programa?->sigla ?: 'Programa';
+    $siglaInstituicao = $instituicao?->sigla ?: 'Instituição';
+    $nomePrograma = $programa?->nome ?? '';
+    $areaPrograma = \Illuminate\Support\Str::contains($nomePrograma, ' em ')
+        ? \Illuminate\Support\Str::after($nomePrograma, ' em ')
+        : $nomePrograma;
+    $departamento = $instituicao?->departamento;
     $trabalho    = $banca->trabalhoAcademico;
     $discente    = $trabalho?->discenteVinculo?->discenteProfile?->user;
     $programa    = $trabalho?->programa;
@@ -237,7 +246,7 @@
 
     $instituicaoNome = function ($membro) {
         $dp = $membro?->docenteProgramaVinculo;
-        if ($dp?->tipo_vinculo === 'interno') return 'UNEB';
+        if ($dp?->tipo_vinculo === 'interno') return $siglaInstituicao;
         $inst = $dp?->docenteProfile?->instituicao_origem ?: ($dp?->docenteProfile?->instituicao_sigla ?: 'Externo');
         return $inst;
     };
@@ -257,20 +266,28 @@
 
     {{-- Cabeçalho --}}
     <div class="cabecalho">
-        <img src="{{ asset('images/logoSemFundo.png') }}" alt="PPGMSB">
+        @if ($programa?->logoUrl())
+            <img src="{{ $programa->logoUrl() }}" alt="{{ $siglaPrograma }}">
+        @endif
         <div class="cabecalho-texto">
-            <p>Universidade do Estado da Bahia</p>
-            <p>Departamento de Ciências Exatas e da Terra</p>
-            <p>Programa de Pós-Graduação em Modelagem e Simulação de Biossistemas</p>
-            <p class="inst">Campus I — Salvador — Bahia</p>
+            <p>{{ $instituicao?->nome }}</p>
+            @if ($departamento)
+                <p>{{ $departamento }}</p>
+            @endif
+            <p>{{ $nomePrograma }}</p>
+            @if ($instituicao?->cidade)
+                <p class="inst">{{ $instituicao->cidade }}{{ $instituicao->estado ? ' — ' . $instituicao->estado : '' }}</p>
+            @endif
         </div>
-        <img src="{{ asset('images/logo_uneb.png') }}" alt="UNEB">
+        @if ($instituicao)
+            <img src="{{ $instituicao->logoUrl() }}" alt="{{ $siglaInstituicao }}">
+        @endif
     </div>
 
     {{-- Título --}}
     <div class="titulo-ata">
         Ata da Sessão Pública de {{ $tipoSessao }} de {{ $tipoTrabalho }}<br>
-        para obtenção do título de {{ $titulo }} em Modelagem e Simulação de Biossistemas
+        para obtenção do título de {{ $titulo }} em {{ $areaPrograma }}
     </div>
 
     {{-- Corpo --}}
@@ -280,9 +297,10 @@
             {{ $dataTexto }},
             no(a) {{ $local }},
             reuniu-se a Comissão Examinadora da {{ strtolower($tipoSessao) }} em epígrafe, indicada pelo
-            Colegiado de Pós-Graduação do Departamento de Ciências Exatas e da Terra, composta pelos:
+            Colegiado de Pós-Graduação{{ $departamento ? ' do ' . $departamento : '' }}, composta pelos:
             <strong>Presidente e Orientador {{ $titulacaoNome($orientador) }}</strong>@if($coorientadores->isNotEmpty()),
-            {{ $coorientadores->map(fn($c) => 'coorientador(a) ' . $titulacaoNome($c))->implode(', ') }}@endif@if($avaliadores->isNotEmpty()),
+            {{ $coorientadores->map(fn($c) => 'coorientador(a) ' . $titulacaoNome($c))->implode(', ') }}@endif
+            @if($avaliadores->isNotEmpty()),
             e pelos membros avaliadores {{ $avaliadores->map(fn($m) => $titulacaoNome($m) . ' (' . $instituicaoNome($m) . ')')->implode(', ') }}@endif.
         </p>
 
@@ -319,24 +337,24 @@
         @if ($nivel === 'mestrado')
         <p>
             Para fazer jus ao título de Mestre, a versão final da {{ $tipoTrabalho }}, considerada
-            aprovada ou aprovada condicionalmente, deverá ser entregue ao Colegiado do PPGMSB no
+            aprovada ou aprovada condicionalmente, deverá ser entregue ao Colegiado do {{ $siglaPrograma }} no
             prazo de 60 (sessenta) dias a partir da data da defesa. De acordo com o previsto no
-            Regimento do PPGMSB e na Resolução CONSU 1679/2024, o(a) aluno(a) aprovado(a) deve
+            Regimento do {{ $siglaPrograma }} e na Resolução CONSU 1679/2024, o(a) aluno(a) aprovado(a) deve
             encaminhar à secretaria 1 versão impressa, 1 versão digital em inglês e a versão digital
             em português, além de efetuar o depósito no repositório Saber Aberto. Após a entrega
-            do exemplar definitivo e a sua conferência pela Secretaria do PPGMSB, o resultado será
+            do exemplar definitivo e a sua conferência pela Secretaria do {{ $siglaPrograma }}, o resultado será
             homologado e encaminhado ao setor de diplomas, conferindo título de validade nacional
             aos aprovados.
         </p>
         @else
         <p>
             Para fazer jus ao título de Doutor, a versão final da {{ $tipoTrabalho }}, considerada
-            aprovada ou aprovada condicionalmente, deverá ser entregue ao Colegiado do PPGMSB no
+            aprovada ou aprovada condicionalmente, deverá ser entregue ao Colegiado do {{ $siglaPrograma }} no
             prazo de 60 (sessenta) dias a partir da data da defesa. De acordo com o previsto no
-            Regimento do PPGMSB e na Resolução CONSU 1679/2024, o(a) aluno(a) aprovado(a) deve
+            Regimento do {{ $siglaPrograma }} e na Resolução CONSU 1679/2024, o(a) aluno(a) aprovado(a) deve
             encaminhar à secretaria 1 versão impressa, 1 versão digital em inglês e a versão digital
             em português, além de efetuar o depósito no repositório Saber Aberto. Após a entrega
-            do exemplar definitivo e a sua conferência pela Secretaria do PPGMSB, o resultado será
+            do exemplar definitivo e a sua conferência pela Secretaria do {{ $siglaPrograma }}, o resultado será
             homologado e encaminhado ao setor de diplomas, conferindo título de validade nacional
             aos aprovados.
         </p>
@@ -365,7 +383,7 @@
             $signatarios->push([
                 'nome'  => $nomeOrientador,
                 'role'  => 'Presidente da Comissão Examinadora / Orientador(a)',
-                'inst'  => 'UNEB — PPGMSB',
+                'inst'  => $siglaInstituicao . ' — ' . $siglaPrograma,
             ]);
 
             // Avaliadores
@@ -374,7 +392,7 @@
                 $signatarios->push([
                     'nome'  => $dp?->user?->name ?? '—',
                     'role'  => 'Membro Avaliador(a)',
-                    'inst'  => $dp?->instituicao_origem ?: ($dp?->instituicao_sigla ?: 'UNEB'),
+                    'inst'  => $dp?->instituicao_origem ?: ($dp?->instituicao_sigla ?: $siglaInstituicao),
                 ]);
             }
 
@@ -382,7 +400,7 @@
             $signatarios->push([
                 'nome'  => $nomeDiscente,
                 'role'  => 'Discente — Ciente',
-                'inst'  => 'PPGMSB / UNEB',
+                'inst'  => $siglaPrograma . ' / ' . $siglaInstituicao,
                 'discente' => true,
             ]);
 
@@ -409,10 +427,7 @@
         <div>
             <strong>Assinatura Digital — Gov.br</strong><br>
             Este documento deve ser assinado digitalmente por todos os membros da banca através do
-            <strong>Assinador Gov.br</strong> (assinador.iti.br). Para assinar: (1) gere o PDF via
-            Imprimir → Salvar como PDF; (2) acesse assinador.iti.br com sua conta Gov.br;
-            (3) carregue o arquivo e assine. O QR code de validação será inserido automaticamente
-            pelo sistema após a coleta de todas as assinaturas.<br>
+            <strong>Assinador Gov.br</strong> (assinador.iti.br) ou pelo fluxo definido pela {{ $siglaInstituicao }}.<br>
             <span style="color:#aaa;">Código de controle: {{ strtoupper(substr(md5($banca->id . $banca->created_at), 0, 16)) }}</span>
         </div>
     </div>
