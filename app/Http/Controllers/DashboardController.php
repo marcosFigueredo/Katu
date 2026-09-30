@@ -29,6 +29,10 @@ class DashboardController extends Controller
             return redirect()->route('primeiro-acesso-senha.edit');
         }
 
+        if ($user->categoria === 'sec' && ! app(\App\Services\ContextoSecretaria::class)->programa($user)) {
+            return redirect()->route('programas.create');
+        }
+
         return match ($user->categoria) {
             'sec' => view('dashboards.secretaria', [
                 'totalDiscentes' => User::where('categoria', 'discente')->where('ativo', true)->count(),
