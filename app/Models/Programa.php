@@ -91,6 +91,11 @@ public function trabalhosAcademicos()
         return $this->hasMany(CriterioCpa::class);
     }
 
+    public function documentosReferencia(): HasMany
+    {
+        return $this->hasMany(ProgramaDocumentoReferencia::class);
+    }
+
     public function logoUrl(): ?string
     {
         return $this->logo_path && str_starts_with($this->logo_path, 'logos/')
