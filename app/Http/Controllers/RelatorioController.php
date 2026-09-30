@@ -307,7 +307,7 @@ class RelatorioController extends Controller
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
 
-        $bancasComIngresso = Banca::with('trabalhoAcademico.discenteVinculo.linhaPesquisa')
+        $bancasComIngresso = Banca::with('trabalhoAcademico.discenteVinculo.linhaPesquisa', 'trabalhoAcademico.discenteVinculo.programaCurso')
             ->where('status', 'finalizada')
             ->whereBetween('data_hora', [$inicio, $fim])
             ->whereHas('trabalhoAcademico.discenteVinculo', fn ($q) => $q->whereNotNull('data_ingresso'))
@@ -326,8 +326,9 @@ class RelatorioController extends Controller
         $histQual   = $this->histograma($mesesQual,   range(0, 36, 3));
         $histDefesa = $this->histograma($mesesDefesa, range(0, 48, 3));
 
-        $eficienciaQual   = $mesesQual->count()   > 0 ? round($mesesQual->filter(fn ($m) => $m <= 18)->count()   / $mesesQual->count()   * 100, 1) : null;
-        $eficienciaDefesa = $mesesDefesa->count() > 0 ? round($mesesDefesa->filter(fn ($m) => $m <= 24)->count() / $mesesDefesa->count() * 100, 1) : null;
+        $indicadores      = app(\App\Services\AutoavaliacaoIndicadorService::class);
+        $eficienciaQual   = $indicadores->percentualNoPrazo($bancasComIngresso, 'qualificacao');
+        $eficienciaDefesa = $indicadores->percentualNoPrazo($bancasComIngresso, 'defesa');
 
         // 17. Funil de progresso (todos os trabalhos, não filtrado por período)
         $funil = TrabalhoAcademico::select('status', DB::raw('count(*) as total'))

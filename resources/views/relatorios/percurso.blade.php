@@ -10,14 +10,14 @@
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm text-center p-3">
                 <div class="fs-2 fw-bold {{ ($eficienciaQual??0) >= 70 ? 'text-success' : 'text-warning' }}">{{ $eficienciaQual !== null ? $eficienciaQual.'%' : '—' }}</div>
-                <div class="text-muted small">Qualificações ≤ 18 meses</div>
+                <div class="text-muted small">Qualificações no prazo do curso</div>
                 <div class="text-muted" style="font-size:.72rem;">Meta: 70%</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm text-center p-3">
                 <div class="fs-2 fw-bold {{ ($eficienciaDefesa??0) >= 70 ? 'text-success' : 'text-warning' }}">{{ $eficienciaDefesa !== null ? $eficienciaDefesa.'%' : '—' }}</div>
-                <div class="text-muted small">Defesas ≤ 24 meses</div>
+                <div class="text-muted small">Defesas no prazo do curso</div>
                 <div class="text-muted" style="font-size:.72rem;">Meta: 70%</div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                     <h6 class="fw-bold mb-0" style="color:#00303A;"><i class="bi bi-bar-chart-fill me-2"></i>Distribuição — Tempo até Qualificação</h6>
                 </div>
                 <div class="card-body"><canvas id="histQual" height="160"></canvas></div>
-                <div class="card-footer bg-white text-muted small">Linha vermelha = prazo regimental (18 meses)</div>
+                <div class="card-footer bg-white text-muted small">Linha vermelha = referência de 18 meses (mestrado); o percentual acima usa o prazo de cada curso</div>
             </div>
         </div>
         @endif
@@ -55,7 +55,7 @@
                     <h6 class="fw-bold mb-0" style="color:#00303A;"><i class="bi bi-bar-chart-fill me-2"></i>Distribuição — Tempo até Defesa</h6>
                 </div>
                 <div class="card-body"><canvas id="histDefesa" height="160"></canvas></div>
-                <div class="card-footer bg-white text-muted small">Linha vermelha = prazo regimental (24 meses)</div>
+                <div class="card-footer bg-white text-muted small">Linha vermelha = referência de 24 meses (mestrado); o percentual acima usa o prazo de cada curso</div>
             </div>
         </div>
         @endif
