@@ -16,6 +16,16 @@ Completar as tarefas de base da Secretaria:
 - Upload de regimento e resoluções.
 - Importação em lote de docentes.
 
+## 0. Logotipos da instituição e do programa
+
+Hoje `instituicoes.logo_path` é sempre gravado como `images/logoUneb.png` e a ata usa imagens fixas de `public/images/`.
+
+- **Instituição**: o formulário ganha upload de logotipo, **obrigatório** no primeiro cadastro e opcional nas edições (substitui o atual). Formatos PNG, JPG ou WebP (SVG não é aceito, por risco de script embutido); até 2 MB; o sistema pré-visualiza antes de salvar.
+- **Programa**: nova coluna `programas.logo_path`, upload opcional com as mesmas regras.
+- **Armazenamento**: `storage/app/private/logos/`, com nome gerado pelo sistema; o arquivo anterior é apagado ao substituir. Servido por rota autenticada (`instituicao.logo`, `programas.logo`), sem depender de `storage:link`.
+- **Uso**: a ata (`avaliacoes.ata`) e a tela da instituição passam a exibir os logotipos cadastrados; sem logotipo do programa, a ata mostra só o da instituição. Os logos de marca do sistema (login, sidebar) não mudam.
+- A instituição continua única no sistema (a instituição sede); `programas.instituicao_id` aponta para ela.
+
 ## 1. Dados completos do programa
 
 Novas colunas em `programas`:
@@ -136,6 +146,7 @@ Todas as rotas novas ficam sob `['auth', 'verified']` e verificam `categoria ===
 
 ## Critérios de aceite
 
+0. A instituição não pode ser cadastrada sem logotipo; o logotipo (e o do programa, se houver) aparece na ata; arquivos inválidos (tipo/tamanho) são recusados.
 1. A Secretaria edita instituição, conceito CAPES, ano de início, coordenador e vice; coordenador ≠ vice e ambos permanentes no programa.
 2. A Secretaria cria, edita e inativa cursos; não é possível duplicar nível+modalidade no programa; `oferta_*` refletem os cursos ativos.
 3. Cada curso tem regras de banca para qualificação e defesa editáveis, com externos ≤ avaliadores.
