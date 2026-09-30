@@ -154,13 +154,88 @@
                             <div class="col-md-12">
                                 <label class="form-check">
                                     <input type="hidden" name="vincular_programa" value="0">
-                                    <input class="form-check-input" type="checkbox" name="vincular_programa" value="1"
+                                    <input class="form-check-input" type="checkbox" name="vincular_programa" id="vincular_programa" value="1"
                                         {{ old('vincular_programa', $docenteVinculo ? true : false) ? 'checked' : '' }}>
                                     <span class="form-check-label">
                                         Vincular este docente ao programa da sessão
                                     </span>
                                 </label>
                             </div>
+
+                            @if ($programaAtual)
+                            <div class="col-12 mt-2" id="bloco-coordenacao-docente">
+                                <div class="card border-0 bg-light p-3 rounded-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-award-fill text-primary me-2 fs-5"></i>
+                                        <h6 class="mb-0 fw-bold text-dark">Função de Coordenação no Programa</h6>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2">Exclusivo: Permanente</span>
+                                    </div>
+                                    <p class="text-muted small mb-3">
+                                        Apenas docentes do quadro permanente vinculados ao programa podem exercer a coordenação ou vice-coordenação. O programa admite apenas 1 coordenador(a) e 1 vice-coordenador(a). Ao atribuir a função a este docente, o titular anterior é automaticamente desmarcado e substituído. Desmarcar remove a titularidade. Um docente não pode acumular ambas as funções.
+                                    </p>
+
+                                    @error('coordenacao')
+                                        <div class="alert alert-danger py-2 small mb-3">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $message }}
+                                        </div>
+                                    @enderror
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="p-2 bg-white rounded border">
+                                                <div class="form-check form-switch mb-1">
+                                                    <input type="hidden" name="eh_coordenador" value="0">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="eh_coordenador" name="eh_coordenador" value="1"
+                                                        {{ old('eh_coordenador', $ehCoordenador) ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="eh_coordenador">
+                                                        Coordenador(a) do Programa
+                                                    </label>
+                                                </div>
+                                                <div class="small text-muted ps-4">
+                                                    @if ($coordenadorAtual && $coordenadorAtual->id !== $usuarioAtualId)
+                                                        <span class="text-warning">
+                                                            <i class="bi bi-info-circle me-1"></i>Atual: <strong>{{ $coordenadorAtual->name }}</strong> (será substituído ao salvar)
+                                                        </span>
+                                                    @elseif ($coordenadorAtual && $coordenadorAtual->id === $usuarioAtualId)
+                                                        <span class="text-success">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>Este docente é o atual coordenador.
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">Nenhum coordenador atribuído no momento.</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="p-2 bg-white rounded border">
+                                                <div class="form-check form-switch mb-1">
+                                                    <input type="hidden" name="eh_vice_coordenador" value="0">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="eh_vice_coordenador" name="eh_vice_coordenador" value="1"
+                                                        {{ old('eh_vice_coordenador', $ehViceCoordenador) ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="eh_vice_coordenador">
+                                                        Vice-Coordenador(a) do Programa
+                                                    </label>
+                                                </div>
+                                                <div class="small text-muted ps-4">
+                                                    @if ($viceCoordenadorAtual && $viceCoordenadorAtual->id !== $usuarioAtualId)
+                                                        <span class="text-warning">
+                                                            <i class="bi bi-info-circle me-1"></i>Atual: <strong>{{ $viceCoordenadorAtual->name }}</strong> (será substituído ao salvar)
+                                                        </span>
+                                                    @elseif ($viceCoordenadorAtual && $viceCoordenadorAtual->id === $usuarioAtualId)
+                                                        <span class="text-success">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>Este docente é o atual vice-coordenador.
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">Nenhum vice-coordenador atribuído no momento.</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
 
                         </div>
                     </div>
@@ -332,6 +407,11 @@
         function atualizarBlocosUsuario() {
             const categoria = document.getElementById('categoria').value;
             const tipoVinculo = document.getElementById('tipo_vinculo').value;
+            const categoriaDocente = document.getElementById('categoria_docente')?.value;
+            const vincularCheck = document.getElementById('vincular_programa');
+            const blocoCoord = document.getElementById('bloco-coordenacao-docente');
+            const coordCheck = document.getElementById('eh_coordenador');
+            const viceCoordCheck = document.getElementById('eh_vice_coordenador');
 
             document.getElementById('campo-tipo-vinculo').classList.toggle('d-none', categoria !== 'docente');
             document.getElementById('bloco-docente').classList.toggle('d-none', categoria !== 'docente');
@@ -342,6 +422,20 @@
                 categoria !== 'docente' || tipoVinculo !== 'interno'
             );
 
+            // Apenas docentes internos do quadro permanente vinculados ao programa podem exercer coordenação
+            const podeSerCoordenador = categoria === 'docente'
+                && tipoVinculo === 'interno'
+                && categoriaDocente === 'permanente'
+                && (!vincularCheck || vincularCheck.checked);
+
+            if (blocoCoord) {
+                blocoCoord.classList.toggle('d-none', !podeSerCoordenador);
+                if (!podeSerCoordenador) {
+                    if (coordCheck) coordCheck.checked = false;
+                    if (viceCoordCheck) viceCoordCheck.checked = false;
+                }
+            }
+
             document.getElementById('campo-orcid').classList.toggle('d-none', categoria === 'sec');
             document.getElementById('orcid_url').required = categoria === 'docente';
             document.getElementById('lattes_url').required = categoria === 'discente';
@@ -349,6 +443,25 @@
 
         document.getElementById('categoria').addEventListener('change', atualizarBlocosUsuario);
         document.getElementById('tipo_vinculo').addEventListener('change', atualizarBlocosUsuario);
+        document.getElementById('categoria_docente')?.addEventListener('change', atualizarBlocosUsuario);
+        document.getElementById('vincular_programa')?.addEventListener('change', atualizarBlocosUsuario);
+
+        const coordCheck = document.getElementById('eh_coordenador');
+        const viceCoordCheck = document.getElementById('eh_vice_coordenador');
+
+        if (coordCheck && viceCoordCheck) {
+            coordCheck.addEventListener('change', function() {
+                if (this.checked) {
+                    viceCoordCheck.checked = false;
+                }
+            });
+
+            viceCoordCheck.addEventListener('change', function() {
+                if (this.checked) {
+                    coordCheck.checked = false;
+                }
+            });
+        }
 
         const telefoneInput = document.getElementById('telefone');
 

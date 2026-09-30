@@ -21,7 +21,7 @@ use App\Mail\PrimeiroAcessoUsuarioMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-
+use Illuminate\Validation\ValidationException;
 
 class UsuarioController extends Controller
 {
@@ -86,20 +86,85 @@ class UsuarioController extends Controller
         return 'completo';
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->autorizarSecretaria();
 
-        $usuarios = User::with([
+        $programa = $this->programaDaSecretaria();
+        $programaId = $programa->id;
+        $classe = $request->get('classe', 'todos');
+        $busca = trim((string) $request->get('busca', ''));
+
+        // Query base restrita ao programa atual
+        $baseQuery = fn () => User::with([
             'docenteProfile.vinculosPrograma.programa',
             'discenteProfile.vinculosPrograma.programa',
+            'discenteProfile.vinculosPrograma.linhaPesquisa',
+            'discenteProfile.vinculosPrograma.programaCurso',
             'programaUsuarios.programa',
-        ])
-            ->tap(fn ($q) => $this->doPrograma($q, $this->programaDaSecretaria()->id))
-            ->orderBy('name')
-            ->get();
+        ])->tap(fn ($q) => $this->doPrograma($q, $programaId));
 
-        return view('usuarios.index', compact('usuarios'));
+        // Contagens por classe para as tabs
+        $contagens = [
+            'todos' => $baseQuery()->count(),
+            'docentes' => $baseQuery()->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
+                $q->where('programa_id', $programaId)->where('tipo_vinculo', 'interno');
+            })->count(),
+            'discentes' => $baseQuery()->where('categoria', 'discente')->count(),
+            'externos' => $baseQuery()->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
+                $q->where('programa_id', $programaId)->where('tipo_vinculo', 'externo');
+            })->count(),
+            'coordenador' => $baseQuery()->where(function ($q) use ($programa) {
+                $ids = array_values(array_filter([$programa->coordenador_id, $programa->vice_coordenador_id]));
+                if (!empty($ids)) {
+                    $q->whereIn('id', $ids);
+                } else {
+                    $q->whereRaw('0 = 1');
+                }
+                $q->orWhereHas('programaUsuarios', function ($pu) use ($programa) {
+                    $pu->where('programa_id', $programa->id)->where('categoria_no_programa', 'coordenador');
+                });
+            })->count(),
+        ];
+
+        // Aplica o filtro de classe
+        $query = $baseQuery();
+
+        if ($classe === 'docentes') {
+            $query->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
+                $q->where('programa_id', $programaId)->where('tipo_vinculo', 'interno');
+            });
+        } elseif ($classe === 'discentes') {
+            $query->where('categoria', 'discente');
+        } elseif ($classe === 'externos') {
+            $query->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
+                $q->where('programa_id', $programaId)->where('tipo_vinculo', 'externo');
+            });
+        } elseif ($classe === 'coordenador') {
+            $query->where(function ($q) use ($programa) {
+                $ids = array_values(array_filter([$programa->coordenador_id, $programa->vice_coordenador_id]));
+                if (!empty($ids)) {
+                    $q->whereIn('id', $ids);
+                } else {
+                    $q->whereRaw('0 = 1');
+                }
+                $q->orWhereHas('programaUsuarios', function ($pu) use ($programa) {
+                    $pu->where('programa_id', $programa->id)->where('categoria_no_programa', 'coordenador');
+                });
+            });
+        }
+
+        // Busca textual por nome ou e-mail
+        if ($busca !== '') {
+            $query->where(function ($q) use ($busca) {
+                $q->where('name', 'like', "%{$busca}%")
+                    ->orWhere('email', 'like', "%{$busca}%");
+            });
+        }
+
+        $usuarios = $query->orderBy('name')->get();
+
+        return view('usuarios.index', compact('usuarios', 'classe', 'contagens', 'busca', 'programa'));
     }
 
     public function create()
@@ -118,8 +183,22 @@ class UsuarioController extends Controller
             ->get();
 
         $cursos = $programaAtual?->cursos()->where('ativo', true)->get() ?? collect();
+        $coordenadorAtual = $programaAtual?->coordenador;
+        $viceCoordenadorAtual = $programaAtual?->viceCoordenador;
+        $ehCoordenador = false;
+        $ehViceCoordenador = false;
+        $usuarioAtualId = null;
 
-        return view('usuarios.create', compact('programaAtual', 'linhasPesquisa', 'cursos'));
+        return view('usuarios.create', compact(
+            'programaAtual',
+            'linhasPesquisa',
+            'cursos',
+            'coordenadorAtual',
+            'viceCoordenadorAtual',
+            'ehCoordenador',
+            'ehViceCoordenador',
+            'usuarioAtualId'
+        ));
     }
 
     public function store(Request $request)
@@ -137,6 +216,22 @@ class UsuarioController extends Controller
             }
         }
 
+        if ($request->boolean('eh_coordenador') && $request->boolean('eh_vice_coordenador')) {
+            throw ValidationException::withMessages([
+                'coordenacao' => 'O docente não pode ser coordenador e vice-coordenador simultaneamente.',
+            ]);
+        }
+
+        $podeSerCoordenador = $request->input('categoria') === 'docente'
+            && ($request->input('tipo_vinculo') ?? 'interno') === 'interno'
+            && ($request->input('categoria_docente') ?? 'permanente') === 'permanente'
+            && $request->boolean('vincular_programa', true);
+
+        if (($request->boolean('eh_coordenador') || $request->boolean('eh_vice_coordenador')) && ! $podeSerCoordenador) {
+            throw ValidationException::withMessages([
+                'coordenacao' => 'Apenas docentes do quadro permanente vinculados ao programa podem exercer a coordenação ou vice-coordenação.',
+            ]);
+        }
 
         $dados = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -200,8 +295,7 @@ class UsuarioController extends Controller
         $dados['cadastro_status'] = $this->cadastroStatus($dados);
         $senhaTemporaria = 'PPG-' . Str::upper(Str::random(4)) . '-' . random_int(1000, 9999);
 
-
-        $usuarioCriado = DB::transaction(function () use ($request, $dados, $programaAtual, $senhaTemporaria) {
+        $usuarioCriado = DB::transaction(function () use ($request, $dados, $programaAtual, $senhaTemporaria, $podeSerCoordenador) {
             $usuario = User::create([
                 'name' => $dados['name'],
                 'email' => $dados['email'],
@@ -228,7 +322,6 @@ class UsuarioController extends Controller
                     'titulacao' => $dados['titulacao'],
                     'area_formacao' => $dados['area_formacao'] ?? null,
                     'lattes_url' => $dados['lattes_url'] ?? null,
-                    'lattes_verificado' => false,
                     'orcid_url' => $dados['orcid_url'] ?? null,
                     'orcid_verificado' => false,
                     'instituicao_origem' => $dados['instituicao_origem'] ?? null,
@@ -250,6 +343,22 @@ class UsuarioController extends Controller
                         'pode_avaliar' => $request->boolean('pode_avaliar', true),
                         'ativo' => true,
                     ]);
+
+                    if ($podeSerCoordenador && $request->boolean('eh_coordenador')) {
+                        $programaAtual->coordenador_id = $usuario->id;
+                        if ($programaAtual->vice_coordenador_id === $usuario->id) {
+                            $programaAtual->vice_coordenador_id = null;
+                        }
+                        $programaAtual->save();
+                    }
+
+                    if ($podeSerCoordenador && $request->boolean('eh_vice_coordenador')) {
+                        $programaAtual->vice_coordenador_id = $usuario->id;
+                        if ($programaAtual->coordenador_id === $usuario->id) {
+                            $programaAtual->coordenador_id = null;
+                        }
+                        $programaAtual->save();
+                    }
                 }
             }
 
@@ -294,6 +403,7 @@ class UsuarioController extends Controller
                     ]);
                 }
             }
+
             return $usuario;
         });
 
@@ -351,7 +461,23 @@ class UsuarioController extends Controller
             ->where(fn ($q) => $q->where('ativo', true)->orWhere('id', $cursoAtualId))
             ->get() ?? collect();
 
-        return view('usuarios.edit', compact('usuario', 'programaAtual', 'linhasPesquisa', 'cursos'));
+        $coordenadorAtual = $programaAtual?->coordenador;
+        $viceCoordenadorAtual = $programaAtual?->viceCoordenador;
+        $ehCoordenador = $programaAtual && $programaAtual->coordenador_id === $usuario->id;
+        $ehViceCoordenador = $programaAtual && $programaAtual->vice_coordenador_id === $usuario->id;
+        $usuarioAtualId = $usuario->id;
+
+        return view('usuarios.edit', compact(
+            'usuario',
+            'programaAtual',
+            'linhasPesquisa',
+            'cursos',
+            'coordenadorAtual',
+            'viceCoordenadorAtual',
+            'ehCoordenador',
+            'ehViceCoordenador',
+            'usuarioAtualId'
+        ));
     }
 
     public function update(Request $request, User $usuario)
@@ -373,6 +499,23 @@ class UsuarioController extends Controller
             } catch (\Exception $e) {
                 // Mantém o valor original para a validação acusar erro.
             }
+        }
+
+        if ($request->boolean('eh_coordenador') && $request->boolean('eh_vice_coordenador')) {
+            throw ValidationException::withMessages([
+                'coordenacao' => 'O docente não pode ser coordenador e vice-coordenador simultaneamente.',
+            ]);
+        }
+
+        $podeSerCoordenador = $request->input('categoria') === 'docente'
+            && ($request->input('tipo_vinculo') ?? 'interno') === 'interno'
+            && ($request->input('categoria_docente') ?? 'permanente') === 'permanente'
+            && $request->boolean('vincular_programa', true);
+
+        if (($request->boolean('eh_coordenador') || $request->boolean('eh_vice_coordenador')) && ! $podeSerCoordenador) {
+            throw ValidationException::withMessages([
+                'coordenacao' => 'Apenas docentes do quadro permanente vinculados ao programa podem exercer a coordenação ou vice-coordenação.',
+            ]);
         }
 
         $dados = $request->validate([
@@ -441,7 +584,7 @@ class UsuarioController extends Controller
         $dados['titulacao'] = $dados['titulacao'] ?? 'Doutor(a)';
         $dados['cadastro_status'] = $this->cadastroStatus($dados);
 
-        $usuarioAtualizado = DB::transaction(function () use ($request, $dados, $programaAtual, $usuario) {
+        $usuarioAtualizado = DB::transaction(function () use ($request, $dados, $programaAtual, $usuario, $podeSerCoordenador) {
             $usuario->update([
                 'name' => $dados['name'],
                 'email' => $dados['email'],
@@ -487,12 +630,70 @@ class UsuarioController extends Controller
                         'pode_avaliar' => true,
                         'ativo' => true,
                     ]);
+
+                    if ($podeSerCoordenador) {
+                        if ($request->boolean('eh_coordenador')) {
+                            $programaAtual->coordenador_id = $usuario->id;
+                            if ($programaAtual->vice_coordenador_id === $usuario->id) {
+                                $programaAtual->vice_coordenador_id = null;
+                            }
+                        } elseif ($programaAtual->coordenador_id === $usuario->id) {
+                            $programaAtual->coordenador_id = null;
+                        }
+
+                        if ($request->boolean('eh_vice_coordenador')) {
+                            $programaAtual->vice_coordenador_id = $usuario->id;
+                            if ($programaAtual->coordenador_id === $usuario->id) {
+                                $programaAtual->coordenador_id = null;
+                            }
+                        } elseif ($programaAtual->vice_coordenador_id === $usuario->id) {
+                            $programaAtual->vice_coordenador_id = null;
+                        }
+
+                        $programaAtual->save();
+                    } else {
+                        $mudouCoord = false;
+                        if ($programaAtual->coordenador_id === $usuario->id) {
+                            $programaAtual->coordenador_id = null;
+                            $mudouCoord = true;
+                        }
+                        if ($programaAtual->vice_coordenador_id === $usuario->id) {
+                            $programaAtual->vice_coordenador_id = null;
+                            $mudouCoord = true;
+                        }
+                        if ($mudouCoord) {
+                            $programaAtual->save();
+                        }
+                    }
                 }
 
                 if ($programaAtual && ! $request->boolean('vincular_programa')) {
                     DocenteProgramaVinculo::where('programa_id', $programaAtual->id)
                         ->where('docente_profile_id', $docenteProfile->id)
                         ->delete();
+
+                    if ($programaAtual->coordenador_id === $usuario->id) {
+                        $programaAtual->coordenador_id = null;
+                    }
+                    if ($programaAtual->vice_coordenador_id === $usuario->id) {
+                        $programaAtual->vice_coordenador_id = null;
+                    }
+                    $programaAtual->save();
+                }
+            }
+
+            if ($programaAtual && $dados['categoria'] !== 'docente') {
+                $mudouCoord = false;
+                if ($programaAtual->coordenador_id === $usuario->id) {
+                    $programaAtual->coordenador_id = null;
+                    $mudouCoord = true;
+                }
+                if ($programaAtual->vice_coordenador_id === $usuario->id) {
+                    $programaAtual->vice_coordenador_id = null;
+                    $mudouCoord = true;
+                }
+                if ($mudouCoord) {
+                    $programaAtual->save();
                 }
             }
 
@@ -528,9 +729,9 @@ class UsuarioController extends Controller
                     ]);
 
                     TrabalhoAcademico::updateOrCreate([
+                        'programa_id' => $programaAtual->id,
                         'discente_programa_vinculo_id' => $vinculo->id,
                     ], [
-                        'programa_id' => $programaAtual->id,
                         'linha_pesquisa_id' => $vinculo->linha_pesquisa_id,
                         'nivel' => $vinculo->nivel,
                         'status' => 'em_andamento',
@@ -578,6 +779,7 @@ class UsuarioController extends Controller
             ->route('usuarios.index')
             ->with('status', 'Usuário atualizado com sucesso.');
     }
+
     public function reenviarAcesso(User $usuario)
     {
         $this->autorizarSecretaria();
