@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\AnalisarConformidadeRagJob;
 use App\Mail\TrabalhoEnviadoBancaMail;
 use App\Models\DocumentoAnalise;
+use App\Models\ProgramaDocumentoReferencia;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
 use App\Services\ArquivoTrabalhoService;
@@ -145,6 +147,15 @@ class TrabalhoDocumentoController extends Controller
         ]);
 
         $analise = $this->analiseService->analisar($documento);
+
+        $normasIndexadas = ProgramaDocumentoReferencia::where('programa_id', $trabalho->programa_id)
+            ->where('tipo', 'normas')
+            ->where('status_indexacao', 'concluido')
+            ->exists();
+
+        if ($normasIndexadas) {
+            AnalisarConformidadeRagJob::dispatch($analise);
+        }
 
         return redirect()
             ->route('meu-trabalho.analise', $analise)
