@@ -25,13 +25,17 @@ Para e-mail sem envio externo, mantenha `MAIL_MAILER=log` e consulte `storage/lo
 
 ## Rotina da Secretaria
 
-1. Cadastre o programa, áreas, linhas, estudantes e docentes.
-2. Acesse **Orientações** e atribua o orientador/coorientadores ao vínculo acadêmico do discente.
-3. Acesse **Membros externos**, envie o convite e acompanhe o cadastro.
-4. Abra o diploma recebido, devolva com observação quando necessário ou aprove o membro.
-5. Acesse **Critérios da CPA** e mantenha uma versão ativa para qualificação e defesa.
-6. Acesse **Homologação de bancas**, confira evidências e composição, depois homologue ou devolva com justificativa.
-7. Somente bancas homologadas ficam liberadas para envio do trabalho e avaliação.
+Cada usuário Secretaria administra **um único programa**, ligado a uma instituição. Todas as telas da Secretaria mostram apenas os dados desse programa.
+
+1. No primeiro acesso, cadastre a **instituição** (nome, sigla e logotipo obrigatórios) e depois o **programa** (instituição, conceito CAPES, ano de início, logotipo opcional).
+2. Em **Configurações → Cursos**, cadastre os cursos do programa (nível × modalidade: mestrado/doutorado, acadêmico/profissional) e ajuste prazos e regras de composição de banca (mín./máx. avaliadores, mín. internos, mín. externos à instituição) para qualificação e defesa.
+3. Cadastre áreas de concentração, linhas de pesquisa e docentes; depois defina coordenador(a) e vice na tela do programa.
+4. Cadastre discentes individualmente (curso e Lattes obrigatórios) ou em lote em **Usuários → Importar discentes** (CSV com prévia; e-mails de primeiro acesso enviados pela fila).
+5. Acesse **Orientações** e atribua o orientador/coorientadores ao vínculo acadêmico do discente.
+6. Acesse **Membros externos**, envie o convite e acompanhe o cadastro; abra o diploma, devolva com observação ou aprove.
+7. Acesse **Critérios da CPA** e mantenha uma versão ativa para qualificação e defesa.
+8. Cadastre ou homologue bancas: o sistema confere a regra do curso e o **ORCID do discente**; sem eles a banca não é salva/homologada. O discente informa o ORCID em **Meu perfil**.
+9. Somente bancas homologadas ficam liberadas para envio do trabalho e avaliação (o envio também exige ORCID).
 
 ## Rotas de operação
 
@@ -39,6 +43,12 @@ Para e-mail sem envio externo, mantenha `MAIL_MAILER=log` e consulte `storage/lo
 - `membros-externos.registro`: formulário público recebido pelo membro externo.
 - `criterios-cpa.index`: configuração dos requisitos CPA.
 - `bancas.homologacao`: fila de homologação e devolução.
+- `instituicoes.create` / `instituicao.edit`: instituição do programa (com logotipo).
+- `programas.create` / `programas.edit`: programa da Secretaria.
+- `programa-cursos.index`: cursos, prazos e regras de banca.
+- `usuarios.importar`: importação de discentes por CSV.
+
+Com a fila em `database`, mantenha `php artisan queue:listen` (ou um worker) rodando para que os e-mails da importação sejam enviados.
 
 ## Verificação antes de disponibilizar
 

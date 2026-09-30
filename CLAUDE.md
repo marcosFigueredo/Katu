@@ -79,3 +79,6 @@ php artisan tinker           # inspeção interativa
 - Baremas inativados não afetam avaliações existentes.
 - A banca de defesa só pode ser criada após a qualificação ser finalizada com aprovação.
 - O orientador é presidente da banca via `Orientacao` — não entra em `banca_membros` como avaliador.
+- Cada Secretaria administra um único programa (`ContextoSecretaria`, helpers `programaDaSecretaria()`/`garantirProgramaDaSecretaria()` no `Controller` base); todas as telas da Secretaria filtram por ele.
+- Regras de composição de banca e prazos vêm do curso do discente (`programa_cursos`, `curso_regras_banca`, via `VerificacaoBancaService`) — não há mais regra fixa por nível nem sigla UNEB no código.
+- ORCID do discente é obrigatório para cadastrar/homologar banca e enviar o trabalho; o discente informa em Meu perfil.
