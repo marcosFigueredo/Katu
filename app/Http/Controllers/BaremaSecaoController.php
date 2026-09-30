@@ -18,6 +18,7 @@ class BaremaSecaoController extends Controller
     public function store(Request $request, Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
@@ -39,6 +40,7 @@ class BaremaSecaoController extends Controller
     public function update(Request $request, BaremaSecao $secao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($secao->barema?->programa_id);
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
@@ -60,6 +62,7 @@ class BaremaSecaoController extends Controller
     public function destroy(BaremaSecao $secao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($secao->barema?->programa_id);
 
         $baremaId = $secao->barema_id;
         $secao->delete();

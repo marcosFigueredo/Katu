@@ -29,6 +29,7 @@ class OrientacaoController extends Controller
             'orientacoes' => fn ($q) => $q->where('ativo', true)->orderBy('tipo')->orderBy('ordem'),
             'orientacoes.docenteProgramaVinculo.docenteProfile.user',
         ])
+        ->where('programa_id', $this->programaDaSecretaria()->id)
         ->orderBy('created_at', 'desc')
         ->get();
 
@@ -38,6 +39,7 @@ class OrientacaoController extends Controller
     public function edit(TrabalhoAcademico $trabalho)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
         $trabalho->load([
             'discenteVinculo.discenteProfile.user',
@@ -70,6 +72,7 @@ class OrientacaoController extends Controller
     public function update(Request $request, TrabalhoAcademico $trabalho)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
         $dados = $request->validate([
             'orientador_vinculo_id'   => ['nullable', 'exists:docente_programa_vinculos,id'],

@@ -34,15 +34,26 @@ class DashboardController extends Controller
         }
 
         return match ($user->categoria) {
-            'sec' => view('dashboards.secretaria', [
-                'totalDiscentes' => User::where('categoria', 'discente')->where('ativo', true)->count(),
-                'totalDocentes'  => User::where('categoria', 'docente')->where('ativo', true)->count(),
-                'totalUsuarios'  => User::where('ativo', true)->count(),
-                'totalProgramas' => Programa::count(),
-            ]),
+            'sec' => $this->painelSecretaria(),
             'docente' => redirect()->route('avaliacoes.index'),
             'discente' => view('dashboards.discente'),
             default => abort(403),
         };
+    }
+
+    private function painelSecretaria()
+    {
+        $programa = $this->programaDaSecretaria();
+
+        $totalDiscentes = \App\Models\DiscenteProgramaVinculo::where('programa_id', $programa->id)->where('ativo', true)->count();
+        $totalDocentes = \App\Models\DocenteProgramaVinculo::where('programa_id', $programa->id)->where('ativo', true)->count();
+        $totalSecretaria = \App\Models\ProgramaUsuario::where('programa_id', $programa->id)->where('ativo', true)->count();
+
+        return view('dashboards.secretaria', [
+            'totalDiscentes' => $totalDiscentes,
+            'totalDocentes'  => $totalDocentes,
+            'totalUsuarios'  => $totalDiscentes + $totalDocentes + $totalSecretaria,
+            'totalProgramas' => 1,
+        ]);
     }
 }

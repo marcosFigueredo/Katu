@@ -70,6 +70,7 @@ class SecretariaOrientacaoTest extends TestCase
     {
         $secretaria = User::factory()->secretaria()->create();
         $programa = Programa::create(['nome' => 'PPGMSB', 'sigla' => 'PPGMSB']);
+        app(\App\Services\ContextoSecretaria::class)->vincular($secretaria, $programa);
 
         $discente = User::factory()->discente()->create();
         $discenteProfile = DiscenteProfile::create([

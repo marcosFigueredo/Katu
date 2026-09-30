@@ -34,12 +34,22 @@ class UsuarioController extends Controller
 
     private function programaAtual()
     {
-        return auth()->user()
-            ->programaUsuarios()
-            ->where('ativo', true)
-            ->with('programa')
-            ->first()
-            ?->programa;
+        return app(\App\Services\ContextoSecretaria::class)->programa(auth()->user());
+    }
+
+    private function doPrograma($query, int $programaId)
+    {
+        return $query->where(function ($q) use ($programaId) {
+            $q->whereHas('programaUsuarios', fn ($p) => $p->where('programa_id', $programaId))
+                ->orWhereHas('docenteProfile.vinculosPrograma', fn ($p) => $p->where('programa_id', $programaId))
+                ->orWhereHas('discenteProfile.vinculosPrograma', fn ($p) => $p->where('programa_id', $programaId));
+        });
+    }
+
+    private function garantirUsuarioDoPrograma(User $usuario): void
+    {
+        $programa = $this->programaDaSecretaria();
+        abort_unless($this->doPrograma(User::whereKey($usuario->id), $programa->id)->exists(), 403);
     }
 
     private function cadastroStatus(array $dados): string
@@ -85,6 +95,7 @@ class UsuarioController extends Controller
             'discenteProfile.vinculosPrograma.programa',
             'programaUsuarios.programa',
         ])
+            ->tap(fn ($q) => $this->doPrograma($q, $this->programaDaSecretaria()->id))
             ->orderBy('name')
             ->get();
 
@@ -315,6 +326,7 @@ class UsuarioController extends Controller
     public function edit(User $usuario)
     {
         $this->autorizarSecretaria();
+        $this->garantirUsuarioDoPrograma($usuario);
 
         $programaAtual = $this->programaAtual();
 
@@ -341,6 +353,7 @@ class UsuarioController extends Controller
     public function update(Request $request, User $usuario)
     {
         $this->autorizarSecretaria();
+        $this->garantirUsuarioDoPrograma($usuario);
 
         $programaAtual = $this->programaAtual();
         $statusAnterior = $usuario->cadastro_status;
@@ -561,6 +574,7 @@ class UsuarioController extends Controller
     public function reenviarAcesso(User $usuario)
     {
         $this->autorizarSecretaria();
+        $this->garantirUsuarioDoPrograma($usuario);
 
         if ($usuario->cadastro_status !== 'completo') {
             return redirect()

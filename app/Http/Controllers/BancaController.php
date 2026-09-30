@@ -42,6 +42,7 @@ class BancaController extends Controller
             'orientacoes.docenteProgramaVinculo.docenteProfile.user',
             'bancas.membros.docenteProgramaVinculo.docenteProfile.user',
         ])
+            ->where('programa_id', $this->programaDaSecretaria()->id)
             ->orderByDesc('created_at')
             ->get();
 
@@ -63,6 +64,7 @@ class BancaController extends Controller
                 'orientacoes.docenteProgramaVinculo.docenteProfile.user',
                 'bancas',
             ])->findOrFail($request->integer('trabalho_id'));
+            $this->garantirProgramaDaSecretaria($trabalho->programa_id);
         }
 
         $trabalhos = TrabalhoAcademico::with([
@@ -70,6 +72,7 @@ class BancaController extends Controller
             'orientacoes' => fn ($q) => $q->where('ativo', true),
             'bancas',
         ])
+            ->where('programa_id', $this->programaDaSecretaria()->id)
             ->orderByDesc('created_at')
             ->get()
             ->filter(fn (TrabalhoAcademico $item) =>
@@ -92,6 +95,7 @@ class BancaController extends Controller
         $data = $this->validar($request);
         $trabalho = TrabalhoAcademico::with(['orientacoes.docenteProgramaVinculo.docenteProfile.user', 'bancas'])
             ->findOrFail($data['trabalho_academico_id']);
+        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
         if ($trabalho->bancas->where('tipo', $data['tipo'])->isNotEmpty()) {
             throw ValidationException::withMessages([
@@ -146,6 +150,7 @@ class BancaController extends Controller
     public function edit(Banca $banca)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
 
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
@@ -172,6 +177,7 @@ class BancaController extends Controller
     public function update(Request $request, Banca $banca)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
 
         $data = $this->validar($request, $banca);
         $banca->load('trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user');
@@ -212,6 +218,7 @@ class BancaController extends Controller
     public function destroy(Banca $banca)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
 
         $banca->delete();
 
@@ -223,6 +230,7 @@ class BancaController extends Controller
     public function reabrir(Banca $banca)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
 
         if ($banca->status !== 'finalizada') {
             return back()->withErrors(['status' => 'Apenas bancas finalizadas podem ser reabertas.']);

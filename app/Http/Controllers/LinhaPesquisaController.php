@@ -18,6 +18,7 @@ class LinhaPesquisaController extends Controller
     public function index(AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         $areaConcentracao->load([
             'programa',
@@ -32,6 +33,7 @@ class LinhaPesquisaController extends Controller
     public function create(AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         $areaConcentracao->load('programa');
 
@@ -41,6 +43,7 @@ class LinhaPesquisaController extends Controller
     public function store(Request $request, AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         $dados = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
@@ -66,6 +69,7 @@ class LinhaPesquisaController extends Controller
     public function edit(LinhaPesquisa $linhaPesquisa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($linhaPesquisa->areaConcentracao?->programa_id);
 
         $linhaPesquisa->load('areaConcentracao.programa');
 
@@ -75,6 +79,7 @@ class LinhaPesquisaController extends Controller
     public function update(Request $request, LinhaPesquisa $linhaPesquisa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($linhaPesquisa->areaConcentracao?->programa_id);
 
         $dados = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
@@ -98,6 +103,7 @@ class LinhaPesquisaController extends Controller
     public function destroy(LinhaPesquisa $linhaPesquisa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($linhaPesquisa->areaConcentracao?->programa_id);
 
         $areaConcentracao = $linhaPesquisa->areaConcentracao;
 

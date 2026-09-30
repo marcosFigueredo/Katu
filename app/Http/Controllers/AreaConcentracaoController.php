@@ -18,6 +18,7 @@ class AreaConcentracaoController extends Controller
     public function index(Programa $programa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($programa->id);
 
         $programa->load(['areasConcentracao' => function ($query) {
             $query->orderBy('nome');
@@ -29,6 +30,7 @@ class AreaConcentracaoController extends Controller
     public function create(Programa $programa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($programa->id);
 
         return view('areas-concentracao.create', compact('programa'));
     }
@@ -36,6 +38,7 @@ class AreaConcentracaoController extends Controller
     public function store(Request $request, Programa $programa)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($programa->id);
 
         $dados = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
@@ -54,6 +57,7 @@ class AreaConcentracaoController extends Controller
     public function edit(AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         $areaConcentracao->load('programa');
 
@@ -63,6 +67,7 @@ class AreaConcentracaoController extends Controller
     public function update(Request $request, AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         $dados = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
@@ -79,6 +84,7 @@ class AreaConcentracaoController extends Controller
     public function destroy(AreaConcentracao $areaConcentracao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($areaConcentracao->programa_id);
 
         if ($areaConcentracao->linhasPesquisa()->exists()) {
             return redirect()

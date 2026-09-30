@@ -29,10 +29,10 @@ class BaremaController extends Controller
     {
         $this->autorizarSecretaria();
 
-        $programa = $this->programaAtual();
+        $programa = $this->programaDaSecretaria();
 
         $baremas = Barema::with('secoes')
-            ->when($programa, fn ($q) => $q->where('programa_id', $programa->id))
+            ->where('programa_id', $programa->id)
             ->orderBy('tipo')
             ->orderBy('nivel')
             ->orderByDesc('ativo')
@@ -55,7 +55,7 @@ class BaremaController extends Controller
     {
         $this->autorizarSecretaria();
 
-        $programa = $this->programaAtual();
+        $programa = $this->programaDaSecretaria();
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
@@ -78,6 +78,7 @@ class BaremaController extends Controller
     public function edit(Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $barema->load(['secoes.itens']);
 
@@ -87,6 +88,7 @@ class BaremaController extends Controller
     public function update(Request $request, Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
@@ -109,6 +111,7 @@ class BaremaController extends Controller
     public function destroy(Barema $barema)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($barema->programa_id);
 
         $barema->delete();
 

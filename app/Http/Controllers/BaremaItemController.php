@@ -31,6 +31,7 @@ class BaremaItemController extends Controller
     public function store(Request $request, BaremaSecao $secao)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($secao->barema?->programa_id);
 
         $data = $this->validar($request);
         $data['barema_secao_id'] = $secao->id;
@@ -47,6 +48,7 @@ class BaremaItemController extends Controller
     public function update(Request $request, BaremaItem $item)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($item->secao?->barema?->programa_id);
 
         $data = $this->validar($request);
         $data['obrigatorio'] = $request->boolean('obrigatorio');
@@ -62,6 +64,7 @@ class BaremaItemController extends Controller
     public function destroy(BaremaItem $item)
     {
         $this->autorizarSecretaria();
+        $this->garantirProgramaDaSecretaria($item->secao?->barema?->programa_id);
 
         $baremaId = $item->secao->barema_id;
         $item->delete();
