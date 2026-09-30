@@ -41,7 +41,7 @@ class ContextoSecretaria
         $atual = $this->programa($user);
         abort_if($atual && ! $atual->is($programa), 403, 'Esta Secretaria já administra outro programa.');
 
-        ProgramaUsuario::firstOrCreate(
+        ProgramaUsuario::updateOrCreate(
             ['programa_id' => $programa->id, 'user_id' => $user->id, 'categoria_no_programa' => 'secretaria'],
             ['ativo' => true],
         );

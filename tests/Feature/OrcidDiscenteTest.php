@@ -116,4 +116,30 @@ class OrcidDiscenteTest extends TestCase
             ->assertOk()
             ->assertSee('Informe seu ORCID');
     }
+
+    public function test_discente_de_curso_inativo_pode_ser_editado_sem_trocar_de_curso(): void
+    {
+        $sec = User::factory()->secretaria()->create(['primeiro_acesso' => false]);
+        $programa = Programa::create(['nome' => 'PPG']);
+        app(ContextoSecretaria::class)->vincular($sec, $programa);
+        $curso = app(CursoProgramaService::class)->criar($programa, 'mestrado', 'academico');
+        $dados = [
+            'name' => 'Ana', 'email' => 'ana@example.com', 'categoria' => 'discente',
+            'matricula' => '1', 'programa_curso_id' => $curso->id,
+            'lattes_url' => 'http://lattes.cnpq.br/1234567890123456',
+        ];
+        $this->actingAs($sec)->post(route('usuarios.store'), $dados)->assertSessionHasNoErrors();
+        $usuario = User::where('email', 'ana@example.com')->firstOrFail();
+        $curso->update(['ativo' => false]);
+
+        $this->actingAs($sec)->get(route('usuarios.edit', $usuario))
+            ->assertOk()->assertSee('Mestrado Acadêmico (inativo)');
+        $this->actingAs($sec)->put(route('usuarios.update', $usuario), $dados + ['telefone' => '(71) 9999-0000'])
+            ->assertSessionHasNoErrors();
+
+        $outro = app(CursoProgramaService::class)->criar($programa, 'doutorado', 'academico');
+        $outro->update(['ativo' => false]);
+        $this->actingAs($sec)->put(route('usuarios.update', $usuario), ['programa_curso_id' => $outro->id] + $dados)
+            ->assertSessionHasErrors('programa_curso_id');
+    }
 }

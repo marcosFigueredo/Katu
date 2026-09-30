@@ -66,4 +66,34 @@ class ContextoSecretariaTest extends TestCase
 
         $this->assertNull(app(ContextoSecretaria::class)->programa($docente));
     }
+
+    public function test_vincular_reativa_vinculo_inativo_existente(): void
+    {
+        $sec = User::factory()->secretaria()->create();
+        $programa = Programa::create(['nome' => 'A']);
+        ProgramaUsuario::create([
+            'programa_id' => $programa->id, 'user_id' => $sec->id,
+            'categoria_no_programa' => 'secretaria', 'ativo' => false,
+        ]);
+
+        app(ContextoSecretaria::class)->vincular($sec, $programa);
+
+        $this->assertTrue(app(ContextoSecretaria::class)->programa($sec)->is($programa));
+    }
+
+    public function test_migration_de_backfill_reativa_vinculo_inativo_sem_duplicar(): void
+    {
+        $sec = User::factory()->secretaria()->create();
+        $programa = Programa::create(['nome' => 'A']);
+        ProgramaUsuario::create([
+            'programa_id' => $programa->id, 'user_id' => $sec->id,
+            'categoria_no_programa' => 'secretaria', 'ativo' => false,
+        ]);
+
+        $migration = require database_path('migrations/2026_09_30_100400_vincular_programa_instituicao_secretarias.php');
+        $migration->up();
+
+        $this->assertSame(1, ProgramaUsuario::where('user_id', $sec->id)->count());
+        $this->assertTrue(app(ContextoSecretaria::class)->programa($sec)->is($programa));
+    }
 }

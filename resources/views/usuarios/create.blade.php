@@ -173,7 +173,7 @@
                                 <select id="programa_curso_id" name="programa_curso_id" class="form-select">
                                     <option value="">Selecione…</option>
                                     @foreach ($cursos as $curso)
-                                        <option value="{{ $curso->id }}" @selected(old('programa_curso_id') == $curso->id)>{{ $curso->nome }}</option>
+                                        <option value="{{ $curso->id }}" @selected(old('programa_curso_id') == $curso->id)>{{ $curso->nome }}{{ $curso->ativo ? '' : ' (inativo)' }}</option>
                                     @endforeach
                                 </select>
                                 @if ($cursos->isEmpty())

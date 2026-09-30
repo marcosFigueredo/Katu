@@ -345,7 +345,11 @@ class UsuarioController extends Controller
             ->orderBy('nome')
             ->get();
 
-        $cursos = $programaAtual?->cursos()->where('ativo', true)->get() ?? collect();
+        $cursoAtualId = $usuario->discenteProfile?->vinculosPrograma
+            ?->firstWhere('programa_id', $programaAtual?->id)?->programa_curso_id;
+        $cursos = $programaAtual?->cursos()
+            ->where(fn ($q) => $q->where('ativo', true)->orWhere('id', $cursoAtualId))
+            ->get() ?? collect();
 
         return view('usuarios.edit', compact('usuario', 'programaAtual', 'linhasPesquisa', 'cursos'));
     }
@@ -354,6 +358,9 @@ class UsuarioController extends Controller
     {
         $this->autorizarSecretaria();
         $this->garantirUsuarioDoPrograma($usuario);
+        $cursoAtualId = $usuario->discenteProfile?->vinculosPrograma()
+            ->where('programa_id', $this->programaAtual()?->id)
+            ->value('programa_curso_id');
 
         $programaAtual = $this->programaAtual();
         $statusAnterior = $usuario->cadastro_status;
@@ -418,7 +425,7 @@ class UsuarioController extends Controller
                 'nullable',
                 Rule::exists('programa_cursos', 'id')->where(fn ($q) => $q
                     ->where('programa_id', $programaAtual?->id)
-                    ->where('ativo', true)),
+                    ->where(fn ($ativo) => $ativo->where('ativo', true)->orWhere('id', $cursoAtualId))),
             ],
             'linha_pesquisa_id' => ['nullable', 'exists:linhas_pesquisa,id'],
             'data_ingresso' => ['nullable', 'date'],

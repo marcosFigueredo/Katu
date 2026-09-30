@@ -71,4 +71,28 @@ class AtaCabecalhoTest extends TestCase
             ->assertDontSee(route('programas.logo', $programa), false)
             ->assertSee(route('instituicoes.logo', $instituicao), false);
     }
+
+    public function test_ata_com_avaliadores_interno_e_externo_e_gerada(): void
+    {
+        [$sec, $programa, , $banca] = $this->banca(null);
+        foreach ([['interno', 'UT', 'Avaliadora Interna'], ['externo', 'UFX', 'Avaliador Externo']] as $ordem => [$tipo, $sigla, $nome]) {
+            $profile = \App\Models\DocenteProfile::create([
+                'user_id' => User::factory()->docente()->create(['name' => $nome])->id,
+                'instituicao_sigla' => $sigla, 'instituicao_origem' => $sigla, 'ativo' => true,
+            ]);
+            $vinculo = \App\Models\DocenteProgramaVinculo::create([
+                'programa_id' => $programa->id, 'docente_profile_id' => $profile->id,
+                'tipo_vinculo' => $tipo, 'pode_avaliar' => true, 'ativo' => true,
+            ]);
+            \App\Models\BancaMembro::create([
+                'banca_id' => $banca->id, 'docente_programa_vinculo_id' => $vinculo->id,
+                'papel' => 'avaliador', 'ordem' => $ordem + 1, 'ativo' => true,
+            ]);
+        }
+
+        $this->actingAs($sec)->get(route('avaliacoes.ata', $banca))
+            ->assertOk()
+            ->assertSee('Avaliadora Interna')
+            ->assertSee('(UT)', false);
+    }
 }

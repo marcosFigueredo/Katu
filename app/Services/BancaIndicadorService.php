@@ -20,7 +20,10 @@ class BancaIndicadorService
         $banca->loadMissing([
             'membros.docenteProgramaVinculo.docenteProfile',
             'trabalhoAcademico.linhaPesquisa',
+            'trabalhoAcademico.programa.instituicao',
         ]);
+
+        $this->siglaInstituicao = $banca->trabalhoAcademico?->programa?->instituicao?->sigla;
 
         $avaliadores = $banca->membros
             ->where('papel', 'avaliador')
@@ -75,7 +78,7 @@ class BancaIndicadorService
 
     private function calcularB2(Collection $avaliadores): bool
     {
-        return $avaliadores->contains(fn ($m) => $this->ehExternoUneb($m));
+        return $avaliadores->contains(fn ($m) => $this->ehExternoInstituicao($m));
     }
 
     private function calcularB3(Collection $avaliadores): bool
@@ -129,7 +132,7 @@ class BancaIndicadorService
             fn ($m) => $m->docenteProgramaVinculo?->tipo_vinculo === 'interno'
         );
 
-        $temExterno = $avaliadores->contains(fn ($m) => $this->ehExternoUneb($m));
+        $temExterno = $avaliadores->contains(fn ($m) => $this->ehExternoInstituicao($m));
 
         return $temInterno && $temExterno;
     }
@@ -205,11 +208,15 @@ PROMPT;
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function ehExternoUneb(BancaMembro $membro): bool
-    {
-        $sigla = strtoupper(trim($membro->docenteProgramaVinculo?->docenteProfile?->instituicao_sigla ?? ''));
+    private ?string $siglaInstituicao = null;
 
-        return $sigla !== '' && $sigla !== 'UNEB';
+    private function ehExternoInstituicao(BancaMembro $membro): bool
+    {
+        return $membro->docenteProgramaVinculo !== null
+            && app(VerificacaoBancaService::class)->externoInstituicao(
+                $membro->docenteProgramaVinculo,
+                $this->siglaInstituicao,
+            );
     }
 
     private function descreverTema(?TrabalhoAcademico $trabalho): string

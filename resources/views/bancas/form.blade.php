@@ -210,7 +210,7 @@
                                     </div>
                                 @else
                                     @php
-                                        $quantidadeSelecionada = (int) old('quantidade_avaliadores', max(2, $avaliadoresAtuais->count()));
+                                        $quantidadeSelecionada = (int) old('quantidade_avaliadores', max($regra['min_avaliadores'] ?? 2, $avaliadoresAtuais->count(), 1));
                                         $adicionaisSelecionados = old('avaliadores_adicionais', $avaliadoresAdicionaisAtuais);
                                     @endphp
 
@@ -222,9 +222,9 @@
                                             <select id="quantidade_avaliadores"
                                                     name="quantidade_avaliadores"
                                                     class="form-select @error('quantidade_avaliadores') is-invalid @enderror">
-                                                @for ($qtd = 2; $qtd <= 5; $qtd++)
+                                                @for ($qtd = 1; $qtd <= 5; $qtd++)
                                                     <option value="{{ $qtd }}" {{ $quantidadeSelecionada === $qtd ? 'selected' : '' }}>
-                                                        {{ $qtd }} avaliadores
+                                                        {{ $qtd }} {{ $qtd === 1 ? 'avaliador' : 'avaliadores' }}
                                                     </option>
                                                 @endfor
                                             </select>
@@ -236,7 +236,7 @@
                                         <div class="col-md-8">
                                             <div class="alert alert-light border small mb-0">
                                                 A banca terá <strong><span id="resumo_quantidade">{{ $quantidadeSelecionada }}</span> avaliadores</strong>.
-                                                Um interno ao {{ $siglaPrograma }} e um externo à {{ $siglaInstituicao }} são obrigatórios.
+                                                A composição mínima segue as regras do curso indicadas acima.
                                             </div>
                                         </div>
 

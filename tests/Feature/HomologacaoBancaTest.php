@@ -170,6 +170,28 @@ class HomologacaoBancaTest extends TestCase
             ->assertSee('interno(s) ao PPGMSB', false);
     }
 
+    public function test_cadastro_de_banca_aceita_composicao_permitida_pela_regra_do_curso(): void
+    {
+        [$secretaria, $programa, $trabalho, $qualificacao] = $this->estruturaComComposicao();
+        $qualificacao->update(['status' => 'finalizada', 'resultado' => 'aprovado']);
+        $curso = app(\App\Services\CursoProgramaService::class)->criar($programa, 'mestrado', 'profissional');
+        $curso->regrasBanca()->where('etapa', 'defesa')->update([
+            'min_avaliadores' => 1, 'max_avaliadores' => 1, 'min_internos' => 0, 'min_externos_instituicao' => 1,
+        ]);
+        $trabalho->discenteVinculo->update(['programa_curso_id' => $curso->id]);
+        $externo = DocenteProgramaVinculo::where('programa_id', $programa->id)->where('tipo_vinculo', 'externo')->firstOrFail();
+
+        $this->actingAs($secretaria)->post(route('bancas.store'), [
+            'trabalho_academico_id' => $trabalho->id,
+            'tipo' => 'defesa',
+            'status' => 'cadastrada',
+            'quantidade_avaliadores' => 1,
+            'avaliador_externo_id' => $externo->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('bancas', ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'defesa']);
+    }
+
     private function dadosDefesa(Programa $programa, TrabalhoAcademico $trabalho): array
     {
         $avaliadores = DocenteProgramaVinculo::where('programa_id', $programa->id)->where('pode_avaliar', true)->get();

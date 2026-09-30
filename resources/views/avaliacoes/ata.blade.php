@@ -244,7 +244,7 @@
         return "Prof(a). {$titulo} {$nome}";
     };
 
-    $instituicaoNome = function ($membro) {
+    $instituicaoNome = function ($membro) use ($siglaInstituicao) {
         $dp = $membro?->docenteProgramaVinculo;
         if ($dp?->tipo_vinculo === 'interno') return $siglaInstituicao;
         $inst = $dp?->docenteProfile?->instituicao_origem ?: ($dp?->docenteProfile?->instituicao_sigla ?: 'Externo');

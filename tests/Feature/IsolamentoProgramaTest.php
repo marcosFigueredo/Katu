@@ -133,4 +133,17 @@ class IsolamentoProgramaTest extends TestCase
             ->assertOk()
             ->assertViewHas('totalDiscentes', 1);
     }
+
+    public function test_secretaria_nao_ve_ata_nem_notas_de_banca_de_outro_programa(): void
+    {
+        $a = $this->programa('A');
+        $b = $this->programa('B');
+        $sec = $a['secretaria'];
+        $b['banca']->update(['status' => 'finalizada', 'resultado' => 'aprovado']);
+
+        $this->actingAs($sec)->get(route('avaliacoes.ata', $b['banca']))->assertForbidden();
+        $this->actingAs($sec)->get(route('avaliacoes.relatorio-consolidado', $b['banca']))->assertForbidden();
+        $this->actingAs($sec)->get(route('avaliacoes.folha-aprovacao', $b['banca']))->assertForbidden();
+        $this->actingAs($sec)->get(route('avaliacoes.relatorio-individual', [$b['banca'], $b['barema']]))->assertForbidden();
+    }
 }

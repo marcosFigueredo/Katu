@@ -25,14 +25,10 @@ return new class extends Migration
         DB::table('users')->where('categoria', 'sec')
             ->whereNotIn('id', $secretariasComPrograma)
             ->pluck('id')
-            ->each(fn ($userId) => DB::table('programa_usuarios')->insert([
-                'programa_id' => $programaId,
-                'user_id' => $userId,
-                'categoria_no_programa' => 'secretaria',
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            ->each(fn ($userId) => DB::table('programa_usuarios')->updateOrInsert(
+                ['programa_id' => $programaId, 'user_id' => $userId, 'categoria_no_programa' => 'secretaria'],
+                ['ativo' => true, 'created_at' => now(), 'updated_at' => now()],
+            ));
     }
 
     public function down(): void

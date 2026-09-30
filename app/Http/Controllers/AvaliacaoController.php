@@ -403,7 +403,7 @@ class AvaliacaoController extends Controller
 
         // Acesso restrito: secretaria ou orientador (presidente da banca)
         if ($user->categoria === 'sec') {
-            // sem restrição extra
+            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
         } elseif ($user->categoria === 'docente') {
             $user->load('docenteProfile.vinculosPrograma');
             $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
@@ -471,6 +471,7 @@ class AvaliacaoController extends Controller
                 ->firstOrFail();
 
         } elseif ($user->categoria === 'sec') {
+            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
             // Secretaria pode passar o membro via query string
             $membroId  = request('membro');
             $avaliacao = BancaAvaliacao::where('banca_id', $banca->id)
@@ -504,6 +505,10 @@ class AvaliacaoController extends Controller
     {
         if (! in_array(auth()->user()->categoria, ['sec', 'docente'])) {
             abort(403);
+        }
+
+        if (auth()->user()->categoria === 'sec') {
+            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
         }
 
         // Orientador também pode ver
@@ -568,6 +573,8 @@ class AvaliacaoController extends Controller
         $user = auth()->user();
 
         if ($user->categoria === 'sec') {
+            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
+
             return;
         }
 
