@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BaseConhecimentoChunk;
+use App\Models\ProgramaDocumentoReferencia;
+
 class IndexacaoBaseConhecimentoService
 {
     public function __construct(private readonly EmbeddingOllamaService $embeddings)
@@ -46,5 +49,50 @@ class IndexacaoBaseConhecimentoService
         }
 
         return $chunks;
+    }
+
+    /**
+     * Quebra, embeda e persiste os chunks de um documento de referência,
+     * substituindo os chunks anteriores daquele documento. Lança
+     * RuntimeException se nenhum trecho puder ser indexado (PDF sem texto
+     * extraível, ou 100% das chamadas de embedding falhando).
+     *
+     * @param array<int, string> $textosPorPagina
+     */
+    public function indexar(ProgramaDocumentoReferencia $documento, array $textosPorPagina): void
+    {
+        $chunks = $this->chunkar($textosPorPagina);
+
+        if (empty($chunks)) {
+            throw new \RuntimeException('Nenhum texto extraível foi encontrado no PDF.');
+        }
+
+        BaseConhecimentoChunk::where('programa_documento_referencia_id', $documento->id)->delete();
+
+        $indexados = 0;
+
+        foreach ($chunks as $chunk) {
+            try {
+                $embedding = $this->embeddings->embedder($chunk['conteudo']);
+
+                BaseConhecimentoChunk::create([
+                    'programa_documento_referencia_id' => $documento->id,
+                    'programa_id' => $documento->programa_id,
+                    'tipo' => $documento->tipo,
+                    'pagina' => $chunk['pagina'],
+                    'ordem' => $chunk['ordem'],
+                    'conteudo' => $chunk['conteudo'],
+                    'embedding' => $embedding,
+                ]);
+
+                $indexados++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        if ($indexados === 0) {
+            throw new \RuntimeException('Nenhum trecho pôde ser indexado (falha ao gerar embeddings).');
+        }
     }
 }
