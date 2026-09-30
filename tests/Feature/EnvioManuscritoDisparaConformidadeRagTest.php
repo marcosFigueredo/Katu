@@ -6,9 +6,11 @@ use App\Jobs\AnalisarConformidadeRagJob;
 use App\Models\Banca;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
+use App\Models\DocumentoConformidadeRag;
 use App\Models\Programa;
 use App\Models\ProgramaDocumentoReferencia;
 use App\Models\TrabalhoAcademico;
+use App\Models\TrabalhoDocumento;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -56,10 +58,32 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
             'titulo' => 'Título do trabalho',
             'resumo' => 'Resumo do trabalho.',
             'palavras_chave' => 'a, b, c',
-            'pdf' => UploadedFile::fake()->create('trabalho.pdf', 100, 'application/pdf'),
+            'pdf' => UploadedFile::fake()->createWithContent('trabalho.pdf', file_get_contents(base_path('docs/dissertacao.pdf'))),
         ]);
 
         Queue::assertPushed(AnalisarConformidadeRagJob::class);
+    }
+
+    public function test_nao_despacha_job_quando_analise_do_pdf_falha(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        [$discente, $programa] = $this->discenteComBancaLiberada();
+        ProgramaDocumentoReferencia::create([
+            'programa_id' => $programa->id, 'tipo' => 'normas',
+            'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'concluido',
+        ]);
+
+        // Conteúdo sem cabeçalho %PDF- válido: a análise estrutural marca status_geral = falha.
+        $this->actingAs($discente)->post(route('meu-trabalho.store'), [
+            'tipo_documento' => 'qualificacao',
+            'titulo' => 'Título do trabalho',
+            'resumo' => 'Resumo do trabalho.',
+            'palavras_chave' => 'a, b, c',
+            'pdf' => UploadedFile::fake()->create('trabalho.pdf', 100, 'application/pdf'),
+        ]);
+
+        Queue::assertNotPushed(AnalisarConformidadeRagJob::class);
     }
 
     public function test_nao_despacha_job_quando_programa_nao_tem_normas_indexadas(): void
@@ -103,5 +127,31 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
         $response->assertSessionDoesntHaveErrors();
         $this->assertDatabaseCount('trabalho_documentos', 1);
         Queue::assertNotPushed(AnalisarConformidadeRagJob::class);
+    }
+
+    public function test_cria_as_quatro_verificacoes_como_processando_imediatamente_apos_o_envio(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        [$discente, $programa] = $this->discenteComBancaLiberada();
+        ProgramaDocumentoReferencia::create([
+            'programa_id' => $programa->id, 'tipo' => 'normas',
+            'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'concluido',
+        ]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.store'), [
+            'tipo_documento' => 'qualificacao',
+            'titulo' => 'Título do trabalho',
+            'resumo' => 'Resumo do trabalho.',
+            'palavras_chave' => 'a, b, c',
+            'pdf' => UploadedFile::fake()->createWithContent('trabalho.pdf', file_get_contents(base_path('docs/dissertacao.pdf'))),
+        ]);
+
+        // Job não roda (Queue::fake), mas as 4 linhas já devem existir para a tela mostrar "processando".
+        $documento = TrabalhoDocumento::firstOrFail();
+        $analise = $documento->analises()->firstOrFail();
+        $registros = DocumentoConformidadeRag::where('documento_analise_id', $analise->id)->get();
+        $this->assertCount(4, $registros);
+        $this->assertTrue($registros->every(fn ($r) => $r->status === 'processando'));
     }
 }

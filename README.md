@@ -144,11 +144,16 @@ QUEUE_CONNECTION=database   # jobs processados pelo banco; use redis em produç�
 
 ```env
 OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b     # modelo instalado localmente
+OLLAMA_MODEL=qwen2.5:7b            # geração de texto (resumo, conformidade RAG)
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text   # embeddings do RAG de conformidade do manuscrito
 OLLAMA_TIMEOUT=120
 ```
 
-> Instale o Ollama em <https://ollama.com> e baixe o modelo: `ollama pull qwen2.5:7b`
+> Instale o Ollama em <https://ollama.com> e baixe os modelos: `ollama pull qwen2.5:7b` e `ollama pull nomic-embed-text`.
+>
+> O RAG de conformidade do manuscrito (`IndexarBaseConhecimentoJob`, `AnalisarConformidadeRagJob`) só funciona com um **worker de fila rodando** (`php artisan queue:listen` ou `queue:work`, incluído no `composer dev`) — diferente da avaliação do resumo, que é disparada por AJAX do navegador. Sem worker, os documentos de referência da Secretaria ficam presos em "Pendente"/"Indexando…" e a conformidade do manuscrito nunca é calculada (a análise estrutural e o resumo continuam funcionando normalmente).
+>
+> Esses dois jobs esperam até `OLLAMA_TIMEOUT` segundos por chamada e podem fazer várias chamadas em sequência (um documento de normas inteiro, ou até 4 verificações por manuscrito). Se o worker de fila usar `QUEUE_CONNECTION=database`, aumente `DB_QUEUE_RETRY_AFTER` (ou o `retry_after` da conexão) para um valor maior que `$timeout` dos jobs — caso contrário a fila pode reenfileirar um job que só está demorando, não travado.
 
 ### Armazenamento de arquivos
 

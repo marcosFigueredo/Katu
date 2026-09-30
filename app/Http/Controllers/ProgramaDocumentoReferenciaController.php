@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\IndexarBaseConhecimentoJob;
+use App\Models\BaseConhecimentoChunk;
 use App\Models\ProgramaDocumentoReferencia;
 use App\Services\ContextoSecretaria;
 use Illuminate\Http\Request;
@@ -75,6 +76,10 @@ class ProgramaDocumentoReferenciaController extends Controller
                 'erro_indexacao' => null,
             ]
         );
+
+        // Apaga os chunks da versão anterior imediatamente, para que nenhuma
+        // análise use conteúdo obsoleto enquanto a reindexação não termina.
+        BaseConhecimentoChunk::where('programa_documento_referencia_id', $documento->id)->delete();
 
         IndexarBaseConhecimentoJob::dispatch($documento);
 

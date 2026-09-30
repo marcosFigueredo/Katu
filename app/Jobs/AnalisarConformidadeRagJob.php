@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
+use Throwable;
 
 class AnalisarConformidadeRagJob implements ShouldQueue
 {
@@ -18,6 +19,7 @@ class AnalisarConformidadeRagJob implements ShouldQueue
 
     public int $timeout = 300;
     public int $tries = 1;
+    public bool $deleteWhenMissingModels = true;
 
     public function __construct(private readonly DocumentoAnalise $analise)
     {
@@ -25,23 +27,39 @@ class AnalisarConformidadeRagJob implements ShouldQueue
 
     public function handle(ConformidadeNormasService $service): void
     {
-        $documento = $this->analise->trabalhoDocumento;
-        $documento->load('trabalhoAcademico');
+        try {
+            $documento = $this->analise->trabalhoDocumento;
+            $documento->load('trabalhoAcademico');
 
-        $programaId = $documento->trabalhoAcademico?->programa_id;
+            $programaId = $documento->trabalhoAcademico?->programa_id;
 
-        if (! $programaId) {
-            return;
+            if (! $programaId) {
+                return;
+            }
+
+            $caminhoPdf = Storage::disk('local')->path($documento->arquivo_pdf_path);
+            $paginas = (new Parser())->parseFile($caminhoPdf)->getPages();
+
+            $textosPorPagina = [];
+            foreach ($paginas as $i => $pagina) {
+                $textosPorPagina[$i + 1] = trim($pagina->getText());
+            }
+
+            $service->analisar($this->analise, $programaId, $textosPorPagina);
+        } catch (Throwable $e) {
+            $service->marcarTodasComoFalhou($this->analise, 'Não foi possível analisar o manuscrito: ' . $e->getMessage());
         }
+    }
 
-        $caminhoPdf = Storage::disk('local')->path($documento->arquivo_pdf_path);
-        $paginas = (new Parser())->parseFile($caminhoPdf)->getPages();
-
-        $textosPorPagina = [];
-        foreach ($paginas as $i => $pagina) {
-            $textosPorPagina[$i + 1] = trim($pagina->getText());
-        }
-
-        $service->analisar($this->analise, $programaId, $textosPorPagina);
+    /**
+     * Chamado pela fila quando o job falha de vez (timeout do processo, todas
+     * as tentativas esgotadas) — cenário que não passa pelo catch de handle().
+     */
+    public function failed(?Throwable $exception): void
+    {
+        app(ConformidadeNormasService::class)->marcarTodasComoFalhou(
+            $this->analise,
+            'Falha ao processar a análise: ' . ($exception?->getMessage() ?? 'tempo limite excedido.'),
+        );
     }
 }

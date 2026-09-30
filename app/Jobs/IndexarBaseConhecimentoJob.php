@@ -19,6 +19,7 @@ class IndexarBaseConhecimentoJob implements ShouldQueue
 
     public int $timeout = 600;
     public int $tries = 1;
+    public bool $deleteWhenMissingModels = true;
 
     public function __construct(private readonly ProgramaDocumentoReferencia $documento)
     {
@@ -50,5 +51,21 @@ class IndexarBaseConhecimentoJob implements ShouldQueue
                 'erro_indexacao' => mb_substr($e->getMessage(), 0, 500),
             ]);
         }
+    }
+
+    /**
+     * Chamado pela fila quando o job falha de vez (timeout do processo, todas
+     * as tentativas esgotadas) — cenário que não passa pelo catch de handle().
+     */
+    public function failed(?Throwable $exception): void
+    {
+        $this->documento->update([
+            'status_indexacao' => 'falhou',
+            'erro_indexacao' => mb_substr(
+                'Falha ao indexar: ' . ($exception?->getMessage() ?? 'tempo limite excedido.'),
+                0,
+                500,
+            ),
+        ]);
     }
 }

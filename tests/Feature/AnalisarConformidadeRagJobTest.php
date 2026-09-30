@@ -68,4 +68,34 @@ class AnalisarConformidadeRagJobTest extends TestCase
 
         $this->assertCount(4, DocumentoConformidadeRag::where('documento_analise_id', $analise->id)->get());
     }
+
+    public function test_job_nao_lanca_excecao_e_marca_falhou_quando_pdf_nao_pode_ser_lido(): void
+    {
+        Storage::fake('local');
+
+        $programa = Programa::create(['nome' => 'PPG']);
+        $discente = User::factory()->discente()->create();
+        $profile = DiscenteProfile::create(['user_id' => $discente->id, 'ativo' => true]);
+        $vinculo = DiscenteProgramaVinculo::create([
+            'programa_id' => $programa->id, 'discente_profile_id' => $profile->id,
+            'nivel' => 'mestrado', 'status' => 'ativo', 'ativo' => true,
+        ]);
+        $trabalho = TrabalhoAcademico::create([
+            'programa_id' => $programa->id, 'discente_programa_vinculo_id' => $vinculo->id,
+            'nivel' => 'mestrado', 'status' => 'em_andamento',
+        ]);
+        $caminhoPdf = 'trabalhos/' . $trabalho->id . '/manuscrito.pdf';
+        Storage::disk('local')->put($caminhoPdf, 'isto nao e um pdf valido');
+        $documento = TrabalhoDocumento::create([
+            'trabalho_academico_id' => $trabalho->id, 'tipo_documento' => 'qualificacao', 'versao' => 1,
+            'arquivo_pdf_path' => $caminhoPdf, 'arquivo_pdf_nome_original' => 'manuscrito.pdf', 'status_analise' => 'concluida',
+        ]);
+        $analise = DocumentoAnalise::create(['trabalho_documento_id' => $documento->id]);
+
+        (new AnalisarConformidadeRagJob($analise))->handle(app(ConformidadeNormasService::class));
+
+        $registros = DocumentoConformidadeRag::where('documento_analise_id', $analise->id)->get();
+        $this->assertCount(4, $registros);
+        $this->assertTrue($registros->every(fn ($r) => $r->status === 'falhou'));
+    }
 }

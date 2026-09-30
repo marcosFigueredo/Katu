@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\IndexarBaseConhecimentoJob;
+use App\Models\BaseConhecimentoChunk;
 use App\Models\Programa;
 use App\Models\ProgramaDocumentoReferencia;
 use App\Models\User;
@@ -67,6 +68,35 @@ class ProgramaDocumentoReferenciaControllerTest extends TestCase
         $this->assertSame('v2.pdf', $atual->arquivo_nome_original);
         $this->assertSame($caminhoAntigo, $atual->arquivo_path);
         Storage::disk('local')->assertExists($atual->arquivo_path);
+    }
+
+    public function test_reenviar_documento_apaga_chunks_antigos_imediatamente(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        [$sec, $programa] = $this->secretariaComPrograma();
+
+        $this->actingAs($sec)->post(route('programa-documentos-referencia.store'), [
+            'tipo' => 'normas',
+            'arquivo' => UploadedFile::fake()->create('v1.pdf', 100, 'application/pdf'),
+        ]);
+        $documento = ProgramaDocumentoReferencia::firstOrFail();
+        BaseConhecimentoChunk::create([
+            'programa_documento_referencia_id' => $documento->id,
+            'programa_id' => $programa->id,
+            'tipo' => 'normas',
+            'pagina' => 1,
+            'ordem' => 0,
+            'conteudo' => 'Trecho da versão anterior.',
+            'embedding' => [0.1],
+        ]);
+
+        $this->actingAs($sec)->post(route('programa-documentos-referencia.store'), [
+            'tipo' => 'normas',
+            'arquivo' => UploadedFile::fake()->create('v2.pdf', 100, 'application/pdf'),
+        ]);
+
+        $this->assertSame(0, BaseConhecimentoChunk::where('programa_documento_referencia_id', $documento->id)->count());
     }
 
     public function test_arquivo_nao_pdf_e_recusado(): void

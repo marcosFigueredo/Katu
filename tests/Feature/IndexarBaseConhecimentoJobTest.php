@@ -62,4 +62,16 @@ class IndexarBaseConhecimentoJobTest extends TestCase
         $this->assertNotNull($documento->erro_indexacao);
         $this->assertSame(0, BaseConhecimentoChunk::where('programa_documento_referencia_id', $documento->id)->count());
     }
+
+    public function test_failed_marca_documento_como_falhou_quando_o_job_e_matado_pela_fila(): void
+    {
+        $documento = $this->documentoComPdfReal();
+        $documento->update(['status_indexacao' => 'processando']);
+
+        (new IndexarBaseConhecimentoJob($documento))->failed(new \RuntimeException('tempo limite excedido'));
+
+        $documento->refresh();
+        $this->assertSame('falhou', $documento->status_indexacao);
+        $this->assertStringContainsString('tempo limite excedido', $documento->erro_indexacao);
+    }
 }

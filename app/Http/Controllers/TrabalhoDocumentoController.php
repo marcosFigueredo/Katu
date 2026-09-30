@@ -9,6 +9,7 @@ use App\Models\ProgramaDocumentoReferencia;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
 use App\Services\ArquivoTrabalhoService;
+use App\Services\ConformidadeNormasService;
 use App\Services\DocumentoAnaliseService;
 use App\Services\OllamaResumoService;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,7 @@ class TrabalhoDocumentoController extends Controller
         private readonly ArquivoTrabalhoService $arquivoService,
         private readonly DocumentoAnaliseService $analiseService,
         private readonly OllamaResumoService $ollamaService,
+        private readonly ConformidadeNormasService $conformidadeService,
     ) {}
 
     public function index()
@@ -148,12 +150,14 @@ class TrabalhoDocumentoController extends Controller
 
         $analise = $this->analiseService->analisar($documento);
 
-        $normasIndexadas = ProgramaDocumentoReferencia::where('programa_id', $trabalho->programa_id)
-            ->where('tipo', 'normas')
-            ->where('status_indexacao', 'concluido')
-            ->exists();
+        $normasIndexadas = $analise->status_geral !== 'falha'
+            && ProgramaDocumentoReferencia::where('programa_id', $trabalho->programa_id)
+                ->where('tipo', 'normas')
+                ->where('status_indexacao', 'concluido')
+                ->exists();
 
         if ($normasIndexadas) {
+            $this->conformidadeService->iniciar($analise);
             AnalisarConformidadeRagJob::dispatch($analise);
         }
 
