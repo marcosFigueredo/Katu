@@ -59,4 +59,9 @@ class DocumentoAnalise extends Model
     {
         return $this->hasOne(DocumentoAnaliseOllama::class, 'documento_analise_id');
     }
+
+    public function conformidadeRag()
+    {
+        return $this->hasMany(DocumentoConformidadeRag::class, 'documento_analise_id');
+    }
 }
