@@ -173,6 +173,8 @@ O campo `categoria` na tabela `users` controla o acesso:
 
 O primeiro acesso de cada usuário é feito via link enviado por e-mail pela secretaria, que exige troca imediata de senha.
 
+Para desenvolvimento e homologação há usuários de teste de todos os perfis (senha `uneb@123`), criados com `php artisan db:seed --class=CenarioTesteSeeder`. Lista completa e roteiro de testes em [docs/superpowers/operacao-fluxo-secretaria.md](docs/superpowers/operacao-fluxo-secretaria.md#usuários-de-teste).
+
 ---
 
 ## Módulos do sistema

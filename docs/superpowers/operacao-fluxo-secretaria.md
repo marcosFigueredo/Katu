@@ -50,6 +50,50 @@ Cada usuário Secretaria administra **um único programa**, ligado a uma institu
 
 Com a fila em `database`, mantenha `php artisan queue:listen` (ou um worker) rodando para que os e-mails da importação sejam enviados.
 
+## Usuários de teste
+
+Somente para desenvolvimento e homologação — **não rode em produção**. O seeder usa o programa `PPGMSB` já cadastrado (sem alterar seus dados, áreas ou linhas), cria o curso Mestrado Acadêmico se ele não existir e um segundo programa (`PPGTI`, na UFBA) para testar o isolamento entre Secretarias. Pode ser executado várias vezes sem duplicar registros.
+
+```powershell
+php artisan db:seed --class=CenarioTesteSeeder
+```
+
+Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
+
+### Secretaria
+
+| E-mail | Para testar |
+| --- | --- |
+| `secretaria@ppgmsb.test` | Secretaria principal do PPGMSB |
+| `secretaria2@ppgmsb.test` | Segunda Secretaria do mesmo programa |
+| `secretaria.outro@ppgmsb.test` | Secretaria de outro programa (PPGTI/UFBA) — não deve ver nada do PPGMSB |
+
+### Docentes do PPGMSB
+
+| E-mail | Perfil |
+| --- | --- |
+| `permanente1@ppgmsb.test` | Permanente, UNEB — orienta e avalia |
+| `permanente2@ppgmsb.test` | Permanente, UNEB — orienta e avalia |
+| `colaborador@ppgmsb.test` | Colaboradora, UNEB — orienta e avalia |
+| `externo.ufba@ppgmsb.test` | Externo, UFBA — só avalia |
+| `externo.usp@ppgmsb.test` | Externa, USP — só avalia |
+
+### Discentes (Mestrado Acadêmico)
+
+| E-mail | Situação |
+| --- | --- |
+| `discente.completo@ppgmsb.test` | Com ORCID; orientadora Permanente Um e coorientador Permanente Dois — banca pode ser cadastrada |
+| `discente.sem.orcid@ppgmsb.test` | Com orientador e **sem ORCID** — cadastro de banca deve ser recusado até ele informar o ORCID em Meu perfil |
+| `discente.sem.orientador@ppgmsb.test` | Com ORCID e sem orientador — para testar Orientações |
+| `discente.outro@ppgmsb.test` | Aluno do programa PPGTI — não deve aparecer para a Secretaria do PPGMSB |
+
+### Roteiro sugerido
+
+1. Como Secretaria, defina coordenador e vice no Programa (as permanentes aparecem na lista).
+2. Cadastre banca para o discente sem ORCID e confira a recusa; entre como ele, informe o ORCID em **Meu perfil** e tente de novo.
+3. Entre como `secretaria.outro@ppgmsb.test` e confirme que usuários, bancas e relatórios do PPGMSB não aparecem.
+4. Importe discentes por CSV (**Usuários → Importar discentes**) e confira os e-mails de primeiro acesso em `storage/logs/laravel.log` (com `MAIL_MAILER=log` e a fila rodando).
+
 ## Verificação antes de disponibilizar
 
 ```powershell
