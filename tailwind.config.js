@@ -17,5 +17,12 @@ export default {
         },
     },
 
+    corePlugins: {
+        // Desativado: a utilitária .collapse do Tailwind (visibility: collapse)
+        // colide com a classe .collapse do componente de accordion do Bootstrap,
+        // tornando o conteúdo expandido invisível mesmo com o espaço reservado.
+        visibility: false,
+    },
+
     plugins: [forms],
 };
