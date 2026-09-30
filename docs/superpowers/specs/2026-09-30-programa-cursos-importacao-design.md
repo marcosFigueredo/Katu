@@ -24,7 +24,22 @@ Hoje `instituicoes.logo_path` é sempre gravado como `images/logoUneb.png` e a a
 - **Programa**: nova coluna `programas.logo_path`, upload opcional com as mesmas regras.
 - **Armazenamento**: `storage/app/private/logos/`, com nome gerado pelo sistema; o arquivo anterior é apagado ao substituir. Servido por rota autenticada (`instituicao.logo`, `programas.logo`), sem depender de `storage:link`.
 - **Uso**: a ata (`avaliacoes.ata`) e a tela da instituição passam a exibir os logotipos cadastrados; sem logotipo do programa, a ata mostra só o da instituição. Os logos de marca do sistema (login, sidebar) não mudam.
-- A instituição continua única no sistema (a instituição sede); `programas.instituicao_id` aponta para ela.
+- A tela da instituição passa a mostrar a instituição **do programa da Secretaria logada**, e não mais `Instituicao::first()`.
+
+## 0.1 Uma Secretaria, um programa, uma instituição
+
+Regra: **cada usuário Secretaria administra um único programa de pós-graduação, e cada programa pertence a uma única instituição.** Uma instituição pode abrigar vários programas (ex.: vários PPGs da UNEB), cada um com sua Secretaria.
+
+Hoje nada disso é garantido: `ProgramaController` permite criar vários programas, não vincula o programa criado à Secretaria e lista/edita qualquer programa; a instituição é tratada como única no sistema.
+
+- **Vínculo**: o programa da Secretaria é o seu `programa_usuarios` ativo com `categoria_no_programa = secretaria`. Um usuário Secretaria pode ter **no máximo um** vínculo ativo desse tipo (garantido na aplicação e por validação no cadastro de usuários).
+- **Criação do programa**: só é permitida à Secretaria **sem** programa; ao salvar, o vínculo `programa_usuarios` é criado na mesma transação. Secretaria que já tem programa é redirecionada para a edição do seu programa.
+- **Instituição obrigatória**: `programas.instituicao_id` passa a ser **obrigatório** no formulário. A Secretaria escolhe uma instituição já cadastrada (busca por nome/sigla) ou cadastra uma nova ali mesmo (nome, sigla e logotipo obrigatórios).
+- **Isolamento**: a Secretaria só vê e edita o **seu** programa e a instituição **do seu programa**; qualquer outro `programa`/`instituicao` na URL retorna 403. `programas.index` deixa de listar todos os programas.
+- **Instituição compartilhada**: pode ser editada pela Secretaria de qualquer programa vinculado a ela.
+- **Várias Secretarias por programa**: permitido (ex.: duas servidoras da mesma secretaria). Um usuário Secretaria cadastrado por outra herda o mesmo programa (comportamento atual de `UsuarioController`).
+- **Migração**: se já existir exatamente um programa e uma instituição, o programa é vinculado a ela e as Secretarias sem programa são vinculadas a ele; nos demais casos, a Secretaria sem programa é levada à tela de criação no próximo acesso.
+- **Varredura**: o plano inclui revisar as telas da Secretaria (usuários, orientações, bancas, baremas, critérios CPA, membros externos, relatórios) para garantir que todas filtram pelo programa da Secretaria logada.
 
 ## 1. Dados completos do programa
 
@@ -32,7 +47,7 @@ Novas colunas em `programas`:
 
 | Coluna | Tipo | Regra |
 | --- | --- | --- |
-| `instituicao_id` | FK `instituicoes`, nullable | instituição sede do programa |
+| `instituicao_id` | FK `instituicoes` (nullable no banco só para a migração) | obrigatório no formulário; ver 0.1 |
 | `conceito_capes` | tinyint, nullable | 1 a 7 |
 | `ano_inicio` | smallint, nullable | 4 dígitos, até o ano corrente |
 | `coordenador_id` | FK `users`, nullable | docente ativo com vínculo permanente ativo no programa |
@@ -147,6 +162,7 @@ Todas as rotas novas ficam sob `['auth', 'verified']` e verificam `categoria ===
 ## Critérios de aceite
 
 0. A instituição não pode ser cadastrada sem logotipo; o logotipo (e o do programa, se houver) aparece na ata; arquivos inválidos (tipo/tamanho) são recusados.
+0.1. Uma Secretaria sem programa cria exatamente um programa, obrigatoriamente vinculado a uma instituição; ao tentar criar outro, é redirecionada ao seu. A Secretaria recebe 403 ao acessar programa ou instituição de outro programa, e as telas da Secretaria só mostram dados do seu programa.
 1. A Secretaria edita instituição, conceito CAPES, ano de início, coordenador e vice; coordenador ≠ vice e ambos permanentes no programa.
 2. A Secretaria cria, edita e inativa cursos; não é possível duplicar nível+modalidade no programa; `oferta_*` refletem os cursos ativos.
 3. Cada curso tem regras de banca para qualificação e defesa editáveis, com externos ≤ avaliadores.
