@@ -190,6 +190,10 @@ class TrabalhoDocumentoController extends Controller
             abort(403);
         }
 
+        if (blank($usuario->discenteProfile?->orcid_url)) {
+            return back()->withErrors(['orcid' => 'Informe seu ORCID no seu cadastro antes de enviar o trabalho para a banca.']);
+        }
+
         $documento->load('trabalhoAcademico.discenteVinculo.discenteProfile.user');
 
         $banca = $trabalho->bancas
@@ -236,7 +240,7 @@ class TrabalhoDocumentoController extends Controller
         }
 
         // Só roda se ainda estiver pendente
-        $analise->load(['ollama', 'trabalhoDocumento.trabalhoAcademico']);
+        $analise->load(['ollama', 'trabalhoDocumento.trabalhoAcademico.linhaPesquisa.areaConcentracao']);
         if ($analise->ollama?->status !== 'processando') {
             return response()->json(['status' => $analise->ollama?->status ?? 'nao_iniciado']);
         }
@@ -255,6 +259,7 @@ class TrabalhoDocumentoController extends Controller
             $textosPorPagina,
             $documento->trabalhoAcademico?->resumo,
             $documento->trabalhoAcademico?->palavras_chave,
+            $documento->trabalhoAcademico?->linhaPesquisa,
         );
 
         return response()->json(['status' => 'concluida']);

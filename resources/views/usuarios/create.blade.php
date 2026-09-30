@@ -169,15 +169,17 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="nivel" class="form-label fw-semibold">Nível</label>
-                                <select id="nivel" name="nivel" class="form-select">
-                                    <option value="mestrado" {{ old('nivel', 'mestrado') === 'mestrado' ? 'selected' : '' }}>
-                                        Mestrado
-                                    </option>
-                                    <option value="doutorado" {{ old('nivel') === 'doutorado' ? 'selected' : '' }}>
-                                        Doutorado
-                                    </option>
+                                <label for="programa_curso_id" class="form-label fw-semibold">Curso</label>
+                                <select id="programa_curso_id" name="programa_curso_id" class="form-select">
+                                    <option value="">Selecione…</option>
+                                    @foreach ($cursos as $curso)
+                                        <option value="{{ $curso->id }}" @selected(old('programa_curso_id') == $curso->id)>{{ $curso->nome }}</option>
+                                    @endforeach
                                 </select>
+                                @if ($cursos->isEmpty())
+                                    <div class="form-text text-danger">Cadastre os cursos do programa antes de cadastrar discentes.</div>
+                                @endif
+                                @error('programa_curso_id')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
 
                             <div class="col-md-12">
@@ -253,14 +255,14 @@
                     <div class="row g-3">
 
                         <div class="col-md-6">
-                            <label for="lattes_url" class="form-label fw-semibold">Currículo Lattes</label>
+                            <label for="lattes_url" class="form-label fw-semibold">Currículo Lattes <small class="text-muted fw-normal">(obrigatório para discente)</small></label>
                             <input type="text" id="lattes_url" name="lattes_url" class="form-control"
                                 value="{{ old('lattes_url') }}"
                                 placeholder="http://lattes.cnpq.br/0000000000000000">
                         </div>
 
                         <div id="campo-orcid" class="col-md-6">
-                            <label for="orcid_url" class="form-label fw-semibold">ORCID</label>
+                            <label for="orcid_url" class="form-label fw-semibold">ORCID <small class="text-muted fw-normal">(obrigatório para docente; o discente pode informar no próprio cadastro)</small></label>
                             <input type="text" id="orcid_url" name="orcid_url" class="form-control"
                                 value="{{ old('orcid_url') }}"
                                 placeholder="https://orcid.org/0000-0000-0000-0000">
@@ -330,9 +332,9 @@
                 categoria !== 'docente' || tipoVinculo !== 'interno'
             );
 
-            const orcidObrigatorio = categoria !== '' && categoria !== 'sec';
             document.getElementById('campo-orcid').classList.toggle('d-none', categoria === 'sec');
-            document.getElementById('orcid_url').required = orcidObrigatorio;
+            document.getElementById('orcid_url').required = categoria === 'docente';
+            document.getElementById('lattes_url').required = categoria === 'discente';
         }
 
         document.getElementById('categoria').addEventListener('change', atualizarBlocosUsuario);

@@ -9,6 +9,7 @@ use App\Models\DocenteProfile;
 use App\Models\DocenteProgramaVinculo;
 use App\Models\LinhaPesquisa;
 use App\Models\Programa;
+use App\Models\ProgramaCurso;
 use App\Models\ProgramaUsuario;
 use App\Models\TrabalhoAcademico;
 use App\Models\User;
@@ -61,9 +62,8 @@ class UsuarioController extends Controller
         if (($dados['categoria'] ?? null) === 'discente') {
             $camposObrigatorios = array_merge($camposObrigatorios, [
                 'matricula',
-                'nivel',
-                'linha_pesquisa_id',
-                'orcid_url',
+                'programa_curso_id',
+                'lattes_url',
             ]);
         }
 
@@ -106,7 +106,9 @@ class UsuarioController extends Controller
             ->orderBy('nome')
             ->get();
 
-        return view('usuarios.create', compact('programaAtual', 'linhasPesquisa'));
+        $cursos = $programaAtual?->cursos()->where('ativo', true)->get() ?? collect();
+
+        return view('usuarios.create', compact('programaAtual', 'linhasPesquisa', 'cursos'));
     }
 
     public function store(Request $request)
@@ -144,6 +146,7 @@ class UsuarioController extends Controller
             'pais' => ['nullable', 'string', 'max:255'],
 
             'lattes_url' => [
+                'required_if:categoria,discente',
                 'nullable',
                 'string',
                 'max:255',
@@ -151,7 +154,7 @@ class UsuarioController extends Controller
             ],
 
             'orcid_url' => [
-                'required_unless:categoria,sec',
+                'required_if:categoria,docente',
                 'nullable',
                 'string',
                 'max:255',
@@ -164,12 +167,21 @@ class UsuarioController extends Controller
             'categoria_docente' => ['nullable', Rule::in(['permanente', 'colaborador', 'visitante'])],
 
             'matricula' => ['nullable', 'string', 'max:255'],
-            'nivel' => ['nullable', Rule::in(['mestrado', 'doutorado'])],
+            'programa_curso_id' => [
+                'required_if:categoria,discente',
+                'nullable',
+                Rule::exists('programa_cursos', 'id')->where(fn ($q) => $q
+                    ->where('programa_id', $programaAtual?->id)
+                    ->where('ativo', true)),
+            ],
             'linha_pesquisa_id' => ['nullable', 'exists:linhas_pesquisa,id'],
             'data_ingresso' => ['nullable', 'date'],
         ], [
             'lattes_url.regex' => 'Informe uma URL válida do Lattes. Exemplo: http://lattes.cnpq.br/1234567890123456',
-            'orcid_url.required_unless' => 'O ORCID é obrigatório para docentes e discentes.',
+            'orcid_url.required_if' => 'O ORCID é obrigatório para docentes.',
+            'lattes_url.required_if' => 'O Lattes é obrigatório para discentes.',
+            'programa_curso_id.required_if' => 'Selecione o curso do discente.',
+            'programa_curso_id.exists' => 'Selecione um curso ativo do programa.',
             'orcid_url.regex' => 'Informe uma URL válida do ORCID. Exemplo: https://orcid.org/0000-0000-0000-0000',
         ]);
 
@@ -231,6 +243,7 @@ class UsuarioController extends Controller
             }
 
             if ($dados['categoria'] === 'discente') {
+                $curso = ProgramaCurso::find($dados['programa_curso_id'] ?? null);
                 $discenteProfile = DiscenteProfile::create([
                     'user_id' => $usuario->id,
                     'formacao' => $dados['formacao'] ?? null,
@@ -253,7 +266,8 @@ class UsuarioController extends Controller
                         'discente_profile_id' => $discenteProfile->id,
                         'linha_pesquisa_id' => $dados['linha_pesquisa_id'] ?? null,
                         'matricula' => $dados['matricula'] ?? null,
-                        'nivel' => $dados['nivel'] ?? 'mestrado',
+                        'programa_curso_id' => $curso?->id,
+                        'nivel' => $curso?->nivel ?? 'mestrado',
                         'status' => 'ativo',
                         'data_ingresso' => $dados['data_ingresso'] ?? null,
                         'ativo' => true,
@@ -319,7 +333,9 @@ class UsuarioController extends Controller
             ->orderBy('nome')
             ->get();
 
-        return view('usuarios.edit', compact('usuario', 'programaAtual', 'linhasPesquisa'));
+        $cursos = $programaAtual?->cursos()->where('ativo', true)->get() ?? collect();
+
+        return view('usuarios.edit', compact('usuario', 'programaAtual', 'linhasPesquisa', 'cursos'));
     }
 
     public function update(Request $request, User $usuario)
@@ -363,6 +379,7 @@ class UsuarioController extends Controller
             'pais' => ['nullable', 'string', 'max:255'],
 
             'lattes_url' => [
+                'required_if:categoria,discente',
                 'nullable',
                 'string',
                 'max:255',
@@ -370,7 +387,7 @@ class UsuarioController extends Controller
             ],
 
             'orcid_url' => [
-                'required_unless:categoria,sec',
+                'required_if:categoria,docente',
                 'nullable',
                 'string',
                 'max:255',
@@ -383,12 +400,21 @@ class UsuarioController extends Controller
             'categoria_docente' => ['nullable', Rule::in(['permanente', 'colaborador', 'visitante'])],
 
             'matricula' => ['nullable', 'string', 'max:255'],
-            'nivel' => ['nullable', Rule::in(['mestrado', 'doutorado'])],
+            'programa_curso_id' => [
+                'required_if:categoria,discente',
+                'nullable',
+                Rule::exists('programa_cursos', 'id')->where(fn ($q) => $q
+                    ->where('programa_id', $programaAtual?->id)
+                    ->where('ativo', true)),
+            ],
             'linha_pesquisa_id' => ['nullable', 'exists:linhas_pesquisa,id'],
             'data_ingresso' => ['nullable', 'date'],
         ], [
             'lattes_url.regex' => 'Informe uma URL válida do Lattes. Exemplo: http://lattes.cnpq.br/1234567890123456',
-            'orcid_url.required_unless' => 'O ORCID é obrigatório para docentes e discentes.',
+            'orcid_url.required_if' => 'O ORCID é obrigatório para docentes.',
+            'lattes_url.required_if' => 'O Lattes é obrigatório para discentes.',
+            'programa_curso_id.required_if' => 'Selecione o curso do discente.',
+            'programa_curso_id.exists' => 'Selecione um curso ativo do programa.',
             'orcid_url.regex' => 'Informe uma URL válida do ORCID. Exemplo: https://orcid.org/0000-0000-0000-0000',
         ]);
 
@@ -451,13 +477,14 @@ class UsuarioController extends Controller
             }
 
             if ($dados['categoria'] === 'discente') {
+                $curso = ProgramaCurso::find($dados['programa_curso_id'] ?? null);
                 $discenteProfile = DiscenteProfile::updateOrCreate([
                     'user_id' => $usuario->id,
                 ], [
                     'formacao' => $dados['formacao'] ?? null,
                     'instituicao_formacao' => $dados['instituicao_formacao'] ?? null,
                     'lattes_url' => $dados['lattes_url'] ?? null,
-                    'orcid_url' => $dados['orcid_url'] ?? null,
+                    'orcid_url' => $dados['orcid_url'] ?? $usuario->discenteProfile?->orcid_url,
                     'telefone' => $dados['telefone'] ?? null,
                     'telefone_whatsapp' => $request->boolean('telefone_whatsapp'),
                     'cidade' => $dados['cidade'] ?? null,
@@ -473,7 +500,8 @@ class UsuarioController extends Controller
                     ], [
                         'linha_pesquisa_id' => $dados['linha_pesquisa_id'] ?? null,
                         'matricula' => $dados['matricula'] ?? null,
-                        'nivel' => $dados['nivel'] ?? 'mestrado',
+                        'programa_curso_id' => $curso?->id,
+                        'nivel' => $curso?->nivel ?? 'mestrado',
                         'status' => 'ativo',
                         'data_ingresso' => $dados['data_ingresso'] ?? null,
                         'ativo' => true,

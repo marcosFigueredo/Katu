@@ -47,6 +47,22 @@
             @endif
         </div>
 
+        @if ($user->categoria === 'discente')
+            <div>
+                <x-input-label for="orcid_url" value="ORCID (obrigatório para qualificação e defesa)" />
+                <x-text-input id="orcid_url" name="orcid_url" type="text" class="mt-1 block w-full"
+                    :value="old('orcid_url', $user->discenteProfile?->orcid_url)" placeholder="https://orcid.org/0000-0000-0000-0000" />
+                <x-input-error class="mt-2" :messages="$errors->get('orcid_url')" />
+            </div>
+
+            <div>
+                <x-input-label for="lattes_url" value="Currículo Lattes" />
+                <x-text-input id="lattes_url" name="lattes_url" type="text" class="mt-1 block w-full"
+                    :value="old('lattes_url', $user->discenteProfile?->lattes_url)" placeholder="http://lattes.cnpq.br/1234567890123456" />
+                <x-input-error class="mt-2" :messages="$errors->get('lattes_url')" />
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

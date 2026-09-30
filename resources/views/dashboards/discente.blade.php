@@ -13,6 +13,13 @@
         $bancas   = $trabalho?->bancas ?? collect();
     @endphp
 
+    @if (blank($usuario->discenteProfile?->orcid_url))
+        <div class="alert alert-warning d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>Informe seu ORCID no <a href="{{ route('profile.edit') }}">seu cadastro</a>. Ele é obrigatório para qualificação e defesa.</div>
+        </div>
+    @endif
+
     <div class="container-fluid">
 
         <div class="mb-4">
