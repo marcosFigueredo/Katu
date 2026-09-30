@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PrimeiroAcessoSenhaController;
 use App\Http\Controllers\InstituicaoController;
 use App\Http\Controllers\LogoController;
+use App\Http\Controllers\ProgramaCursoController;
 use App\Http\Controllers\ProgramaController;
 use App\Http\Controllers\AreaConcentracaoController;
 use App\Http\Controllers\LinhaPesquisaController;
@@ -59,6 +60,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/instituicao', [InstituicaoController::class, 'update'])->name('instituicao.update');
     Route::get('/instituicoes/{instituicao}/logo', [LogoController::class, 'instituicao'])->name('instituicoes.logo');
     Route::get('/programas/{programa}/logo', [LogoController::class, 'programa'])->name('programas.logo');
+    Route::get('/programa/cursos', [ProgramaCursoController::class, 'index'])->name('programa-cursos.index');
+    Route::post('/programa/cursos', [ProgramaCursoController::class, 'store'])->name('programa-cursos.store');
+    Route::put('/programa-cursos/{curso}', [ProgramaCursoController::class, 'update'])->name('programa-cursos.update');
+    Route::put('/programa-cursos/{curso}/regras', [ProgramaCursoController::class, 'regras'])->name('programa-cursos.regras');
 });
 
 Route::resource('programas', ProgramaController::class)

@@ -16,7 +16,6 @@
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
 
@@ -109,7 +108,7 @@
                                 Perfil
                             </x-dropdown-link>
 
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" data-no-dirty-check>
                                 @csrf
 
                                 <x-dropdown-link :href="route('logout')"
@@ -210,7 +209,7 @@
 
                     @if (auth()->user()?->categoria === 'sec')
                     @php
-                        $configAberto = request()->routeIs('instituicao.*', 'programas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
+                        $configAberto = request()->routeIs('instituicao.*', 'instituicoes.*', 'programas.*', 'programa-cursos.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
                         $usuariosAberto = request()->routeIs('usuarios.*');
                         $bancasAberto = request()->routeIs('bancas.*', 'orientacoes.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*');
                         $avaliaAberto = request()->routeIs('mabac.*', 'bibliometria.*', 'autoavaliacao.*', 'orientacao-avaliacao.*');
@@ -245,7 +244,14 @@
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
                                       {{ request()->routeIs('programas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-diagram-3-fill" style="font-size: 15px; flex-shrink:0;"></i>
-                                Programas
+                                Programa
+                            </a>
+
+                            <a href="{{ route('programa-cursos.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('programa-cursos.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-mortarboard-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Cursos
                             </a>
 
                         </div>
@@ -458,8 +464,6 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     {{-- Modal: aviso de sessão expirando --}}
     <div class="modal fade" id="modalSessaoExpirando" tabindex="-1"
          data-bs-backdrop="static" data-bs-keyboard="false">
@@ -486,7 +490,7 @@
     </div>
 
     {{-- Formulário oculto para logout --}}
-    <form id="form-logout-automatico" method="POST" action="{{ route('logout') }}" style="display:none;">
+    <form id="form-logout-automatico" method="POST" action="{{ route('logout') }}" style="display:none;" data-no-dirty-check>
         @csrf
     </form>
 

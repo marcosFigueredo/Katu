@@ -188,7 +188,7 @@
         @if ($editando)
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
                 <div class="p-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Cursos</h2>
+                    <div class="flex justify-between items-center mb-3"><h2 class="text-lg font-semibold text-gray-800">Cursos</h2><a href="{{ route('programa-cursos.index') }}" class="text-sm text-indigo-700 underline">Gerenciar cursos e regras de banca</a></div>
                     @forelse ($programa->cursos as $curso)
                         <div class="flex justify-between text-sm border-b py-2">
                             <span>{{ $curso->nome }}</span>
