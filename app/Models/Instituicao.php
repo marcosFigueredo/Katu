@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Instituicao extends Model
 {
@@ -29,5 +30,10 @@ class Instituicao extends Model
         return [
             'ativo' => 'boolean',
         ];
+    }
+
+    public function programas(): HasMany
+    {
+        return $this->hasMany(Programa::class);
     }
 }

@@ -9,6 +9,7 @@ class DiscenteProgramaVinculo extends Model
 {
     protected $fillable = [
         'programa_id',
+        'programa_curso_id',
         'discente_profile_id',
         'linha_pesquisa_id',
         'matricula',
@@ -29,6 +30,11 @@ class DiscenteProgramaVinculo extends Model
     public function programa(): BelongsTo
     {
         return $this->belongsTo(Programa::class);
+    }
+
+    public function programaCurso(): BelongsTo
+    {
+        return $this->belongsTo(ProgramaCurso::class);
     }
 
     public function discenteProfile(): BelongsTo

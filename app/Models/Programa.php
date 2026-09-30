@@ -3,11 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Programa extends Model
 {
     protected $fillable = [
+        'instituicao_id',
+        'conceito_capes',
+        'ano_inicio',
+        'coordenador_id',
+        'vice_coordenador_id',
+        'logo_path',
         'nome',
         'sigla',
         'codigo_capes',
@@ -28,6 +35,26 @@ class Programa extends Model
             'oferta_doutorado' => 'boolean',
             'ativo' => 'boolean',
         ];
+    }
+
+    public function instituicao(): BelongsTo
+    {
+        return $this->belongsTo(Instituicao::class);
+    }
+
+    public function coordenador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coordenador_id');
+    }
+
+    public function viceCoordenador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'vice_coordenador_id');
+    }
+
+    public function cursos(): HasMany
+    {
+        return $this->hasMany(ProgramaCurso::class)->orderBy('nivel')->orderBy('modalidade');
     }
 
     public function areasConcentracao(): HasMany
