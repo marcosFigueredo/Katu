@@ -45,6 +45,7 @@ class InstituicaoLogoTest extends TestCase
 
     public function test_svg_e_arquivo_disfarcado_sao_recusados(): void
     {
+        Storage::fake('local');
         $sec = User::factory()->secretaria()->create();
         $svg = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
         $caminho = tempnam(sys_get_temp_dir(), 'logo');
