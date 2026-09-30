@@ -9,12 +9,16 @@ use Illuminate\Validation\ValidationException;
 
 class HomologacaoBancaService
 {
-    public function __construct(private readonly CriterioCpaService $criterioCpa)
-    {
+    public function __construct(
+        private readonly CriterioCpaService $criterioCpa,
+        private readonly VerificacaoBancaService $verificacao,
+    ) {
     }
 
     public function homologar(Banca $banca, User $responsavel): void
     {
+        $this->verificacao->exigir($this->verificacao->verificarBanca($banca), 'homologacao');
+
         $pendencias = $this->criterioCpa->pendenciasObrigatorias($banca);
 
         if ($pendencias->isNotEmpty()) {

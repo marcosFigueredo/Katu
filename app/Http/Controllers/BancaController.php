@@ -15,9 +15,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use App\Services\VerificacaoBancaService;
 
 class BancaController extends Controller
 {
+    public function __construct(private readonly VerificacaoBancaService $verificacao)
+    {
+    }
+
     private function autorizarSecretaria(): void
     {
         if (auth()->user()->categoria !== 'sec') {
@@ -103,7 +108,7 @@ class BancaController extends Controller
             ]);
         }
 
-        $this->validarComposicao($trabalho, collect($data['avaliadores'] ?? []));
+        $this->validarComposicao($trabalho, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
         $banca = DB::transaction(function () use ($data, $dataHora) {
@@ -171,7 +176,7 @@ class BancaController extends Controller
         $data = $this->validar($request, $banca);
         $banca->load('trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user');
 
-        $this->validarComposicao($banca->trabalhoAcademico, collect($data['avaliadores'] ?? []));
+        $this->validarComposicao($banca->trabalhoAcademico, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
         DB::transaction(function () use ($banca, $data, $dataHora) {
@@ -298,7 +303,7 @@ class BancaController extends Controller
         return Carbon::createFromFormat('d/m/Y H:i', "{$data['data_banca']} {$data['horario_banca']}");
     }
 
-    private function validarComposicao(TrabalhoAcademico $trabalho, Collection $avaliadorIds): void
+    private function validarComposicao(TrabalhoAcademico $trabalho, string $etapa, Collection $avaliadorIds): void
     {
         $orientador = $trabalho->orientacoes->firstWhere('tipo', 'orientador');
 
@@ -330,44 +335,10 @@ class BancaController extends Controller
             ]);
         }
 
-        $internos    = $avaliadores->where('tipo_vinculo', 'interno');
-        $externosUneb = $avaliadores->filter(fn (DocenteProgramaVinculo $v) => $this->externoUneb($v));
-
-        if ($trabalho->nivel === 'mestrado') {
-            if ($avaliadorIds->count() < 2 || $avaliadorIds->count() > 5) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'No mestrado a banca deve ter no mínimo 2 e no máximo 5 avaliadores.',
-                ]);
-            }
-            if ($internos->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'A banca deve ter pelo menos 1 avaliador interno ao PPGMSB.',
-                ]);
-            }
-            if ($externosUneb->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'A banca deve ter pelo menos 1 avaliador externo à UNEB.',
-                ]);
-            }
-        }
-
-        if ($trabalho->nivel === 'doutorado') {
-            if ($avaliadorIds->count() !== 5) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'No doutorado a banca deve ter exatamente 5 avaliadores.',
-                ]);
-            }
-            if ($internos->count() !== 2) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'No doutorado são obrigatórios exatamente 2 avaliadores internos ao PPGMSB.',
-                ]);
-            }
-            if ($externosUneb->count() < 2) {
-                throw ValidationException::withMessages([
-                    'avaliadores' => 'No doutorado são obrigatórios pelo menos 2 avaliadores externos à UNEB.',
-                ]);
-            }
-        }
+        $this->verificacao->exigir(
+            $this->verificacao->verificar($trabalho, $etapa, $avaliadorIds),
+            'avaliadores',
+        );
     }
 
     private function sincronizarAvaliadores(Banca $banca, Collection $avaliadorIds): void
@@ -411,9 +382,13 @@ class BancaController extends Controller
             ->filter(fn (DocenteProgramaVinculo $vinculo) => $vinculo->tipo_vinculo === 'interno')
             ->values();
 
+        $siglaInstituicao = $trabalho?->programa?->instituicao?->sigla;
         $externosUneb = $avaliadores
-            ->filter(fn (DocenteProgramaVinculo $vinculo) => $this->externoUneb($vinculo))
+            ->filter(fn (DocenteProgramaVinculo $vinculo) => $this->verificacao->externoInstituicao($vinculo, $siglaInstituicao))
             ->values();
+        $siglaPrograma = $trabalho?->programa?->sigla ?: 'programa';
+        $siglaInstituicao = $siglaInstituicao ?: 'instituição';
+        $regra = $trabalho ? $this->verificacao->regraPara($trabalho, $banca->tipo ?? 'qualificacao') : null;
 
         $primeiroInterno = $avaliadoresAtuais
             ->first(fn ($id) => $internos->contains('id', $id));
@@ -437,15 +412,10 @@ class BancaController extends Controller
             'primeiroInterno',
             'primeiroExterno',
             'avaliadoresAdicionaisAtuais',
+            'siglaPrograma',
+            'siglaInstituicao',
+            'regra',
         );
-    }
-
-    private function externoUneb(DocenteProgramaVinculo $vinculo): bool
-    {
-        $sigla = strtoupper(trim((string) $vinculo->docenteProfile?->instituicao_sigla));
-
-        // Externo à UNEB = instituição diferente de UNEB, independente do tipo_vinculo no programa
-        return $sigla !== '' && $sigla !== 'UNEB';
     }
 
     private function enviarEmailParticipantes(Banca $banca): void

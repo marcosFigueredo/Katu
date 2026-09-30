@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Banca;
+use App\Models\BancaMembro;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
 use App\Models\DocenteProgramaVinculo;
+use App\Models\Instituicao;
 use App\Models\Orientacao;
 use App\Models\Programa;
 use App\Models\TrabalhoAcademico;
@@ -111,10 +113,82 @@ class HomologacaoBancaTest extends TestCase
         ]);
     }
 
-    private function estrutura(): array
+    public function test_banca_sem_orcid_do_discente_nao_e_homologada(): void
+    {
+        [$secretaria, , $banca] = $this->estrutura(orcid: null);
+
+        $this->actingAs($secretaria)->post(route('bancas.homologar', $banca))
+            ->assertSessionHasErrors('homologacao');
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
+    public function test_tela_de_homologacao_mostra_quadro_de_verificacao(): void
+    {
+        [$secretaria] = $this->estrutura(orcid: null);
+
+        $this->actingAs($secretaria)->get(route('bancas.homologacao'))
+            ->assertOk()
+            ->assertSee('ORCID do discente')
+            ->assertSee('Número de avaliadores');
+    }
+
+    public function test_cadastro_de_banca_sem_orcid_do_discente_e_recusado(): void
+    {
+        [$secretaria, $programa, $trabalho, $qualificacao] = $this->estruturaComComposicao(orcid: null);
+        $qualificacao->update(['status' => 'finalizada', 'resultado' => 'aprovado']);
+
+        $this->actingAs($secretaria)->post(route('bancas.store'), $this->dadosDefesa($programa, $trabalho))
+            ->assertSessionHasErrors('avaliadores');
+        $this->assertDatabaseMissing('bancas', ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'defesa']);
+    }
+
+    public function test_cadastro_de_banca_segue_regra_do_curso(): void
+    {
+        [$secretaria, $programa, $trabalho, $qualificacao] = $this->estruturaComComposicao();
+        $qualificacao->update(['status' => 'finalizada', 'resultado' => 'aprovado']);
+        $curso = app(\App\Services\CursoProgramaService::class)->criar($programa, 'mestrado', 'academico');
+        $curso->regrasBanca()->where('etapa', 'defesa')->update(['min_avaliadores' => 3]);
+        $trabalho->discenteVinculo->update(['programa_curso_id' => $curso->id]);
+
+        $this->actingAs($secretaria)->post(route('bancas.store'), $this->dadosDefesa($programa, $trabalho))
+            ->assertSessionHasErrors('avaliadores');
+
+        $curso->regrasBanca()->where('etapa', 'defesa')->update(['min_avaliadores' => 2]);
+        $this->actingAs($secretaria)->post(route('bancas.store'), $this->dadosDefesa($programa, $trabalho))
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('bancas', ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'defesa']);
+    }
+
+    public function test_formulario_de_banca_mostra_regras_com_siglas_do_cadastro(): void
+    {
+        [$secretaria, , $trabalho] = $this->estruturaComComposicao();
+
+        $this->actingAs($secretaria)->get(route('bancas.create', ['trabalho_id' => $trabalho->id]))
+            ->assertOk()
+            ->assertSee('Regras do curso')
+            ->assertSee('externo(s) à UNEB', false)
+            ->assertSee('interno(s) ao PPGMSB', false);
+    }
+
+    private function dadosDefesa(Programa $programa, TrabalhoAcademico $trabalho): array
+    {
+        $avaliadores = DocenteProgramaVinculo::where('programa_id', $programa->id)->where('pode_avaliar', true)->get();
+
+        return [
+            'trabalho_academico_id' => $trabalho->id,
+            'tipo' => 'defesa',
+            'status' => 'cadastrada',
+            'quantidade_avaliadores' => 2,
+            'avaliador_interno_id' => $avaliadores->firstWhere('tipo_vinculo', 'interno')->id,
+            'avaliador_externo_id' => $avaliadores->firstWhere('tipo_vinculo', 'externo')->id,
+        ];
+    }
+
+    private function estrutura(?string $orcid = 'https://orcid.org/0000-0002-1825-0097'): array
     {
         $secretaria = User::factory()->secretaria()->create();
-        $programa = Programa::create(['nome' => 'PPGMSB', 'sigla' => 'PPGMSB']);
+        $instituicao = Instituicao::create(['nome' => 'UNEB', 'sigla' => 'UNEB', 'ativo' => true]);
+        $programa = Programa::create(['nome' => 'PPGMSB', 'sigla' => 'PPGMSB', 'instituicao_id' => $instituicao->id]);
         DB::table('programa_usuarios')->insert([
             'programa_id' => $programa->id,
             'user_id' => $secretaria->id,
@@ -125,7 +199,7 @@ class HomologacaoBancaTest extends TestCase
         ]);
 
         $discente = User::factory()->discente()->create();
-        $profile = DiscenteProfile::create(['user_id' => $discente->id, 'ativo' => true]);
+        $profile = DiscenteProfile::create(['user_id' => $discente->id, 'orcid_url' => $orcid, 'ativo' => true]);
         $vinculo = DiscenteProgramaVinculo::create([
             'programa_id' => $programa->id,
             'discente_profile_id' => $profile->id,
@@ -148,6 +222,32 @@ class HomologacaoBancaTest extends TestCase
         DB::table('bancas')->where('id', $banca->id)->update([
             'homologacao_status' => 'aguardando',
         ]);
+
+        foreach ([['interno', 'UNEB', 'UNEB'], ['externo', 'UFBA', 'UFBA']] as $ordem => [$tipo, $sigla, $nome]) {
+            $user = User::factory()->docente()->create();
+            $docenteProfile = DocenteProfile::create([
+                'user_id' => $user->id,
+                'titulacao' => 'Doutorado',
+                'instituicao_origem' => $nome,
+                'instituicao_sigla' => $sigla,
+                'ativo' => true,
+            ]);
+            $vinculoDocente = DocenteProgramaVinculo::create([
+                'programa_id' => $programa->id,
+                'docente_profile_id' => $docenteProfile->id,
+                'tipo_vinculo' => $tipo,
+                'pode_orientar' => false,
+                'pode_avaliar' => true,
+                'ativo' => true,
+            ]);
+            BancaMembro::create([
+                'banca_id' => $banca->id,
+                'docente_programa_vinculo_id' => $vinculoDocente->id,
+                'papel' => 'avaliador',
+                'ordem' => $ordem + 1,
+                'ativo' => true,
+            ]);
+        }
 
         return [$secretaria, $programa, $banca->fresh()];
     }
@@ -172,9 +272,9 @@ class HomologacaoBancaTest extends TestCase
         ];
     }
 
-    private function estruturaComComposicao(): array
+    private function estruturaComComposicao(?string $orcid = 'https://orcid.org/0000-0002-1825-0097'): array
     {
-        [$secretaria, $programa, $banca] = $this->estrutura();
+        [$secretaria, $programa, $banca] = $this->estrutura($orcid);
         $trabalho = $banca->trabalhoAcademico;
 
         $orientadorUser = User::factory()->docente()->create();
@@ -201,25 +301,6 @@ class HomologacaoBancaTest extends TestCase
             'ordem' => 1,
             'ativo' => true,
         ]);
-
-        foreach ([['interno', 'UNEB', 'UNEB'], ['externo', 'UFBA', 'UFBA']] as [$tipo, $sigla, $nome]) {
-            $user = User::factory()->docente()->create();
-            $profile = DocenteProfile::create([
-                'user_id' => $user->id,
-                'titulacao' => 'Doutorado',
-                'instituicao_origem' => $nome,
-                'instituicao_sigla' => $sigla,
-                'ativo' => true,
-            ]);
-            DocenteProgramaVinculo::create([
-                'programa_id' => $programa->id,
-                'docente_profile_id' => $profile->id,
-                'tipo_vinculo' => $tipo,
-                'pode_orientar' => false,
-                'pode_avaliar' => true,
-                'ativo' => true,
-            ]);
-        }
 
         return [$secretaria, $programa, $trabalho, $banca];
     }

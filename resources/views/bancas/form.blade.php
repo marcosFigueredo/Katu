@@ -92,9 +92,14 @@
                 </div>
 
                 <div class="alert alert-info small">
-                    <div class="fw-semibold mb-1">Regras atuais</div>
-                    <div>Mestrado: mínimo 2 e máximo 5 avaliadores.</div>
-                    <div>Obrigatório: 1 avaliador externo à UNEB e 1 interno ao PPGMSB.</div>
+                    <div class="fw-semibold mb-1">Regras do curso</div>
+                    @if ($regra)
+                        <div>{{ $regra['min_avaliadores'] === $regra['max_avaliadores'] ? $regra['min_avaliadores'] : $regra['min_avaliadores'].' a '.$regra['max_avaliadores'] }} avaliadores.</div>
+                        <div>Obrigatório: ≥ {{ $regra['min_internos'] }} interno(s) ao {{ $siglaPrograma }} e ≥ {{ $regra['min_externos_instituicao'] }} externo(s) à {{ $siglaInstituicao }}.</div>
+                    @else
+                        <div>Selecione o trabalho para ver as regras do curso do discente.</div>
+                    @endif
+                    <div>O discente precisa ter ORCID informado.</div>
                 </div>
             </div>
 
@@ -231,13 +236,13 @@
                                         <div class="col-md-8">
                                             <div class="alert alert-light border small mb-0">
                                                 A banca terá <strong><span id="resumo_quantidade">{{ $quantidadeSelecionada }}</span> avaliadores</strong>.
-                                                Um interno ao PPGMSB e um externo à UNEB são obrigatórios.
+                                                Um interno ao {{ $siglaPrograma }} e um externo à {{ $siglaInstituicao }} são obrigatórios.
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
                                             <label for="avaliador_interno_id" class="form-label small fw-semibold">
-                                                Avaliador interno ao PPGMSB
+                                                Avaliador interno ao {{ $siglaPrograma }}
                                             </label>
                                             <select id="avaliador_interno_id"
                                                     name="avaliador_interno_id"
@@ -258,7 +263,7 @@
 
                                         <div class="col-md-6">
                                             <label for="avaliador_externo_id" class="form-label small fw-semibold">
-                                                Avaliador externo à UNEB
+                                                Avaliador externo à {{ $siglaInstituicao }}
                                             </label>
                                             <select id="avaliador_externo_id"
                                                     name="avaliador_externo_id"
@@ -290,13 +295,13 @@
                                                         @php
                                                             $profile = $avaliador->docenteProfile;
                                                             $externoUneb = $avaliador->tipo_vinculo === 'externo'
-                                                                || (($profile?->instituicao_sigla ?? '') !== '' && strtoupper($profile->instituicao_sigla) !== 'UNEB');
+                                                                || (($profile?->instituicao_sigla ?? '') !== '' && strtoupper(trim($profile->instituicao_sigla)) !== strtoupper(trim($siglaInstituicao)));
                                                         @endphp
                                                         <option value="{{ $avaliador->id }}"
                                                             {{ ($adicionaisSelecionados[$slot] ?? null) == $avaliador->id ? 'selected' : '' }}>
                                                             {{ $profile?->user?->name ?? '-' }}
-                                                            - {{ $avaliador->tipo_vinculo === 'interno' ? 'Interno PPGMSB' : 'Externo' }}
-                                                            {{ $externoUneb ? ' / externo UNEB' : '' }}
+                                                            - {{ $avaliador->tipo_vinculo === 'interno' ? 'Interno ' . $siglaPrograma : 'Externo' }}
+                                                            {{ $externoUneb ? ' / externo ' . $siglaInstituicao : '' }}
                                                         </option>
                                                     @endforeach
                                                 </select>

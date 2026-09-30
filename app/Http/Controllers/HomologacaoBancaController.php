@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Banca;
 use App\Services\HomologacaoBancaService;
+use App\Services\VerificacaoBancaService;
 use Illuminate\Http\Request;
 
 class HomologacaoBancaController extends Controller
@@ -31,11 +32,16 @@ class HomologacaoBancaController extends Controller
                 'trabalhoAcademico.discenteVinculo.discenteProfile.user',
                 'trabalhoAcademico.programa',
                 'evidencias.criterio',
+                'membros',
             ])
             ->orderByDesc('updated_at')
             ->get();
 
-        return view('bancas.homologacao', compact('bancas'));
+        $verificacoes = $bancas->mapWithKeys(
+            fn (Banca $banca) => [$banca->id => app(VerificacaoBancaService::class)->verificarBanca($banca)]
+        );
+
+        return view('bancas.homologacao', compact('bancas', 'verificacoes'));
     }
 
     public function homologar(Banca $banca)
