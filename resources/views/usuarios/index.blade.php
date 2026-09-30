@@ -18,11 +18,16 @@
                 </p>
             </div>
 
-            <a href="{{ route('usuarios.create') }}"
-                class="btn text-white fw-semibold"
-                style="background-color: #00303A;">
-                + Novo usuário
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('usuarios.importar') }}" class="btn btn-outline-secondary fw-semibold">
+                    <i class="bi bi-file-earmark-arrow-up me-1"></i>Importar discentes
+                </a>
+                <a href="{{ route('usuarios.create') }}"
+                    class="btn text-white fw-semibold"
+                    style="background-color: #00303A;">
+                    + Novo usuário
+                </a>
+            </div>
         </div>
 
         <div class="card border-0 shadow-sm">

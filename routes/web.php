@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PrimeiroAcessoSenhaController;
+use App\Http\Controllers\ImportacaoDiscenteController;
 use App\Http\Controllers\InstituicaoController;
 use App\Http\Controllers\LogoController;
 use App\Http\Controllers\ProgramaCursoController;
@@ -133,6 +134,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // usuarios rotas
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/usuarios/importar-discentes', [ImportacaoDiscenteController::class, 'create'])->name('usuarios.importar');
+    Route::post('/usuarios/importar-discentes', [ImportacaoDiscenteController::class, 'analisar'])->name('usuarios.importar.analisar');
+    Route::post('/usuarios/importar-discentes/confirmar', [ImportacaoDiscenteController::class, 'confirmar'])->name('usuarios.importar.confirmar');
+
     Route::get('/usuarios', [UsuarioController::class, 'index'])
         ->name('usuarios.index');
 
