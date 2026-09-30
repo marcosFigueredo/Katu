@@ -23,7 +23,7 @@ Hoje `instituicoes.logo_path` é sempre gravado como `images/logoUneb.png` e a a
 - **Instituição**: o formulário ganha upload de logotipo, **obrigatório** no primeiro cadastro e opcional nas edições (substitui o atual). Formatos PNG, JPG ou WebP (SVG não é aceito, por risco de script embutido); até 2 MB; o sistema pré-visualiza antes de salvar.
 - **Programa**: nova coluna `programas.logo_path`, upload opcional com as mesmas regras.
 - **Armazenamento**: `storage/app/private/logos/`, com nome gerado pelo sistema; o arquivo anterior é apagado ao substituir. Servido por rota autenticada (`instituicao.logo`, `programas.logo`), sem depender de `storage:link`.
-- **Uso**: a ata (`avaliacoes.ata`) e a tela da instituição passam a exibir os logotipos cadastrados; sem logotipo do programa, a ata mostra só o da instituição. Os logos de marca do sistema (login, sidebar) não mudam.
+- **Uso**: a ata (`avaliacoes.ata`) e a tela da instituição passam a exibir os logotipos cadastrados, e o cabeçalho da ata (instituição, departamento, programa, cidade/UF) passa a vir do cadastro em vez do texto fixo do PPGMSB; sem logotipo do programa, a ata mostra só o da instituição. Os logos de marca do sistema (login, sidebar) não mudam.
 - A tela da instituição passa a mostrar a instituição **do programa da Secretaria logada**, e não mais `Instituicao::first()`.
 
 ## 0.1 Uma Secretaria, um programa, uma instituição
@@ -77,13 +77,13 @@ Uma linha por curso e etapa:
 
 - `programa_curso_id` (FK, cascade)
 - `etapa`: `qualificacao` | `defesa`
-- `min_avaliadores` (≥ 1)
-- `min_externos_programa` (≥ 0): membro cujo vínculo no programa tem `tipo_vinculo = externo`
-- `min_externos_instituicao` (≥ 0): membro cuja `instituicao_sigla` (perfil docente) difere, sem distinção de maiúsculas/espaços, da sigla da instituição do programa
+- `min_avaliadores` (≥ 1) e `max_avaliadores` (≥ `min_avaliadores`, ≤ 5 — limite do formulário de banca)
+- `min_internos` (≥ 0): membro com `tipo_vinculo = interno` no programa
+- `min_externos_instituicao` (≥ 0): membro cuja `instituicao_sigla` (perfil docente) está preenchida e difere, sem distinção de maiúsculas/espaços, da sigla da instituição do programa
 - único: (`programa_curso_id`, `etapa`)
-- os mínimos de externos não podem exceder `min_avaliadores`
+- `min_internos + min_externos_instituicao` não pode exceder `max_avaliadores`
 
-Ao criar um curso, as duas regras (qualificação e defesa) são criadas com `min_avaliadores = 2` e externos = 0, para a Secretaria ajustar.
+Essas regras **substituem as regras fixas** hoje em `BancaController::validarComposicao` (mestrado: 2–5 avaliadores, ≥ 1 interno, ≥ 1 externo à UNEB; doutorado: exatamente 5, 2 internos, ≥ 2 externos à UNEB) e a sigla `UNEB` fixa em `externoUneb`. Ao criar um curso, as regras de qualificação e defesa nascem com esses mesmos valores (mestrado 2/5/1/1; doutorado 5/5/2/2); vínculos sem curso ou cursos sem regra usam esses valores como padrão. Os rótulos "interno ao PPGMSB"/"externo à UNEB" do formulário passam a usar a sigla do programa e da instituição.
 
 ### Vínculo do discente
 
@@ -100,14 +100,19 @@ Cadastro individual de discente passa a pedir o **curso** em vez do nível.
 
 `AutoavaliacaoIndicadorService` passa a comparar o tempo de cada discente com os prazos do **seu curso** (fallback 18/24 quando o vínculo não tem curso). Os rótulos deixam de citar "18 meses"/"24 meses" e passam a "dentro do prazo do curso".
 
-## 3. Regras bloqueantes na homologação
+## 3. Regras bloqueantes nos atos de banca
 
-`HomologacaoBancaService::homologar` recusa a homologação (a Secretaria só pode devolver) quando:
+Um único serviço (`VerificacaoBancaService`) avalia, para um trabalho, uma etapa e um conjunto de avaliadores:
 
 1. **ORCID ausente**: o discente do trabalho não tem `orcid_url` no perfil.
-2. **Composição mínima**: a banca não atende a regra do curso do discente para a etapa (`banca.tipo`). Se o curso não tiver regra, não bloqueia por composição.
+2. **Composição**: número de avaliadores, internos e externos à instituição contra a regra do curso do discente para a etapa (ou o padrão por nível, ver 2).
 
-A tela de homologação exibe um quadro de verificação com cada regra (exigido × encontrado, ✔/✖) e a pendência de ORCID, e desabilita o botão "Homologar" enquanto houver falha. O serviço valida novamente no servidor (não confia na tela).
+O serviço é usado:
+
+- no **cadastro e na edição de banca** pela Secretaria (`BancaController`), que hoje já homologa a banca ao salvar — falha impede salvar, com a mensagem de cada regra;
+- na **homologação** (`HomologacaoBancaService::homologar`) de bancas aguardando/devolvidas — falha impede homologar (a Secretaria só pode devolver).
+
+A tela de homologação exibe um quadro de verificação com cada regra (exigido × encontrado, ✔/✖) e a pendência de ORCID, e desabilita o botão "Homologar" enquanto houver falha. O servidor sempre revalida.
 
 ## 4. ORCID obrigatório para atos de banca
 
@@ -118,6 +123,7 @@ A tela de homologação exibe um quadro de verificação com cada regra (exigido
   - homologar a banca (item 3);
   - enviar o trabalho para a banca.
   A mensagem indica que o discente deve informar o ORCID no seu cadastro.
+- **Cadastro individual pela Secretaria**: ORCID deixa de ser obrigatório para discente (continua obrigatório para docente); Lattes passa a ser obrigatório para discente. Um discente é `completo` com nome, e-mail, matrícula, curso e Lattes — assim recebe o e-mail de primeiro acesso sem ORCID. Linha de pesquisa passa a ser opcional para o status.
 
 ## 5. Importação de discentes (CSV)
 
@@ -165,10 +171,10 @@ Todas as rotas novas ficam sob `['auth', 'verified']` e verificam `categoria ===
 0.1. Uma Secretaria sem programa cria exatamente um programa, obrigatoriamente vinculado a uma instituição; ao tentar criar outro, é redirecionada ao seu. A Secretaria recebe 403 ao acessar programa ou instituição de outro programa, e as telas da Secretaria só mostram dados do seu programa.
 1. A Secretaria edita instituição, conceito CAPES, ano de início, coordenador e vice; coordenador ≠ vice e ambos permanentes no programa.
 2. A Secretaria cria, edita e inativa cursos; não é possível duplicar nível+modalidade no programa; `oferta_*` refletem os cursos ativos.
-3. Cada curso tem regras de banca para qualificação e defesa editáveis, com externos ≤ avaliadores.
+3. Cada curso tem regras de banca para qualificação e defesa editáveis (mín./máx. avaliadores, mín. internos, mín. externos à instituição); as regras fixas de mestrado/doutorado e a sigla UNEB deixam de existir no código.
 4. Vínculos existentes recebem curso na migration; novos discentes são cadastrados por curso.
 5. A13/A14 usam os prazos do curso.
-6. Banca que não atende a composição mínima ou cujo discente não tem ORCID não pode ser homologada; o quadro de verificação mostra o motivo.
+6. Banca que não atende a regra do curso ou cujo discente não tem ORCID não pode ser cadastrada/editada pela Secretaria nem homologada; o quadro de verificação mostra o motivo.
 7. Sem ORCID do discente, cadastrar banca e enviar trabalho para a banca são recusados.
 8. O discente edita ORCID e Lattes no próprio perfil.
 9. O CSV com `;` ou `,`, com BOM ou Latin-1, gera prévia correta; linhas inválidas e já existentes não são importadas; Lattes é obrigatório.
