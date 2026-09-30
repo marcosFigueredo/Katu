@@ -46,6 +46,7 @@ return new class extends Migration
                 'pdf_pesquisavel',
                 'imagem_dpi',
                 'metadado_pdf',
+                'metadados_final',
             ])->default('texto_flexivel');
 
             $table->json('termos_busca')->nullable();
