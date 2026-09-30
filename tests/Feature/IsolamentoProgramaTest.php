@@ -146,4 +146,16 @@ class IsolamentoProgramaTest extends TestCase
         $this->actingAs($sec)->get(route('avaliacoes.folha-aprovacao', $b['banca']))->assertForbidden();
         $this->actingAs($sec)->get(route('avaliacoes.relatorio-individual', [$b['banca'], $b['barema']]))->assertForbidden();
     }
+
+    public function test_secretaria_gerencia_areas_e_linhas_do_proprio_programa(): void
+    {
+        $a = $this->programa('A');
+        $sec = $a['secretaria'];
+
+        $this->actingAs($sec)->get(route('programas.areas.index', $a['programa']))->assertOk()->assertSee('Área A');
+        $this->actingAs($sec)->post(route('programas.areas.store', $a['programa']), ['nome' => 'Área Nova'])->assertRedirect();
+        $this->assertDatabaseHas('areas_concentracao', ['programa_id' => $a['programa']->id, 'nome' => 'Área Nova']);
+        $this->actingAs($sec)->get(route('areas.linhas.index', $a['area']))->assertOk()->assertSee('Linha A');
+        $this->actingAs($sec)->get(route('areas.linhas.create', $a['area']))->assertOk();
+    }
 }

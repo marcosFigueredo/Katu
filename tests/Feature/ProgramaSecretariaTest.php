@@ -133,4 +133,18 @@ class ProgramaSecretariaTest extends TestCase
             ->assertSee('name="logo"', false)
             ->assertSee('enctype="multipart/form-data"', false);
     }
+
+    public function test_programa_e_menu_levam_as_areas_de_concentracao(): void
+    {
+        $sec = User::factory()->secretaria()->create(['primeiro_acesso' => false]);
+        $programa = Programa::create(['nome' => 'A', 'instituicao_id' => $this->instituicao()->id]);
+        app(ContextoSecretaria::class)->vincular($sec, $programa);
+
+        $this->actingAs($sec)->get(route('programas.edit', $programa))
+            ->assertOk()
+            ->assertSee(route('programas.areas.index', $programa), false)
+            ->assertSee('Áreas e linhas de pesquisa');
+        $this->actingAs($sec)->get(route('programa-cursos.index'))
+            ->assertSee(route('programas.areas.index', $programa), false);
+    }
 }

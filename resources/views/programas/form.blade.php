@@ -187,6 +187,21 @@
 
         @if ($editando)
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+                <div class="p-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800">Áreas e linhas de pesquisa</h2>
+                        <p class="text-sm text-gray-600">
+                            {{ $programa->areasConcentracao()->count() }} área(s) de concentração cadastrada(s). Cada área reúne suas linhas de pesquisa.
+                        </p>
+                    </div>
+                    <a href="{{ route('programas.areas.index', $programa) }}"
+                       class="px-4 py-2 text-white rounded-md text-sm font-semibold" style="background-color: #00303A;">
+                        Gerenciar áreas e linhas
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-3"><h2 class="text-lg font-semibold text-gray-800">Cursos</h2><a href="{{ route('programa-cursos.index') }}" class="text-sm text-indigo-700 underline">Gerenciar cursos e regras de banca</a></div>
                     @forelse ($programa->cursos as $curso)

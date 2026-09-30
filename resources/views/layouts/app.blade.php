@@ -242,7 +242,7 @@
 
                             <a href="{{ route('programas.index') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
-                                      {{ request()->routeIs('programas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                      {{ request()->routeIs('programas.index', 'programas.create', 'programas.edit') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-diagram-3-fill" style="font-size: 15px; flex-shrink:0;"></i>
                                 Programa
                             </a>
@@ -253,6 +253,16 @@
                                 <i class="bi bi-mortarboard-fill" style="font-size: 15px; flex-shrink:0;"></i>
                                 Cursos
                             </a>
+
+                            @php($programaMenu = app(\App\Services\ContextoSecretaria::class)->programa(auth()->user()))
+                            @if ($programaMenu)
+                                <a href="{{ route('programas.areas.index', $programaMenu) }}"
+                                   class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                          {{ request()->routeIs('programas.areas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                    <i class="bi bi-bookmarks-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                    Áreas e linhas de pesquisa
+                                </a>
+                            @endif
 
                         </div>
                     </div>
