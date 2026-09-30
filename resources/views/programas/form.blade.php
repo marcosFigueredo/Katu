@@ -98,6 +98,14 @@
                             <x-input-error :messages="$errors->get('ano_inicio')" class="mt-2" />
                         </div>
 
+                        <div>
+                            <x-input-label for="max_coorientadores" value="Máximo de coorientadores por discente" />
+                            <x-text-input id="max_coorientadores" name="max_coorientadores" type="number" min="0" max="5"
+                                class="mt-1 block w-full" value="{{ old('max_coorientadores', $programa?->max_coorientadores ?? 1) }}" />
+                            <p class="text-xs text-gray-500 mt-1">Além do orientador principal. Coorientadores podem ser internos ou externos. Use 0 para não permitir.</p>
+                            <x-input-error :messages="$errors->get('max_coorientadores')" class="mt-2" />
+                        </div>
+
                         @if ($editando)
                             <div>
                                 <x-input-label for="coordenador_id" value="Coordenador(a)" />

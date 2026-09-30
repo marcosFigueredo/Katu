@@ -85,74 +85,69 @@
                             @csrf
                             @method('PUT')
 
-                            {{-- Orientador --}}
+                            {{-- Orientador principal --}}
                             <div class="mb-4">
                                 <label for="orientador_vinculo_id" class="form-label fw-semibold">
-                                    Orientador
+                                    Orientador principal
                                 </label>
 
-                                @if ($docentes->isEmpty())
+                                @if (empty($opcoesOrientador))
                                     <div class="alert alert-warning small py-2 mb-0">
                                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
                                         Nenhum docente com permissão de orientação cadastrado neste programa.
                                     </div>
                                 @else
-                                    <select id="orientador_vinculo_id"
-                                            name="orientador_vinculo_id"
-                                            class="form-select @error('orientador_vinculo_id') is-invalid @enderror">
-                                        <option value="">— Não atribuído —</option>
-                                        @foreach ($docentes as $vinculoDocente)
-                                            <option value="{{ $vinculoDocente->id }}"
-                                                {{ ($orientadorAtual?->docente_programa_vinculo_id == $vinculoDocente->id) ? 'selected' : '' }}>
-                                                {{ $vinculoDocente->docenteProfile?->user?->name ?? '?' }}
-                                                @if ($vinculoDocente->docenteProfile?->titulacao)
-                                                    ({{ $vinculoDocente->docenteProfile->titulacao }})
-                                                @endif
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <x-select-busca name="orientador_vinculo_id" id="orientador_vinculo_id"
+                                        :opcoes="$opcoesOrientador"
+                                        :selecionado="old('orientador_vinculo_id', $orientadorAtual?->docente_programa_vinculo_id)"
+                                        :invalido="$errors->has('orientador_vinculo_id')"
+                                        placeholder="Digite o nome do orientador…" />
                                     @error('orientador_vinculo_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">
-                                        Apenas docentes vinculados ao programa com permissão de orientação são listados.
+                                        Apenas docentes do programa com permissão de orientação.
                                     </div>
                                 @endif
                             </div>
 
                             {{-- Coorientadores --}}
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">
-                                    Coorientador(es)
-                                    <span class="text-muted fw-normal">(opcional)</span>
-                                </label>
+                            @if ($maxCoorientadores > 0)
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold mb-0">
+                                        Coorientadores
+                                        <span class="text-muted fw-normal">(opcional — até {{ $maxCoorientadores }})</span>
+                                    </label>
+                                    <div class="form-text mt-0 mb-2">
+                                        Podem ser docentes internos ou externos vinculados ao programa.
+                                    </div>
 
-                                @if ($docentes->isEmpty())
-                                    <p class="text-muted small mb-0">Sem docentes disponíveis.</p>
-                                @else
-                                    <div class="border rounded p-3" style="max-height: 240px; overflow-y: auto;">
-                                        @foreach ($docentes as $vinculoDocente)
-                                            <div class="form-check mb-1">
-                                                <input class="form-check-input"
-                                                       type="checkbox"
-                                                       name="coorientadores[]"
-                                                       value="{{ $vinculoDocente->id }}"
-                                                       id="co_{{ $vinculoDocente->id }}"
-                                                       {{ in_array($vinculoDocente->id, $coorientadoresAtuais) ? 'checked' : '' }}>
-                                                <label class="form-check-label small" for="co_{{ $vinculoDocente->id }}">
-                                                    {{ $vinculoDocente->docenteProfile?->user?->name ?? '?' }}
-                                                    @if ($vinculoDocente->docenteProfile?->titulacao)
-                                                        <span class="text-muted">({{ $vinculoDocente->docenteProfile->titulacao }})</span>
-                                                    @endif
+                                    @if (count($coorientadoresAtuais) > $maxCoorientadores)
+                                        <div class="alert alert-warning small py-2">
+                                            Este discente tem {{ count($coorientadoresAtuais) }} coorientadores, acima do limite atual do programa
+                                            ({{ $maxCoorientadores }}). Ajuste antes de salvar.
+                                        </div>
+                                    @endif
+
+                                    <div class="row g-2">
+                                        @for ($i = 0; $i < $maxCoorientadores; $i++)
+                                            <div class="col-md-6">
+                                                <label for="coorientador_{{ $i }}" class="form-label small text-muted mb-1">
+                                                    Coorientador {{ $i + 1 }}
                                                 </label>
+                                                <x-select-busca name="coorientadores[{{ $i }}]" id="coorientador_{{ $i }}"
+                                                    :opcoes="$opcoesCoorientador"
+                                                    :selecionado="old('coorientadores.' . $i, $coorientadoresAtuais[$i] ?? null)"
+                                                    :invalido="$errors->has('coorientadores')"
+                                                    placeholder="Digite o nome do coorientador…" />
                                             </div>
-                                        @endforeach
+                                        @endfor
                                     </div>
-                                    <div class="form-text">
-                                        Um docente selecionado como orientador é automaticamente removido da lista de coorientadores ao salvar.
-                                    </div>
-                                @endif
-                            </div>
+                                    @error('coorientadores')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endif
 
                             <div class="d-flex gap-2 pt-2 border-top">
                                 <button type="submit" class="btn btn-primary fw-semibold">

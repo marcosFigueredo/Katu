@@ -45,6 +45,7 @@ class ProgramaController extends Controller
             'ano_inicio' => ['nullable', 'integer', 'digits:4', 'min:1950', 'max:' . now()->year],
             'coordenador_id' => ['nullable', 'integer', $coordenadorPermanente],
             'vice_coordenador_id' => ['nullable', 'integer', 'different:coordenador_id', $coordenadorPermanente],
+            'max_coorientadores' => ['nullable', 'integer', 'min:0', 'max:5'],
             'email' => ['nullable', 'email', 'max:255'],
             'site' => ['nullable', 'string', 'max:255'],
             'telefone' => ['nullable', 'string', 'max:30'],
@@ -56,6 +57,7 @@ class ProgramaController extends Controller
     private const MENSAGENS = [
         'instituicao_id.required' => 'Selecione a instituição do programa.',
         'conceito_capes.between' => 'O conceito CAPES deve estar entre 1 e 7.',
+        'max_coorientadores.max' => 'O máximo de coorientadores por discente é 5.',
         'vice_coordenador_id.different' => 'O vice-coordenador deve ser diferente do coordenador.',
     ];
 
@@ -88,6 +90,7 @@ class ProgramaController extends Controller
 
         $dados = collect($request->validate($this->regras(null), self::MENSAGENS))
             ->except(['logo', 'coordenador_id', 'vice_coordenador_id'])
+            ->reject(fn ($valor, $campo) => $campo === 'max_coorientadores' && $valor === null)
             ->all();
         if ($request->hasFile('logo')) {
             $dados['logo_path'] = LogoController::armazenar($request->file('logo'), null);
@@ -130,7 +133,9 @@ class ProgramaController extends Controller
         $this->autorizarSecretaria();
         $this->contexto->garantirPrograma($request->user(), $programa->id);
 
-        $dados = collect($request->validate($this->regras($programa), self::MENSAGENS))->except('logo')->all();
+        $dados = collect($request->validate($this->regras($programa), self::MENSAGENS))->except('logo')
+            ->reject(fn ($valor, $campo) => $campo === 'max_coorientadores' && $valor === null)
+            ->all();
         if ($request->hasFile('logo')) {
             $dados['logo_path'] = LogoController::armazenar($request->file('logo'), $programa->logo_path);
         }

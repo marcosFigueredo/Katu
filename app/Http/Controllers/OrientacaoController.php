@@ -7,6 +7,7 @@ use App\Models\Orientacao;
 use App\Models\TrabalhoAcademico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class OrientacaoController extends Controller
@@ -49,21 +50,36 @@ class OrientacaoController extends Controller
             'orientacoes.docenteProgramaVinculo.docenteProfile.user',
         ]);
 
-        $docentes = DocenteProgramaVinculo::where('programa_id', $trabalho->programa_id)
-            ->where('pode_orientar', true)
+        $vinculosAtivos = DocenteProgramaVinculo::where('programa_id', $trabalho->programa_id)
             ->where('ativo', true)
             ->with('docenteProfile.user')
             ->get()
-            ->sortBy('docenteProfile.user.name');
+            ->sortBy('docenteProfile.user.name')
+            ->values();
 
-        $orientadorAtual    = $trabalho->orientacoes->firstWhere('tipo', 'orientador');
+        $opcao = fn (DocenteProgramaVinculo $v) => [
+            'valor' => $v->id,
+            'rotulo' => $v->docenteProfile?->user?->name ?? '?',
+            'detalhe' => trim(($v->tipo_vinculo === 'externo' ? 'externo' : 'interno')
+                . ($v->docenteProfile?->instituicao_sigla ? ', ' . $v->docenteProfile->instituicao_sigla : '')),
+        ];
+
+        $opcoesOrientador = $vinculosAtivos->where('pode_orientar', true)->map($opcao)->values()->all();
+        $opcoesCoorientador = $vinculosAtivos->map($opcao)->all();
+        $maxCoorientadores = (int) ($trabalho->programa?->max_coorientadores ?? 1);
+
+        $orientadorAtual = $trabalho->orientacoes->firstWhere('tipo', 'orientador');
         $coorientadoresAtuais = $trabalho->orientacoes->where('tipo', 'coorientador')
+            ->sortBy('ordem')
             ->pluck('docente_programa_vinculo_id')
-            ->toArray();
+            ->values()
+            ->all();
 
         return view('orientacoes.edit', compact(
             'trabalho',
-            'docentes',
+            'opcoesOrientador',
+            'opcoesCoorientador',
+            'maxCoorientadores',
             'orientadorAtual',
             'coorientadoresAtuais',
         ));
@@ -74,31 +90,46 @@ class OrientacaoController extends Controller
         $this->autorizarSecretaria();
         $this->garantirProgramaDaSecretaria($trabalho->programa_id);
 
-        $dados = $request->validate([
-            'orientador_vinculo_id'   => ['nullable', 'exists:docente_programa_vinculos,id'],
-            'coorientadores'          => ['nullable', 'array'],
-            'coorientadores.*'        => ['exists:docente_programa_vinculos,id'],
-        ], [
-            'orientador_vinculo_id.exists' => 'Orientador inválido.',
-            'coorientadores.*.exists'      => 'Um ou mais coorientadores inválidos.',
+        $request->merge([
+            'coorientadores' => collect($request->input('coorientadores', []))->filter(fn ($id) => filled($id))->values()->all(),
         ]);
 
-        $docenteIds = collect([
-            $dados['orientador_vinculo_id'] ?? null,
-            ...($dados['coorientadores'] ?? []),
-        ])->filter()->map(fn ($id) => (int) $id)->unique()->values();
+        $maxCoorientadores = (int) ($trabalho->programa?->max_coorientadores ?? 1);
 
-        $docentesValidos = DocenteProgramaVinculo::query()
-            ->where('programa_id', $trabalho->programa_id)
-            ->where('pode_orientar', true)
-            ->where('ativo', true)
-            ->whereIn('id', $docenteIds)
-            ->pluck('id');
+        try {
+            $dados = $request->validate([
+            'orientador_vinculo_id' => [
+                'nullable',
+                Rule::exists('docente_programa_vinculos', 'id')->where(fn ($q) => $q
+                    ->where('programa_id', $trabalho->programa_id)
+                    ->where('pode_orientar', true)
+                    ->where('ativo', true)),
+            ],
+            'coorientadores' => ['array', 'max:' . $maxCoorientadores],
+            'coorientadores.*' => [
+                'integer',
+                'distinct',
+                'different:orientador_vinculo_id',
+                Rule::exists('docente_programa_vinculos', 'id')->where(fn ($q) => $q
+                    ->where('programa_id', $trabalho->programa_id)
+                    ->where('ativo', true)),
+            ],
+        ], [
+            'orientador_vinculo_id.exists' => 'O orientador principal deve ser docente ativo do programa com permissão de orientação.',
+            'coorientadores.max' => "O programa permite no máximo {$maxCoorientadores} coorientador(es) por discente.",
+            'coorientadores.*.distinct' => 'O mesmo docente foi escolhido mais de uma vez como coorientador.',
+            'coorientadores.*.different' => 'O orientador principal não pode ser também coorientador.',
+            'coorientadores.*.exists' => 'Selecione coorientadores ativos vinculados ao programa do discente.',
+        ]);
+        } catch (ValidationException $e) {
+            // Agrupa os erros de cada campo coorientadores.N em "coorientadores".
+            $erros = collect($e->errors())
+                ->mapToGroups(fn ($mensagens, $campo) => [
+                    str_starts_with($campo, 'coorientadores.') ? 'coorientadores' : $campo => $mensagens,
+                ])
+                ->map(fn ($grupo) => $grupo->flatten()->unique()->values()->all());
 
-        if ($docentesValidos->count() !== $docenteIds->count()) {
-            throw ValidationException::withMessages([
-                'orientador_vinculo_id' => 'Selecione apenas docentes orientáveis e vinculados ao programa do discente.',
-            ]);
+            throw ValidationException::withMessages($erros->all());
         }
 
         DB::transaction(function () use ($dados, $trabalho) {
@@ -115,9 +146,7 @@ class OrientacaoController extends Controller
                 ]);
             }
 
-            $coorientadores = collect($dados['coorientadores'] ?? [])
-                ->reject(fn ($id) => $id == ($dados['orientador_vinculo_id'] ?? null))
-                ->values();
+            $coorientadores = collect($dados['coorientadores'] ?? [])->values();
 
             foreach ($coorientadores as $ordem => $vinculoId) {
                 Orientacao::create([

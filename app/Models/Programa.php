@@ -14,6 +14,7 @@ class Programa extends Model
         'ano_inicio',
         'coordenador_id',
         'vice_coordenador_id',
+        'max_coorientadores',
         'logo_path',
         'nome',
         'sigla',
@@ -34,6 +35,7 @@ class Programa extends Model
             'oferta_mestrado' => 'boolean',
             'oferta_doutorado' => 'boolean',
             'ativo' => 'boolean',
+            'max_coorientadores' => 'integer',
         ];
     }
 
