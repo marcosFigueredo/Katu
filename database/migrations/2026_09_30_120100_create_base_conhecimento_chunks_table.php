@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('programa_documento_referencia_id')
-                ->constrained('programa_documentos_referencia')
+                ->constrained('programa_documentos_referencia', indexName: 'base_conhec_chunks_doc_ref_fk')
                 ->cascadeOnDelete();
 
             $table->foreignId('programa_id')
