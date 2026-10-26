@@ -254,11 +254,11 @@
                                 Cursos
                             </a>
 
-                            <a href="{{ route('programa-documentos-referencia.index') }}"
+                            <a href="{{ route('programa-template.index') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
-                                      {{ request()->routeIs('programa-documentos-referencia.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
-                                <i class="bi bi-robot" style="font-size: 15px; flex-shrink:0;"></i>
-                                Base de Conhecimento (IA)
+                                      {{ request()->routeIs('programa-template.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-file-earmark-zip" style="font-size: 15px; flex-shrink:0;"></i>
+                                Template LaTeX
                             </a>
 
                             @php($programaMenu = app(\App\Services\ContextoSecretaria::class)->programa(auth()->user()))

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Programa extends Model
 {
@@ -94,6 +95,16 @@ public function trabalhosAcademicos()
     public function documentosReferencia(): HasMany
     {
         return $this->hasMany(ProgramaDocumentoReferencia::class);
+    }
+
+    public function templateLatex(): HasOne
+    {
+        return $this->hasOne(ProgramaTemplateLatex::class);
+    }
+
+    public function temTemplateLatex(): bool
+    {
+        return $this->templateLatex()->exists();
     }
 
     public function logoUrl(): ?string

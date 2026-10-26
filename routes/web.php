@@ -10,6 +10,7 @@ use App\Http\Controllers\LogoController;
 use App\Http\Controllers\ProgramaCursoController;
 use App\Http\Controllers\ProgramaController;
 use App\Http\Controllers\ProgramaDocumentoReferenciaController;
+use App\Http\Controllers\ProgramaTemplateLatexController;
 use App\Http\Controllers\AreaConcentracaoController;
 use App\Http\Controllers\LinhaPesquisaController;
 use App\Http\Controllers\UsuarioController;
@@ -71,6 +72,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('programa-documentos-referencia.index');
     Route::post('/programa/documentos-referencia', [ProgramaDocumentoReferenciaController::class, 'store'])
         ->name('programa-documentos-referencia.store');
+    Route::get('/programa/template-latex', [ProgramaTemplateLatexController::class, 'index'])
+        ->name('programa-template.index');
+    Route::post('/programa/template-latex', [ProgramaTemplateLatexController::class, 'store'])
+        ->name('programa-template.store');
+    Route::get('/programas/{programa}/template-latex/download', [ProgramaTemplateLatexController::class, 'download'])
+        ->name('programa-template.download');
 });
 
 Route::resource('programas', ProgramaController::class)
