@@ -1,0 +1,46 @@
+\datalist[entry]{nty/global//global/global}
+  \entry{santos2024}{article}{}
+    \name{author}{2}{}{%
+      {{hash=aaa}{%
+         family={Santos},
+         familyi={S\bibinitperiod},
+         given={Maria},
+         giveni={M\bibinitperiod}}}%
+      {{hash=bbb}{%
+         family={Rosa},
+         familyi={R\bibinitperiod},
+         given={Antonio\bibnamedelima Guimar{\~a}es},
+         giveni={A\bibinitperiod}}}%
+    }
+    \strng{namehash}{abc}
+    \field{title}{Redes bayesianas na vigil{\^a}ncia em sa{\'u}de}
+    \field{journaltitle}{Revista de Dados}
+    \field{year}{2024}
+    \verb{doi}
+    \verb 10.5555/rd.2024.9
+    \endverb
+  \endentry
+  \entry{pereira2020}{book}{}
+    \name{author}{1}{}{%
+      {{hash=ccc}{%
+         family={Pereira},
+         familyi={P\bibinitperiod},
+         given={Jo{\~a}o},
+         giveni={J\bibinitperiod}}}%
+    }
+    \field{title}{Introdu{\c c}{\~a}o {\`a} bioestat{\'i}stica}
+    \field{date}{2020-03}
+  \endentry
+  \entry{nobel2023}{article}{}
+    \name{author}{1}{}{%
+      {{hash=ddd}{%
+         family={Nobel},
+         familyi={N\bibinitperiod},
+         given={Ana},
+         giveni={A\bibinitperiod}}}%
+    }
+    \field{title}{Modelos de previs{\~a}o}
+    \field{year}{2023}
+    \field{doi}{10.7777/mp.2023.1}
+  \endentry
+\enddatalist

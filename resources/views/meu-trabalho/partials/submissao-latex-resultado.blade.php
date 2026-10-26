@@ -124,6 +124,10 @@
         </details>
     @endif
 
+    @if ($submissao->bbl_path)
+        @include('partials.relatorio-referencias', ['submissao' => $submissao])
+    @endif
+
     @if ($submissao->pdf_banca_path || $submissao->pdf_conferencia_path)
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body d-flex flex-wrap gap-2 align-items-center">

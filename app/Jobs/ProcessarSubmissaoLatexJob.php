@@ -154,9 +154,8 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
         $this->atualizarTrabalho($trabalho, $elementos, $idioma);
 
         // 8. verificação das referências (Tarefa 10), só quando compilou
-        $jobReferencias = 'App\\Jobs\\VerificarReferenciasSubmissaoJob';
-        if ($compilou && class_exists($jobReferencias)) {
-            $jobReferencias::dispatch($submissao->fresh());
+        if ($compilou) {
+            VerificarReferenciasSubmissaoJob::dispatch($submissao->fresh());
         }
     }
 

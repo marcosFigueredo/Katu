@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /** Envio do projeto LaTeX (.zip) pelo discente e o resultado do processamento em fila. */
@@ -72,6 +73,12 @@ class TrabalhoSubmissaoLatex extends Model
     public function documento(): HasOne
     {
         return $this->hasOne(TrabalhoDocumento::class, 'submissao_latex_id');
+    }
+
+    /** Referências do .bbl com o resultado da verificação (só discente e avaliadores veem). */
+    public function referencias(): HasMany
+    {
+        return $this->hasMany(SubmissaoReferencia::class, 'submissao_id');
     }
 
     /** É a submissão mais recente do trabalho? Só ela pode seguir à homologação. */

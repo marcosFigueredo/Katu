@@ -83,6 +83,28 @@ class TrabalhoAcademico extends Model
         return $this->hasOne(TrabalhoSubmissaoLatex::class)->latestOfMany();
     }
 
+    /**
+     * Atualidade e produção do orientador da submissão mais recente com verificação concluída (D8),
+     * para os relatórios. null quando nenhuma foi concluída.
+     *
+     * @return array{total: int, com_ano: int, recentes_pct: ?float, atualizadas: ?bool, orientador: int}|null
+     */
+    public function metricasReferencias(): ?array
+    {
+        $s = $this->submissoesLatex()->where('refs_status', 'concluida')->latest('id')->first();
+        if ($s === null) {
+            return null;
+        }
+
+        return [
+            'total' => (int) $s->refs_total,
+            'com_ano' => (int) $s->refs_com_ano,
+            'recentes_pct' => $s->refs_recentes_pct !== null ? (float) $s->refs_recentes_pct : null,
+            'atualizadas' => $s->refs_atualizadas,
+            'orientador' => (int) $s->refs_orientador,
+        ];
+    }
+
     public function bancaQualificacao()
     {
         return $this->hasOne(Banca::class)->where('tipo', 'qualificacao');

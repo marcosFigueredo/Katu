@@ -1,0 +1,20 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Silva \BBA{} Souza}{Silva \BBA{} Souza}{2021}]{silva2021}
+Silva, J.\ \BBA{} Souza, M. (2021).
+\newblock Modelagem matem{\'a}tica em sa{\'u}de coletiva.
+\newblock {\Bem Revista de Sa{\'u}de}, {\Bem 10}(2), 1--10.
+\newblock \doi{10.1590/s0034-8910.2021.001}
+
+\bibitem[\protect\citeauthoryear{Costa}{Costa}{2019}]{costa2019}
+Costa, A. (2019).
+\newblock {\Bem Epidemiologia aplicada}.
+\newblock Salvador: EDUFBA.
+
+\bibitem[\protect\citeauthoryear{Lima}{Lima}{2025}]{lima2025}
+Lima, R. (2025).
+\newblock Aprendizado de m{\'a}quina para vigil{\^a}ncia.
+\newblock {\Bem Cadernos}, {\Bem 3}, 5--9.
+\newblock https://doi.org/10.1234/cad.2025.77
+
+\end{thebibliography}

@@ -1,0 +1,22 @@
+\begin{thebibliography}{4}
+
+\bibitem{alfa}
+J.~Silva and M.~Souza.
+\newblock Modelos de transmiss{\~a}o de doen{\c c}as.
+\newblock {\em Revista X}, 12(3):45--60, 2022.
+\newblock doi:10.2222/rx.2022.45.
+
+\bibitem{beta}
+A.~Costa.
+\newblock Estat{\'i}stica para a sa{\'u}de.
+\newblock Editora Y, 2018.
+
+\bibitem{gama}
+R.~Lima.
+\newblock An{\'a}lise de sobreviv{\^e}ncia.
+\newblock {\em Cadernos Z}, 2021. \url{https://doi.org/10.3333/cz.2021.8}
+
+\bibitem{delta}
+Anonimo, sem ano nem titulo identificavel
+
+\end{thebibliography}

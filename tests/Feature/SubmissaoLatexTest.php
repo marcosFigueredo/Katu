@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessarSubmissaoLatexJob;
+use App\Jobs\VerificarReferenciasSubmissaoJob;
 use App\Models\Banca;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
@@ -37,6 +38,8 @@ class SubmissaoLatexTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
+        // a verificação das referências (Tarefa 10) tem testes próprios; aqui só se confere o disparo
+        Queue::fake([VerificarReferenciasSubmissaoJob::class]);
         $this->compilador = new CompiladorFalso;
         $this->app->instance(CompiladorLatex::class, $this->compilador);
     }
@@ -116,6 +119,9 @@ class SubmissaoLatexTest extends TestCase
         $this->assertNotNull($submissao->pdf_banca_path);
         Storage::disk('local')->assertExists($submissao->pdf_banca_path);
         $this->assertTrue($this->compilador->chamadas[0]['numerar']);
+        Queue::assertPushed(VerificarReferenciasSubmissaoJob::class);
+        $this->actingAs($discente)->get(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()->assertSee('Verificação das referências');
 
         $itens = collect($submissao->conformidade)->keyBy('codigo');
         $this->assertSame('ok', $itens['orientador']['status']);
