@@ -9,7 +9,9 @@ use App\Models\ProgramaTemplateLatex;
 use App\Models\User;
 use App\Services\ContextoSecretaria;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use ZipArchive;
@@ -184,5 +186,71 @@ class ProgramaTemplateLatexTest extends TestCase
 
         $tmp = storage_path('app/private/tmp');
         $this->assertSame([], is_dir($tmp) ? array_values(array_diff(scandir($tmp), ['.', '..'])) : []);
+    }
+
+    private function zipArticle(): UploadedFile
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'z');
+        $z = new ZipArchive;
+        $z->open($tmp, ZipArchive::OVERWRITE);
+        $z->addFromString('modelo/main.tex', file_get_contents(base_path('tests/fixtures/latex/article/main.tex')));
+        $z->close();
+        $arq = UploadedFile::fake()->createWithContent('article.zip', file_get_contents($tmp));
+        @unlink($tmp);
+
+        return $arq;
+    }
+
+    public function test_upload_grava_mapa_e_motor(): void
+    {
+        Storage::fake('local');
+        Http::fake();
+        [$sec] = $this->secretariaComPrograma();
+
+        $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipValido()])
+            ->assertRedirect(route('programa-template.index'));
+
+        $t = ProgramaTemplateLatex::firstOrFail();
+        $this->assertSame('resumo', $t->mapa_elementos['resumo_pt']['nome']);
+        $this->assertSame(['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'], $t->mapa_elementos['membros_banca']);
+        $this->assertSame('pdflatex', $t->motor);
+        Http::assertNothingSent();
+    }
+
+    public function test_ollama_sugere_codigos_faltantes(): void
+    {
+        Storage::fake('local');
+        $foraDoAr = false;
+        Http::fake(function () use (&$foraDoAr) {
+            if ($foraDoAr) {
+                throw new ConnectionException('fora do ar');
+            }
+
+            return Http::response(['response' => json_encode([
+                'membros_banca' => ['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'],
+                'titulo_en' => ['tipo' => 'comando', 'nome' => 'naoPedido'],
+            ])]);
+        });
+        [$sec] = $this->secretariaComPrograma();
+
+        $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipArticle()])
+            ->assertRedirect(route('programa-template.index'));
+
+        $t = ProgramaTemplateLatex::firstOrFail();
+        $this->assertSame(['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'], $t->mapa_elementos['membros_banca']);
+        $this->assertSame(['tipo' => 'comando', 'nome' => 'title'], $t->mapa_elementos['titulo_en']);
+        $this->assertSame(['tipo' => 'ambiente', 'nome' => 'abstract'], $t->mapa_elementos['abstract_en']);
+        $this->assertSame('pdflatex', $t->motor);
+        Http::assertSent(fn ($r) => str_contains($r['prompt'], 'membros_banca'));
+
+        // Ollama fora do ar: o upload continua funcionando
+        $foraDoAr = true;
+        $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipArticle()])
+            ->assertRedirect(route('programa-template.index'))
+            ->assertSessionHasNoErrors();
+
+        $t = ProgramaTemplateLatex::firstOrFail();
+        $this->assertArrayNotHasKey('membros_banca', $t->mapa_elementos);
+        $this->assertSame(['tipo' => 'ambiente', 'nome' => 'abstract'], $t->mapa_elementos['abstract_en']);
     }
 }

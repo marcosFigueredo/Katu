@@ -6,6 +6,9 @@ use App\Exceptions\ProjetoLatexInvalidoException;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\Programa;
 use App\Models\ProgramaTemplateLatex;
+use App\Services\Latex\ElementosVitais;
+use App\Services\Latex\ExtratorElementosLatexService;
+use App\Services\Latex\MapaTemplateOllamaService;
 use App\Services\Latex\ProjetoLatexZipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -29,8 +32,12 @@ class ProgramaTemplateLatexController extends Controller
         return view('programas.template-latex', compact('programa', 'template'));
     }
 
-    public function store(Request $request, ProjetoLatexZipService $servico)
-    {
+    public function store(
+        Request $request,
+        ProjetoLatexZipService $servico,
+        ExtratorElementosLatexService $extrator,
+        MapaTemplateOllamaService $ollama,
+    ) {
         $this->autorizarSecretaria();
         $programa = $this->programaDaSecretaria();
 
@@ -50,10 +57,19 @@ class ProgramaTemplateLatexController extends Controller
             $projeto = $servico->extrair($arquivo->path(), $tmp, 'dissertacao.tex');
             $classe = $projeto->classeDocumento();
             $texPrincipal = $projeto->texPrincipal;
+            $fonte = $projeto->fonteExpandido();
+            $mapa = $extrator->descobrirMapa($fonte);
+            $motor = $extrator->detectarMotor($fonte);
         } catch (ProjetoLatexInvalidoException $e) {
             throw ValidationException::withMessages(['arquivo' => $e->getMessage()]);
         } finally {
             File::deleteDirectory($tmp);
+        }
+
+        // o Ollama só completa o que as regras não acharam; falha dele devolve []
+        $faltantes = array_values(array_diff(ElementosVitais::todos(), array_keys($mapa)));
+        if ($faltantes !== []) {
+            $mapa += $ollama->sugerir($fonte, $faltantes);
         }
 
         $destino = "programas/{$programa->id}/template-latex/template.zip";
@@ -67,8 +83,8 @@ class ProgramaTemplateLatexController extends Controller
                 'hash_sha256' => hash_file('sha256', $arquivo->path()),
                 'tex_principal' => $texPrincipal,
                 'classe_documento' => $classe,
-                'motor' => null,
-                'mapa_elementos' => null,
+                'motor' => $motor,
+                'mapa_elementos' => $mapa,
                 'enviado_por' => auth()->id(),
                 'enviado_em' => now(),
             ]
