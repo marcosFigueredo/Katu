@@ -11,6 +11,9 @@
         $vinculo  = $discenteProfile?->vinculosPrograma?->first();
         $trabalho = $vinculo?->trabalhoAcademico;
         $bancas   = $trabalho?->bancas ?? collect();
+
+        $orientador     = $trabalho?->orientacoes?->firstWhere('tipo', 'orientador');
+        $coorientadores = $trabalho?->orientacoes?->where('tipo', 'coorientador') ?? collect();
     @endphp
 
     @if (blank($usuario->discenteProfile?->orcid_url))
@@ -104,6 +107,51 @@
                                 </span>
                             @endif
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h5 fw-bold text-dark mb-3">
+                            <i class="bi bi-mortarboard-fill me-2"></i>Orientação
+                        </h2>
+
+                        @if ($orientador)
+                            @php $orientadorUser = $orientador->docenteProgramaVinculo?->docenteProfile?->user; @endphp
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-light rounded-3 h-100">
+                                        <div class="text-muted small text-uppercase fw-semibold mb-1">Orientador</div>
+                                        <div class="fw-semibold">{{ $orientadorUser?->name ?? '—' }}</div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope-fill me-1"></i>{{ $orientadorUser?->email ?? 'E-mail não informado' }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if ($coorientadores->isNotEmpty())
+                                    @foreach ($coorientadores as $co)
+                                        @php $coUser = $co->docenteProgramaVinculo?->docenteProfile?->user; @endphp
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded-3 h-100">
+                                                <div class="text-muted small text-uppercase fw-semibold mb-1">Coorientador(a)</div>
+                                                <div class="fw-semibold">{{ $coUser?->name ?? '—' }}</div>
+                                                <div class="small text-muted">
+                                                    <i class="bi bi-envelope-fill me-1"></i>{{ $coUser?->email ?? 'E-mail não informado' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        @else
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                Orientador ainda não definido. Procure a secretaria do programa.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>

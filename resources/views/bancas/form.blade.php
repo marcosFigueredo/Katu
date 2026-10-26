@@ -4,20 +4,34 @@
         <nav aria-label="breadcrumb" class="mb-3">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                    <a href="{{ route('bancas.index') }}" class="text-decoration-none">Bancas</a>
+                    <a href="{{ $modoDiscente ? route('meu-trabalho.index') : route('bancas.index') }}" class="text-decoration-none">
+                        {{ $modoDiscente ? 'Meu Trabalho' : 'Bancas' }}
+                    </a>
                 </li>
-                <li class="breadcrumb-item active">{{ $banca->exists ? 'Gerenciar banca' : 'Nova banca' }}</li>
+                <li class="breadcrumb-item active">
+                    {{ $banca->exists ? ($modoDiscente ? 'Editar proposta' : 'Gerenciar banca') : ($modoDiscente ? 'Propor banca' : 'Nova banca') }}
+                </li>
             </ol>
         </nav>
 
         <div class="mb-4">
             <h1 class="h3 fw-bold mb-1" style="color: #00303A;">
-                {{ $banca->exists ? 'Gerenciar Banca' : 'Cadastrar Banca' }}
+                {{ $modoDiscente ? ($banca->exists ? 'Editar Proposta de Banca' : 'Propor Banca') : ($banca->exists ? 'Gerenciar Banca' : 'Cadastrar Banca') }}
             </h1>
             <p class="text-muted mb-0">
-                O orientador preside a banca, coorientadores aparecem em ata e apenas avaliadores lançam nota.
+                @if ($modoDiscente)
+                    A Secretaria homologa sua proposta antes de liberar o envio do trabalho aos avaliadores.
+                @else
+                    O orientador preside a banca, coorientadores aparecem em ata e apenas avaliadores lançam nota.
+                @endif
             </p>
         </div>
+
+        @if ($modoDiscente && $banca->exists && $banca->homologacao_status === 'devolvida' && $banca->homologacao_observacoes)
+            <div class="alert alert-danger">
+                <strong>Motivo da devolução:</strong> {{ $banca->homologacao_observacoes }}
+            </div>
+        @endif
 
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -118,7 +132,9 @@
                             @endif
                             <input type="hidden" name="enviar_email_participantes" id="enviar_email_participantes" value="0">
 
-                            @if (! $banca->exists)
+                            @if ($banca->exists || $modoDiscente)
+                                <input type="hidden" name="trabalho_academico_id" value="{{ $trabalho->id }}">
+                            @else
                                 <div class="mb-3">
                                     <label for="trabalho_academico_id" class="form-label fw-semibold">Discente / Trabalho</label>
                                     <select id="trabalho_academico_id"
@@ -134,28 +150,30 @@
                                         @endforeach
                                     </select>
                                 </div>
-                            @else
-                                <input type="hidden" name="trabalho_academico_id" value="{{ $trabalho->id }}">
                             @endif
 
                             <div class="row g-3 mb-3">
-                                <div class="col-md-4">
+                                <div class="{{ $modoDiscente ? 'col-md-6' : 'col-md-4' }}">
                                     <label for="tipo" class="form-label fw-semibold">Tipo</label>
                                     <select id="tipo" name="tipo" class="form-select">
                                         <option value="qualificacao" {{ old('tipo', $banca->tipo) === 'qualificacao' ? 'selected' : '' }}>Qualificação</option>
                                         <option value="defesa" {{ old('tipo', $banca->tipo) === 'defesa' ? 'selected' : '' }}>Defesa</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="status" class="form-label fw-semibold">Status</label>
-                                    <select id="status" name="status" class="form-select">
-                                        <option value="cadastrada" {{ old('status', $banca->status) === 'cadastrada' ? 'selected' : '' }}>Cadastrada</option>
-                                        <option value="em_avaliacao" {{ old('status', $banca->status) === 'em_avaliacao' ? 'selected' : '' }}>Em avaliação</option>
-                                        <option value="finalizada" {{ old('status', $banca->status) === 'finalizada' ? 'selected' : '' }}>Finalizada</option>
-                                        <option value="cancelada" {{ old('status', $banca->status) === 'cancelada' ? 'selected' : '' }}>Cancelada</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
+                                @if ($modoDiscente)
+                                    <input type="hidden" name="status" value="cadastrada">
+                                @else
+                                    <div class="col-md-4">
+                                        <label for="status" class="form-label fw-semibold">Status</label>
+                                        <select id="status" name="status" class="form-select">
+                                            <option value="cadastrada" {{ old('status', $banca->status) === 'cadastrada' ? 'selected' : '' }}>Cadastrada</option>
+                                            <option value="em_avaliacao" {{ old('status', $banca->status) === 'em_avaliacao' ? 'selected' : '' }}>Em avaliação</option>
+                                            <option value="finalizada" {{ old('status', $banca->status) === 'finalizada' ? 'selected' : '' }}>Finalizada</option>
+                                            <option value="cancelada" {{ old('status', $banca->status) === 'cancelada' ? 'selected' : '' }}>Cancelada</option>
+                                        </select>
+                                    </div>
+                                @endif
+                                <div class="{{ $modoDiscente ? 'col-md-3' : 'col-md-2' }}">
                                     <label for="data_banca" class="form-label fw-semibold">Data</label>
                                     <input type="text"
                                            id="data_banca"
@@ -173,7 +191,7 @@
                                         A data não pode ser anterior a hoje.
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="{{ $modoDiscente ? 'col-md-3' : 'col-md-2' }}">
                                     <label for="horario_banca" class="form-label fw-semibold">Horário</label>
                                     <input type="text"
                                            id="horario_banca"
@@ -323,17 +341,26 @@
                             </div>
 
                             <div class="d-flex gap-2 pt-2 border-top">
-                                <button type="button"
-                                        class="btn btn-primary fw-semibold"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modal-email-participantes"
-                                        {{ ! $trabalho ? 'disabled' : '' }}>
-                                    <i class="bi bi-floppy-fill me-2"></i>
-                                    {{ $banca->exists ? 'Atualizar banca' : 'Cadastrar banca' }}
-                                </button>
-                                <a href="{{ route('bancas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                                @if ($modoDiscente)
+                                    <button type="submit"
+                                            class="btn btn-primary fw-semibold"
+                                            {{ ! $trabalho ? 'disabled' : '' }}>
+                                        <i class="bi bi-floppy-fill me-2"></i>
+                                        {{ $banca->exists ? 'Reenviar proposta' : 'Propor banca' }}
+                                    </button>
+                                @else
+                                    <button type="button"
+                                            class="btn btn-primary fw-semibold"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-email-participantes"
+                                            {{ ! $trabalho ? 'disabled' : '' }}>
+                                        <i class="bi bi-floppy-fill me-2"></i>
+                                        {{ $banca->exists ? 'Atualizar banca' : 'Cadastrar banca' }}
+                                    </button>
+                                @endif
+                                <a href="{{ $modoDiscente ? route('meu-trabalho.index') : route('bancas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
 
-                                @if ($banca->exists)
+                                @if ($banca->exists && ! $modoDiscente)
                                     <button type="submit"
                                             form="delete-banca"
                                             class="btn btn-outline-danger ms-auto"
@@ -344,7 +371,7 @@
                             </div>
                         </form>
 
-                        @if ($banca->exists)
+                        @if ($banca->exists && ! $modoDiscente)
                             <form id="delete-banca" method="POST" action="{{ route('bancas.destroy', $banca) }}" class="d-none">
                                 @csrf
                                 @method('DELETE')

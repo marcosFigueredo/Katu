@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Banca;
+use App\Services\BancaNotificacaoService;
 use App\Services\HomologacaoBancaService;
 use App\Services\VerificacaoBancaService;
 use Illuminate\Http\Request;
 
 class HomologacaoBancaController extends Controller
 {
-    public function __construct(private readonly HomologacaoBancaService $service)
-    {
+    public function __construct(
+        private readonly HomologacaoBancaService $service,
+        private readonly BancaNotificacaoService $notificacao,
+    ) {
     }
 
     private function autorizarSecretaria(): void
@@ -50,6 +53,7 @@ class HomologacaoBancaController extends Controller
         $this->garantirPrograma($banca);
 
         $this->service->homologar($banca, auth()->user());
+        $this->notificacao->enviarCadastro($banca);
 
         return back()->with('status', 'Banca homologada. O envio do trabalho foi liberado.');
     }

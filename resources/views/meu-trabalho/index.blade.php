@@ -52,15 +52,30 @@
                         };
                         $orientador = $trabalho?->orientacoes?->firstWhere('tipo', 'orientador');
                         $coorientadores = $trabalho?->orientacoes?->where('tipo', 'coorientador') ?? collect();
+                        $homologacaoCor = match($banca->homologacao_status) {
+                            'homologada' => 'success',
+                            'devolvida'  => 'danger',
+                            default      => 'secondary',
+                        };
+                        $homologacaoLabel = match($banca->homologacao_status) {
+                            'homologada' => 'Homologada',
+                            'devolvida'  => 'Devolvida para ajustes',
+                            default      => 'Aguardando homologação',
+                        };
                     @endphp
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="badge text-bg-{{ $tipoCor }} fs-6 px-3 py-2">
                                         {{ $tipoLabel }}
                                     </span>
                                     <span class="badge text-bg-{{ $statusCor }}">{{ $statusLabel }}</span>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="badge text-bg-{{ $homologacaoCor }}">
+                                        <i class="bi bi-patch-check-fill me-1"></i>{{ $homologacaoLabel }}
+                                    </span>
                                 </div>
 
                                 <dl class="row small mb-0">
@@ -96,15 +111,34 @@
                                         </dd>
                                     @endif
                                 </dl>
+
+                                @if (in_array($banca->homologacao_status, ['aguardando', 'devolvida']))
+                                    @if ($banca->homologacao_status === 'devolvida' && $banca->homologacao_observacoes)
+                                        <div class="alert alert-danger small mt-3 mb-2">
+                                            <strong>Motivo da devolução:</strong> {{ $banca->homologacao_observacoes }}
+                                        </div>
+                                    @endif
+                                    <a href="{{ route('bancas.edit', $banca) }}" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="bi bi-pencil-fill me-1"></i>
+                                        {{ $banca->homologacao_status === 'devolvida' ? 'Corrigir e reenviar' : 'Editar proposta' }}
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
                 @endforeach
             </div>
         @else
-            <div class="alert alert-warning mb-4">
-                <i class="bi bi-hourglass-split me-2"></i>
-                Nenhuma banca cadastrada ainda. O envio do trabalho será liberado após a secretaria registrar sua banca.
+            <div class="alert alert-warning mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    Nenhuma banca cadastrada ainda. O envio do trabalho é liberado após a Secretaria homologar sua proposta de banca.
+                </div>
+                @if ($trabalho)
+                    <a href="{{ route('bancas.create') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>Propor banca
+                    </a>
+                @endif
             </div>
         @endif
 
@@ -124,7 +158,7 @@
                         @if (! $bancaLiberada)
                             <div class="alert alert-warning small mb-0">
                                 <i class="bi bi-lock-fill me-2"></i>
-                                O envio será liberado após a secretaria cadastrar a banca do seu trabalho.
+                                O envio será liberado após a Secretaria homologar a proposta de banca do seu trabalho.
                             </div>
                         @else
 

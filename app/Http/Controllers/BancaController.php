@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SincronizarOrcidBancaJob;
-use App\Mail\BancaCadastradaMail;
 use App\Models\Banca;
 use App\Models\BancaIndicador;
 use App\Models\BancaMembro;
@@ -13,14 +12,16 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use App\Services\BancaNotificacaoService;
 use App\Services\VerificacaoBancaService;
 
 class BancaController extends Controller
 {
-    public function __construct(private readonly VerificacaoBancaService $verificacao)
-    {
+    public function __construct(
+        private readonly VerificacaoBancaService $verificacao,
+        private readonly BancaNotificacaoService $notificacao,
+    ) {
     }
 
     private function autorizarSecretaria(): void
@@ -28,6 +29,45 @@ class BancaController extends Controller
         if (auth()->user()->categoria !== 'sec') {
             abort(403);
         }
+    }
+
+    /** Resolve o trabalho acadêmico do discente autenticado, com as relações usadas pelo formulário de banca. */
+    private function trabalhoDoDiscenteAutenticado(): ?TrabalhoAcademico
+    {
+        $usuario = auth()->user()->load([
+            'discenteProfile.vinculosPrograma.programa',
+            'discenteProfile.vinculosPrograma.linhaPesquisa',
+            'discenteProfile.vinculosPrograma.trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
+            'discenteProfile.vinculosPrograma.trabalhoAcademico.bancas',
+        ]);
+
+        return $usuario->discenteProfile?->vinculosPrograma?->first()?->trabalhoAcademico;
+    }
+
+    /**
+     * Autoriza acesso a uma banca existente (edit/update) e informa se o autor é o discente.
+     * Secretaria: acesso completo dentro do próprio programa. Discente: apenas a própria
+     * banca, e só enquanto ela não estiver homologada.
+     */
+    private function autorizarAcessoBanca(Banca $banca): bool
+    {
+        $user = auth()->user();
+
+        if ($user->categoria === 'sec') {
+            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
+
+            return false;
+        }
+
+        if ($user->categoria === 'discente') {
+            $trabalho = $this->trabalhoDoDiscenteAutenticado();
+            abort_unless($trabalho && $trabalho->id === $banca->trabalho_academico_id, 403);
+            abort_unless(in_array($banca->homologacao_status, ['aguardando', 'devolvida'], true), 403);
+
+            return true;
+        }
+
+        abort(403);
     }
 
     public function index()
@@ -51,51 +91,75 @@ class BancaController extends Controller
 
     public function create(Request $request)
     {
-        $this->autorizarSecretaria();
+        $modoDiscente = auth()->user()->categoria === 'discente';
 
-        $trabalho = null;
+        if ($modoDiscente) {
+            $trabalho = $this->trabalhoDoDiscenteAutenticado();
+            abort_unless($trabalho, 404);
+            $trabalhos = collect([$trabalho]);
+        } else {
+            $this->autorizarSecretaria();
 
-        if ($request->filled('trabalho_id')) {
-            $trabalho = TrabalhoAcademico::with([
+            $trabalho = null;
+
+            if ($request->filled('trabalho_id')) {
+                $trabalho = TrabalhoAcademico::with([
+                    'discenteVinculo.discenteProfile.user',
+                    'discenteVinculo.linhaPesquisa',
+                    'programa',
+                    'orientacoes' => fn ($q) => $q->where('ativo', true)->orderBy('tipo')->orderBy('ordem'),
+                    'orientacoes.docenteProgramaVinculo.docenteProfile.user',
+                    'bancas',
+                ])->findOrFail($request->integer('trabalho_id'));
+                $this->garantirProgramaDaSecretaria($trabalho->programa_id);
+            }
+
+            $trabalhos = TrabalhoAcademico::with([
                 'discenteVinculo.discenteProfile.user',
-                'discenteVinculo.linhaPesquisa',
-                'programa',
-                'orientacoes' => fn ($q) => $q->where('ativo', true)->orderBy('tipo')->orderBy('ordem'),
-                'orientacoes.docenteProgramaVinculo.docenteProfile.user',
+                'orientacoes' => fn ($q) => $q->where('ativo', true),
                 'bancas',
-            ])->findOrFail($request->integer('trabalho_id'));
-            $this->garantirProgramaDaSecretaria($trabalho->programa_id);
+            ])
+                ->where('programa_id', $this->programaDaSecretaria()->id)
+                ->orderByDesc('created_at')
+                ->get()
+                ->filter(fn (TrabalhoAcademico $item) =>
+                    $item->orientacoes->firstWhere('tipo', 'orientador') &&
+                    $item->bancas->count() < 2
+                );
         }
-
-        $trabalhos = TrabalhoAcademico::with([
-            'discenteVinculo.discenteProfile.user',
-            'orientacoes' => fn ($q) => $q->where('ativo', true),
-            'bancas',
-        ])
-            ->where('programa_id', $this->programaDaSecretaria()->id)
-            ->orderByDesc('created_at')
-            ->get()
-            ->filter(fn (TrabalhoAcademico $item) =>
-                $item->orientacoes->firstWhere('tipo', 'orientador') &&
-                $item->bancas->count() < 2
-            );
 
         $avaliadores = $trabalho ? $this->avaliadoresDisponiveis($trabalho) : collect();
         $avaliadoresAtuais = collect();
-        $banca = new Banca(['tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => true]);
+        $banca = new Banca(['tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => ! $modoDiscente]);
 
         return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais)
-            + ['indicadores' => null]);
+            + ['indicadores' => null, 'modoDiscente' => $modoDiscente]);
     }
 
     public function store(Request $request)
     {
-        $this->autorizarSecretaria();
+        $modoDiscente = auth()->user()->categoria === 'discente';
+
+        if ($modoDiscente) {
+            $trabalhoDiscente = $this->trabalhoDoDiscenteAutenticado();
+            abort_unless($trabalhoDiscente, 404);
+            $request->merge([
+                'trabalho_academico_id' => $trabalhoDiscente->id,
+                'status' => 'cadastrada',
+            ]);
+        } else {
+            $this->autorizarSecretaria();
+        }
 
         $data = $this->validar($request);
         $trabalho = TrabalhoAcademico::with(['orientacoes.docenteProgramaVinculo.docenteProfile.user', 'bancas'])
             ->findOrFail($data['trabalho_academico_id']);
-        $this->garantirProgramaDaSecretaria($trabalho->programa_id);
+
+        if ($modoDiscente) {
+            abort_unless($trabalho->id === $trabalhoDiscente->id, 403);
+        } else {
+            $this->garantirProgramaDaSecretaria($trabalho->programa_id);
+        }
 
         if ($trabalho->bancas->where('tipo', $data['tipo'])->isNotEmpty()) {
             throw ValidationException::withMessages([
@@ -115,19 +179,19 @@ class BancaController extends Controller
         $this->validarComposicao($trabalho, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
-        $banca = DB::transaction(function () use ($data, $dataHora) {
-            $banca = Banca::create([
+        $homologacao = $modoDiscente
+            ? ['homologacao_status' => 'aguardando', 'homologada_por' => null, 'homologada_em' => null, 'libera_envio_trabalho' => false]
+            : ['homologacao_status' => 'homologada', 'homologada_por' => auth()->id(), 'homologada_em' => now(), 'libera_envio_trabalho' => true];
+
+        $banca = DB::transaction(function () use ($data, $dataHora, $homologacao) {
+            $banca = Banca::create(array_merge([
                 'trabalho_academico_id' => $data['trabalho_academico_id'],
                 'tipo' => $data['tipo'],
                 'status' => $data['status'],
-                'homologacao_status' => 'homologada',
-                'homologada_por' => auth()->id(),
-                'homologada_em' => now(),
                 'data_hora' => $dataHora,
                 'local' => $data['local'] ?? null,
                 'observacoes' => $data['observacoes'] ?? null,
-                'libera_envio_trabalho' => true,
-            ]);
+            ], $homologacao));
 
             $this->sincronizarAvaliadores($banca, collect($data['avaliadores'] ?? []));
 
@@ -136,8 +200,14 @@ class BancaController extends Controller
 
         SincronizarOrcidBancaJob::dispatch($banca);
 
+        if ($modoDiscente) {
+            return redirect()
+                ->route('meu-trabalho.index')
+                ->with('success', 'Proposta de banca enviada. Aguarde a homologação da Secretaria.');
+        }
+
         if ($request->boolean('enviar_email_participantes')) {
-            $this->enviarEmailParticipantes($banca);
+            $this->notificacao->enviarCadastro($banca);
         }
 
         return redirect()
@@ -149,8 +219,7 @@ class BancaController extends Controller
 
     public function edit(Banca $banca)
     {
-        $this->autorizarSecretaria();
-        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
+        $modoDiscente = $this->autorizarAcessoBanca($banca);
 
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
@@ -171,13 +240,16 @@ class BancaController extends Controller
         $indicadores = BancaIndicador::where('banca_id', $banca->id)->first();
 
         return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais)
-            + compact('indicadores'));
+            + compact('indicadores') + ['modoDiscente' => $modoDiscente]);
     }
 
     public function update(Request $request, Banca $banca)
     {
-        $this->autorizarSecretaria();
-        $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
+        $modoDiscente = $this->autorizarAcessoBanca($banca);
+
+        if ($modoDiscente) {
+            $request->merge(['status' => 'cadastrada']);
+        }
 
         $data = $this->validar($request, $banca);
         $banca->load('trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user');
@@ -185,18 +257,31 @@ class BancaController extends Controller
         $this->validarComposicao($banca->trabalhoAcademico, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
-        DB::transaction(function () use ($banca, $data, $dataHora) {
-            $banca->update([
-                'tipo' => $data['tipo'],
-                'status' => $data['status'],
+        $homologacao = $modoDiscente
+            ? [
+                'homologacao_status' => 'aguardando',
+                'homologacao_observacoes' => null,
+                'homologada_por' => null,
+                'homologada_em' => null,
+                'devolvida_por' => null,
+                'devolvida_em' => null,
+                'libera_envio_trabalho' => false,
+            ]
+            : [
                 'homologacao_status' => 'homologada',
                 'homologada_por' => auth()->id(),
                 'homologada_em' => now(),
+                'libera_envio_trabalho' => true,
+            ];
+
+        DB::transaction(function () use ($banca, $data, $dataHora, $homologacao) {
+            $banca->update(array_merge([
+                'tipo' => $data['tipo'],
+                'status' => $data['status'],
                 'data_hora' => $dataHora,
                 'local' => $data['local'] ?? null,
                 'observacoes' => $data['observacoes'] ?? null,
-                'libera_envio_trabalho' => true,
-            ]);
+            ], $homologacao));
 
             $banca->membros()->delete();
             $this->sincronizarAvaliadores($banca, collect($data['avaliadores'] ?? []));
@@ -204,8 +289,14 @@ class BancaController extends Controller
 
         SincronizarOrcidBancaJob::dispatch($banca);
 
+        if ($modoDiscente) {
+            return redirect()
+                ->route('meu-trabalho.index')
+                ->with('success', 'Proposta de banca reenviada. Aguarde a homologação da Secretaria.');
+        }
+
         if ($request->boolean('enviar_email_participantes')) {
-            $this->enviarEmailParticipantes($banca);
+            $this->notificacao->enviarCadastro($banca);
         }
 
         return redirect()
@@ -424,32 +515,4 @@ class BancaController extends Controller
         );
     }
 
-    private function enviarEmailParticipantes(Banca $banca): void
-    {
-        $banca->load([
-            'trabalhoAcademico.discenteVinculo.discenteProfile.user',
-            'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
-            'membros.docenteProgramaVinculo.docenteProfile.user',
-        ]);
-
-        $emails = collect([
-            $banca->trabalhoAcademico?->discenteVinculo?->discenteProfile?->user?->email,
-        ])
-            ->merge($banca->trabalhoAcademico?->orientacoes?->map(
-                fn ($orientacao) => $orientacao->docenteProgramaVinculo?->docenteProfile?->user?->email
-            ) ?? collect())
-            ->merge($banca->membros?->map(
-                fn ($membro) => $membro->docenteProgramaVinculo?->docenteProfile?->user?->email
-            ) ?? collect())
-            ->filter()
-            ->unique()
-            ->values();
-
-        foreach ($emails as $email) {
-            Mail::to($email)->send(new BancaCadastradaMail(
-                $banca,
-                route('dashboard'),
-            ));
-        }
-    }
 }
