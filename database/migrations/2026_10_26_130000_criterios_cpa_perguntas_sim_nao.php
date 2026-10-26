@@ -47,6 +47,12 @@ return new class extends Migration
     {
         DB::table('criterios_cpa')->whereNull('etapa')->update(['etapa' => 'qualificacao']);
 
+        // A FK de programa_id precisa de um índice o tempo todo (MySQL, erro 1553):
+        // o antigo é criado antes de derrubar o novo.
+        Schema::table('criterios_cpa', function (Blueprint $table) {
+            $table->index(['programa_id', 'etapa', 'nivel', 'ativo'], 'criterios_cpa_aplicacao_idx');
+        });
+
         Schema::table('criterios_cpa', function (Blueprint $table) {
             $table->dropIndex('criterios_cpa_pergunta_aplicacao_idx');
             $table->dropColumn('inativado_em');
@@ -71,7 +77,6 @@ return new class extends Migration
 
         Schema::table('criterios_cpa', function (Blueprint $table) {
             $table->unique(['programa_id', 'etapa', 'codigo', 'versao'], 'criterios_cpa_programa_codigo_versao_unique');
-            $table->index(['programa_id', 'etapa', 'nivel', 'ativo'], 'criterios_cpa_aplicacao_idx');
         });
 
         Schema::create('banca_evidencias', function (Blueprint $table) {
