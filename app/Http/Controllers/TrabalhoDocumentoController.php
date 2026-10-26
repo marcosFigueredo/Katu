@@ -214,6 +214,14 @@ class TrabalhoDocumentoController extends Controller
             abort(403);
         }
 
+        // Programa com template LaTeX: só a submissão vigente com "ok" segue à homologação
+        // (SubmissaoLatexController::enviarHomologacao); PDFs antigos não passam por aqui.
+        if ($trabalho->programa?->temTemplateLatex()) {
+            return back()->withErrors([
+                'homologacao' => 'Seu programa usa o template LaTeX: envie à homologação pela submissão do projeto com verificação "ok".',
+            ]);
+        }
+
         $banca = $this->pedidoHomologacao->bancaDoPedido($trabalho);
 
         if (! $banca) {

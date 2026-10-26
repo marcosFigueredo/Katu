@@ -325,6 +325,80 @@ class SubmissaoLatexTest extends TestCase
         $this->assertDatabaseCount('trabalho_submissoes_latex', 0);
     }
 
+    public function test_rota_pdf_de_homologacao_e_recusada_com_template(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+        // PDF anterior ao template (ou de outro caminho) não pode furar a verificação LaTeX
+        $antigo = TrabalhoDocumento::create([
+            'trabalho_academico_id' => $trabalho->id,
+            'enviado_por_id' => $discente->id,
+            'tipo_documento' => 'qualificacao',
+            'arquivo_pdf_path' => 'trabalhos/antigo.pdf',
+            'arquivo_pdf_nome_original' => 'antigo.pdf',
+            'enviado_em' => now(),
+        ]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $antigo))
+            ->assertSessionHasErrors('homologacao');
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+        $this->assertNull($banca->fresh()->documento_homologacao_id);
+
+        $this->actingAs($discente)->get(route('meu-trabalho.index'))
+            ->assertDontSee(route('meu-trabalho.enviar-homologacao', $antigo), false);
+    }
+
+    public function test_banca_editada_depois_da_verificacao_bloqueia_envio(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+        $submissao = $this->enviarZip($discente);
+        $this->assertSame('ok', $submissao->status);
+        $this->assertSame(64, strlen((string) $submissao->banca_composicao_hash));
+
+        // o discente troca um membro no mesmo registro de banca
+        $novo = $this->docente($trabalho->programa, 'Ana Paula Menezes', 'interno');
+        $banca->avaliadores()->whereHas('docenteProgramaVinculo', fn ($q) => $q->where('tipo_vinculo', 'interno'))
+            ->update(['docente_programa_vinculo_id' => $novo->id]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.enviar-homologacao', $submissao))
+            ->assertSessionHasErrors(['homologacao' => 'A banca mudou depois da verificação. Envie o projeto novamente.']);
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+        $this->assertDatabaseCount('trabalho_documentos', 0);
+
+        // mudar só o local também invalida
+        $outra = $this->enviarZip($discente);
+        $banca->update(['local' => 'Sala 9']);
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.enviar-homologacao', $outra))
+            ->assertSessionHasErrors(['homologacao' => 'A banca mudou depois da verificação. Envie o projeto novamente.']);
+
+        // reenviado o projeto, a nova verificação vale
+        $nova = $this->enviarZip($discente);
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.enviar-homologacao', $nova))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
+    public function test_erro_inesperado_nao_expoe_detalhes_internos(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $this->proporBanca($discente, $trabalho);
+        $this->compilador->excecao = new \RuntimeException('Falha em C:\servidor\segredo\app\storage\x.tex');
+
+        $submissao = $this->enviarZip($discente);
+
+        $this->assertSame('erro', $submissao->status);
+        $this->assertSame(ProcessarSubmissaoLatexJob::MENSAGEM_ERRO, $submissao->log_resumido);
+        $this->assertStringNotContainsString('segredo', (string) $submissao->log_resumido);
+
+        // failed() também não expõe
+        (new ProcessarSubmissaoLatexJob($submissao))->failed(new \RuntimeException('/var/www/segredo'));
+        $this->assertSame(ProcessarSubmissaoLatexJob::MENSAGEM_ERRO, $submissao->fresh()->log_resumido);
+
+        $this->actingAs($discente)->get(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()->assertDontSee('segredo');
+    }
+
     // ─── apoio ───────────────────────────────────────────────────────────
 
     private function enviarZip(User $discente, ?callable $alterarTex = null): TrabalhoSubmissaoLatex
@@ -477,6 +551,8 @@ class CompiladorFalso implements CompiladorLatex
 
     public string $log = '';
 
+    public ?\Throwable $excecao = null;
+
     /** @var list<array{numerar: bool, motor: string}> */
     public array $chamadas = [];
 
@@ -486,6 +562,9 @@ class CompiladorFalso implements CompiladorLatex
     public function compilar(ProjetoLatex $projeto, string $motor, bool $numerarLinhas, ?string $apendiceTex = null): ResultadoCompilacao
     {
         $this->chamadas[] = ['numerar' => $numerarLinhas, 'motor' => $motor];
+        if ($this->excecao !== null) {
+            throw $this->excecao;
+        }
         $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'latexfake_'.bin2hex(random_bytes(6));
         mkdir($dir);
         $this->diretorios[] = $dir;

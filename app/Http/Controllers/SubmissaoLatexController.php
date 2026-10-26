@@ -151,6 +151,14 @@ class SubmissaoLatexController extends Controller
             ]);
         }
 
+        // A conformidade foi conferida contra a composição de então (membros, data, local).
+        if ($submissao->banca_composicao_hash === null
+            || ! hash_equals($submissao->banca_composicao_hash, (string) TrabalhoSubmissaoLatex::impressaoBanca($banca))) {
+            return back()->withErrors([
+                'homologacao' => 'A banca mudou depois da verificação. Envie o projeto novamente.',
+            ]);
+        }
+
         $novoArquivo = null;
 
         try {

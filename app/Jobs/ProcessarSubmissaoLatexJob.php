@@ -34,6 +34,8 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
 
     public const AVISO_SEM_NUMERACAO = 'Numeração de linhas indisponível com esta classe';
 
+    public const MENSAGEM_ERRO = 'Erro inesperado no processamento. Tente novamente ou procure a Secretaria.';
+
     public int $tries = 1;
 
     /** Duas compilações de até 180 s cada, mais extração e cópias. */
@@ -66,6 +68,9 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
 
     public function failed(?Throwable $e): void
     {
+        if ($e !== null) {
+            report($e);
+        }
         $this->marcarErro($e);
     }
 
@@ -118,6 +123,7 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
 
         $submissao->update([
             'tex_principal' => $projeto->texPrincipal,
+            'banca_composicao_hash' => TrabalhoSubmissaoLatex::impressaoBanca($submissao->banca),
             'idioma' => $idioma,
             'motor' => $motor,
             'elementos' => $elementos,
@@ -271,12 +277,12 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
         }
     }
 
+    /** O detalhe vai para o log do servidor (report); o discente vê só a mensagem genérica. */
     private function marcarErro(?Throwable $e): void
     {
-        $mensagem = $e?->getMessage() ?: 'Falha inesperada no processamento.';
         TrabalhoSubmissaoLatex::whereKey($this->submissao->id)->update([
             'status' => 'erro',
-            'log_resumido' => 'Erro inesperado no processamento: '.mb_substr($mensagem, 0, 2000),
+            'log_resumido' => self::MENSAGEM_ERRO,
         ]);
     }
 }

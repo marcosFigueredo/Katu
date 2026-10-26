@@ -16,6 +16,7 @@ class TrabalhoSubmissaoLatex extends Model
     protected $fillable = [
         'trabalho_academico_id',
         'banca_id',
+        'banca_composicao_hash',
         'enviado_por_id',
         'tipo_documento',
         'idioma',
@@ -79,6 +80,26 @@ class TrabalhoSubmissaoLatex extends Model
         return ! static::where('trabalho_academico_id', $this->trabalho_academico_id)
             ->where('id', '>', $this->id)
             ->exists();
+    }
+
+    /**
+     * Impressão digital da composição da banca conferida: avaliadores ativos (ids dos
+     * vínculos, ordenados), data/hora e local. Muda quando o discente edita a banca.
+     */
+    public static function impressaoBanca(?Banca $banca): ?string
+    {
+        if ($banca === null) {
+            return null;
+        }
+        $ids = $banca->avaliadores()->pluck('docente_programa_vinculo_id')
+            ->map(fn ($id) => (int) $id)->sort()->values()->all();
+        $banca->refresh();
+
+        return hash('sha256', json_encode([
+            'avaliadores' => $ids,
+            'data_hora' => $banca->data_hora?->format('Y-m-d H:i'),
+            'local' => trim((string) $banca->local),
+        ]));
     }
 
     public function diretorioArquivos(): string
