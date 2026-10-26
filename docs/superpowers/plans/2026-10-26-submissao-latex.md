@@ -87,7 +87,8 @@ Esses serviços são orquestrados por jobs em fila. A compilação fica atrás d
 ### Tarefa 3: Extração dos elementos vitais (D1)
 
 **Arquivos:**
-- Criar: `app/Services/Latex/ExtratorElementosLatexService.php`, `app/Services/Latex/ElementosVitais.php` (constantes dos códigos)
+- Criar: `app/Services/Latex/ExtratorElementosLatexService.php`, `app/Services/Latex/ElementosVitais.php` (constantes dos códigos), `app/Services/Latex/MapaTemplateOllamaService.php`
+- Modificar: `app/Http/Controllers/ProgramaTemplateLatexController.php` (gravar mapa e motor no upload)
 - Fixtures: `tests/fixtures/latex/abntex2/main.tex` (abnTeX2 mínimo: `\titulo{}`, `\autor{}`, `\orientador{}`, `\coorientador{}`, `\begin{resumo}...\textbf{Palavras-chave}: a. b.\end{resumo}`, `\begin{resumo}[Abstract]...\textbf{Keywords}: x. y.\end{resumo}`) e `tests/fixtures/latex/article/main.tex` (`\title{}`, `\author{}`, `\begin{abstract}`, sem banca). O caso do PPGMSB usa `docs/classppgmsb.zip` (`classppgmsb/dissertacao.tex`), extraído pela Tarefa 2.
 - Teste: `tests/Unit/ExtratorElementosLatexServiceTest.php`
 
@@ -97,6 +98,9 @@ Esses serviços são orquestrados por jobs em fila. A compilação fica atrás d
   - `ElementosVitais` com as constantes `TITULO_PT`, `TITULO_EN`, `RESUMO_PT`, `PALAVRAS_CHAVE_PT`, `ABSTRACT_EN`, `PALAVRAS_CHAVE_EN`, `AUTOR`, `ORIENTADOR`, `COORIENTADORES`, `MEMBROS_BANCA`, `DATA_DEFESA`, `LOCAL_DEFESA` (valores `'titulo_pt'`, …).
   - `ExtratorElementosLatexService::descobrirMapa(string $fonte): array`, no formato `[codigo => ['tipo' => 'comando'|'ambiente'|'ambiente_opcao'|'secao'|'padrao_comando', 'nome' => string, 'opcao'? => string]]`. Só regras, sem IA.
   - `ExtratorElementosLatexService::extrair(string $fonte, ?array $mapa = null): array`, no formato `[codigo => string|array<string>|null]`. `COORIENTADORES` e `MEMBROS_BANCA` são listas de nomes; ausente = `null`. Com `$mapa`, ele é usado primeiro e as regras genéricas servem de reserva para os códigos não resolvidos.
+  - `ExtratorElementosLatexService::detectarMotor(string $fonte): string`: `% !TEX program = xelatex|lualatex|pdflatex` (comentário mágico, lido antes de remover comentários), ou `xelatex` se houver `\usepackage{fontspec}` ou `unicode-math`; senão `pdflatex`.
+  - `MapaTemplateOllamaService::sugerir(string $fonte, array $codigosFaltantes): array` (arquivo `app/Services/Latex/MapaTemplateOllamaService.php`), no mesmo formato do mapa. Chamado só para os códigos que as regras não resolveram. Erro de rede ou JSON inválido devolve `[]`. Usa `config('ollama.url')`, `config('ollama.model')` e `config('ollama.timeout')`.
+  - **Integração com o cadastro do template (Tarefa 4, já pronta):** em `ProgramaTemplateLatexController::store`, depois de validar o zip, calcular `mapa_elementos` (`descobrirMapa` + `sugerir` para os faltantes) e `motor` (`detectarMotor`) sobre o `fonteExpandido()` do template, e gravar no registro. Nada disso aparece na tela (decisão do usuário).
 
 - [ ] **Passo 1: testes que falham:**
   - `test_extrai_ppgmsb`: título PT começa com "Este é um título"; título EN começa com "This is a dissertation"; `palavras_chave_pt === 'modelagem; simulação; otimização'`; abstract começa com "With the marvelous"; orientador `'Antonio Guimarães Rosa'`; `membros_banca` contém `'Profa. Helena Souza Lima'` e tem 5 itens; `data_defesa === '01/01/2023'`; `local_defesa === 'Alagoinhas/BA'`.
@@ -105,7 +109,9 @@ Esses serviços são orquestrados por jobs em fila. A compilação fica atrás d
   - `test_descobrir_mapa_ppgmsb` → `mapa['resumo_pt'] === ['tipo'=>'ambiente','nome'=>'resumo']`, `mapa['abstract_en']['nome'] === 'newAbstract'`, `mapa['membros_banca'] === ['tipo'=>'padrao_comando','nome'=>'Membro[A-Z]Nome']`.
   - `test_ignora_comentarios`: `% \TituloBR{falso}` antes do real não é extraído.
   - `test_mapa_com_codigo_inexistente_cai_nas_regras`.
-- [ ] **Passo 2:** `php artisan test --filter=ExtratorElementosLatexServiceTest` → FALHA.
+  - `test_detectar_motor` (`% !TEX program = xelatex` → `xelatex`; `\usepackage{fontspec}` → `xelatex`; nada → `pdflatex`).
+  - Em `tests/Feature/ProgramaTemplateLatexTest.php` (já existe, da Tarefa 4): `test_upload_grava_mapa_e_motor` (template PPGMSB → `mapa_elementos['resumo_pt']['nome'] === 'resumo'`, `motor === 'pdflatex'`) e `test_ollama_sugere_codigos_faltantes` (`Http::fake` devolvendo um mapa para `membros_banca` num zip com template `article` → o mapa gravado contém a sugestão; com o Ollama falhando, o upload continua funcionando).
+- [ ] **Passo 2:** `php artisan test --filter="ExtratorElementosLatexServiceTest|ProgramaTemplateLatexTest"` → FALHA.
 - [ ] **Passo 3: implementar.**
   - Remover comentários (`%` não escapado) antes de tudo.
   - Ler argumentos com chaves balanceadas.
@@ -117,34 +123,41 @@ Esses serviços são orquestrados por jobs em fila. A compilação fica atrás d
 - [ ] **Passo 4:** os testes PASSAM.
 - [ ] **Passo 5: commit** `feat: extrator genérico de elementos vitais do fonte LaTeX`.
 
-### Tarefa 4: Template LaTeX do programa (tela da Secretaria)
+### Tarefa 4: Cadastro do template LaTeX do programa (tela da Secretaria)
+
+> **Decisão do usuário (2026-10-26):** a Secretaria só cadastra o modelo oficial. A tela tem apenas essa ação. Não há mapa, confirmação nem escolha de motor; isso fica para a Tarefa 3. Esta tarefa é executada **antes** da Tarefa 3.
 
 **Arquivos:**
-- Criar: migration `database/migrations/2026_10_26_100000_create_programa_templates_latex_table.php`, `app/Models/ProgramaTemplateLatex.php`, `app/Http/Controllers/ProgramaTemplateLatexController.php`, `app/Services/Latex/MapaTemplateOllamaService.php`, `resources/views/programas/template-latex.blade.php`
-- Modificar: `app/Models/Programa.php` (`templateLatex(): HasOne`), `routes/web.php`, `resources/views/layouts/app.blade.php` (o item de menu da base de conhecimento passa a apontar para `programa-template.index`, com o rótulo "Template LaTeX")
+- Criar: migration `database/migrations/2026_10_26_100000_create_programa_templates_latex_table.php`, `app/Models/ProgramaTemplateLatex.php`, `app/Http/Controllers/ProgramaTemplateLatexController.php`, `resources/views/programas/template-latex.blade.php`
+- Modificar: `app/Models/Programa.php` (`templateLatex(): HasOne`, `temTemplateLatex(): bool`), `routes/web.php`, `resources/views/layouts/app.blade.php` (o item "Base de Conhecimento (IA)" passa a ser "Template LaTeX" e aponta para `programa-template.index`; nenhum link para a tela de Normas)
 - Teste: `tests/Feature/ProgramaTemplateLatexTest.php`
 
 **Interfaces:**
-- Consome: `ProjetoLatexZipService::extrair`, `ExtratorElementosLatexService::descobrirMapa`.
+- Consome: `ProjetoLatexZipService::extrair(string $zipPath, string $destino, ?string $principalPreferido = null): ProjetoLatex`, que lança `ProjetoLatexInvalidoException`. **`extrair()` apaga todo o conteúdo de `$destino` quando falha**: passe sempre um diretório temporário novo e único (ex.: `storage_path('app/private/tmp/'.Str::uuid())`) e apague-o ao terminar, com sucesso ou não.
 - Produz:
-  - tabela `programa_templates_latex`: `programa_id` (unique, FK), `arquivo_path`, `arquivo_nome_original`, `hash_sha256`, `tex_principal`, `classe_documento` (nullable), `motor` enum `pdflatex|xelatex|lualatex` (padrão `pdflatex`), `mapa_elementos` json, `mapa_confirmado` bool (padrão false), `enviado_por` FK users, `enviado_em`.
-  - `Programa::templateLatex()`; `Programa::temTemplateLatex(): bool`, que exige `mapa_confirmado`.
-  - Rotas: `programa-template.index` (GET), `programa-template.store` (POST, `.zip` até 50 MB), `programa-template.mapa` (PUT, confirma/edita o mapa e o motor), `programa-template.download` (GET; Secretaria do programa ou discente com vínculo no programa).
-  - `MapaTemplateOllamaService::sugerir(string $fonte, array $codigosFaltantes): array`, no mesmo formato do mapa. Chamado só para os códigos que as regras não resolveram; erro de rede ou JSON inválido devolve `[]`.
+  - Tabela `programa_templates_latex`: `programa_id` (unique, FK), `arquivo_path`, `arquivo_nome_original`, `hash_sha256`, `tex_principal`, `classe_documento` (nullable), `motor` (string nullable; preenchido pela Tarefa 3), `mapa_elementos` (json nullable; preenchido pela Tarefa 3), `enviado_por` (FK users), `enviado_em`, timestamps.
+  - `Programa::templateLatex()`; `Programa::temTemplateLatex(): bool`, verdadeiro quando o programa tem registro de template.
+  - Rotas:
+    - `programa-template.index` (GET);
+    - `programa-template.store` (POST, campo `arquivo`, `.zip` até 50 MB). Valida extraindo para um diretório temporário com `ProjetoLatexZipService` (preferido: `dissertacao.tex`; se ambíguo, a mensagem da exceção vai para o usuário). Guarda o zip em `programas/{programa_id}/template-latex/template.zip` (disco `local`), substitui o anterior e grava `tex_principal` e `classe_documento`;
+    - `programa-template.download` (GET; Secretaria do programa ou discente com vínculo ativo no programa).
+  - Constante de tela: título "Template LaTeX do programa".
 
 - [ ] **Passo 1: testes que falham:**
-  - `test_secretaria_envia_template_e_ve_mapa_descoberto` (`Storage::fake`, zip de `docs/classppgmsb.zip` → registro criado, `mapa_elementos['resumo_pt']['nome'] === 'resumo'`, `mapa_confirmado === false`; a tela mostra "Resumo" e "resumo");
-  - `test_secretaria_confirma_mapa` (PUT → `mapa_confirmado === true`, `motor` salvo);
-  - `test_zip_invalido_mostra_erro` (zip sem `.tex` → erro de validação com a mensagem da exceção);
-  - `test_ollama_sugere_codigos_faltantes` (`Http::fake` devolvendo JSON de mapa para `membros_banca` num template article → mapa contém a sugestão);
+  - `test_secretaria_envia_template` (`Storage::fake('local')`, `UploadedFile` com o conteúdo de `docs/classppgmsb.zip` → registro com `tex_principal === 'dissertacao.tex'`, `classe_documento === 'classPPGMSB'`, arquivo existe no disco; a tela mostra o nome do arquivo e "dissertacao.tex");
+  - `test_reenvio_substitui_template` (dois envios → um registro, `hash_sha256` atualizado);
+  - `test_zip_invalido_mostra_erro` (zip sem `.tex` principal → erro de validação em `arquivo` com a mensagem da exceção; nenhum registro);
+  - `test_arquivo_nao_zip_e_recusado` (PDF → erro de validação);
   - `test_tela_nao_mostra_normas` (`assertDontSee('Normas e Procedimentos')`);
+  - `test_menu_da_secretaria_aponta_para_template` (GET dashboard → `assertSee(route('programa-template.index'))` e `assertDontSee('Base de Conhecimento')`);
   - `test_docente_nao_acessa` (403);
-  - `test_secretaria_de_outro_programa_nao_ve_template` (isolamento);
-  - `test_discente_do_programa_baixa_template`.
+  - `test_secretaria_de_outro_programa_nao_ve_template` (isolamento: vê a tela do próprio programa, sem o template do outro, e não baixa o do outro);
+  - `test_discente_do_programa_baixa_template` e `test_discente_de_outro_programa_nao_baixa` (403);
+  - `test_diretorio_temporario_e_removido` (depois do envio, `storage_path('app/private/tmp')` não guarda resíduo do upload).
 - [ ] **Passo 2:** `php artisan test --filter=ProgramaTemplateLatexTest` → FALHA.
-- [ ] **Passo 3: implementar** controller, model, migration e view. Texto da tela: "Template LaTeX do programa"; explicação: "Com o template cadastrado, os discentes enviam o projeto LaTeX (.zip) e o sistema compila, extrai os elementos vitais e confere com o cadastro. Sem template, o programa usa o envio de PDF, sem análise por IA." Mapa em tabela editável (código → tipo/nome).
-- [ ] **Passo 4:** os testes PASSAM; `php artisan migrate` no MySQL local roda sem erro.
-- [ ] **Passo 5: commit** `feat: Secretaria cadastra o template LaTeX do programa e confirma o mapa de elementos`.
+- [ ] **Passo 3: implementar** migration, model, controller e view, no padrão visual das telas da Secretaria (Bootstrap; usar `resources/views/programas/documentos-referencia.blade.php` como referência de layout). Texto da tela: "Template LaTeX do programa". Explicação: "Envie o modelo oficial (.zip) do projeto LaTeX do programa. Com o template cadastrado, os discentes enviam o trabalho em LaTeX e o sistema compila, extrai os elementos vitais e confere com o cadastro. Sem template, o programa usa o envio de PDF, sem análise por IA." Mostra o template atual (arquivo, `.tex` principal, classe, enviado por/em), o botão de download e o formulário de envio ou substituição.
+- [ ] **Passo 4:** os testes PASSAM; a suíte inteira PASSA; `php artisan migrate` no MySQL local roda sem erro.
+- [ ] **Passo 5: commit** `feat: Secretaria cadastra o template LaTeX oficial do programa`.
 
 ### Tarefa 5: Compilador LaTeX
 
@@ -351,7 +364,7 @@ Esses serviços são orquestrados por jobs em fila. A compilação fica atrás d
 - [ ] **Passo 1:** atualizar os documentos.
 - [ ] **Passo 2:** `php artisan test` → toda a suíte PASSA; `php artisan test --group=latex` → PASSA, ou registra o pacote MiKTeX que falta.
 - [ ] **Passo 3: verificação manual** com MySQL, fila e servidor rodando:
-  1. a `secretaria@ppgmsb.test` cadastra `docs/classppgmsb.zip` e confirma o mapa;
+  1. a `secretaria@ppgmsb.test` cadastra `docs/classppgmsb.zip`;
   2. o `discente.completo@ppgmsb.test`, com banca homologada, envia o zip ajustado (nomes do cadastro) → ok;
   3. confere o PDF numerado;
   4. submete à homologação;
