@@ -150,7 +150,8 @@ class TrabalhoDocumentoController extends Controller
 
         $analise = $this->analiseService->analisar($documento);
 
-        $normasIndexadas = $analise->status_geral !== 'falha'
+        $normasIndexadas = config('ia.conformidade_rag')
+            && $analise->status_geral !== 'falha'
             && ProgramaDocumentoReferencia::where('programa_id', $trabalho->programa_id)
                 ->where('tipo', 'normas')
                 ->where('status_indexacao', 'concluido')

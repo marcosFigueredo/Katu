@@ -18,6 +18,7 @@ class ProgramaDocumentoReferenciaController extends Controller
 
     private function autorizarSecretaria(): void
     {
+        abort_unless(config('ia.conformidade_rag'), 404);
         abort_unless(auth()->user()->categoria === 'sec', 403);
     }
 

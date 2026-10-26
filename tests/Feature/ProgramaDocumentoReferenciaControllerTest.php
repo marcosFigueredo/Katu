@@ -18,6 +18,12 @@ class ProgramaDocumentoReferenciaControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['ia.conformidade_rag' => true]);
+    }
+
     private function secretariaComPrograma(): array
     {
         $sec = User::factory()->secretaria()->create();

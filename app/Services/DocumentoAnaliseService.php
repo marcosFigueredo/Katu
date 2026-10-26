@@ -229,11 +229,13 @@ class DocumentoAnaliseService
             // Cria o registro Ollama em estado pendente.
             // O Ollama será chamado via AJAX pelo browser após o redirect,
             // sem depender de queue worker no servidor.
-            DocumentoAnaliseOllama::create([
-                'documento_analise_id' => $analise->id,
-                'modelo'               => config('ollama.model'),
-                'status'               => 'processando',
-            ]);
+            if (config('ia.analise_resumo')) {
+                DocumentoAnaliseOllama::create([
+                    'documento_analise_id' => $analise->id,
+                    'modelo'               => config('ollama.model'),
+                    'status'               => 'processando',
+                ]);
+            }
 
             return $analise;
         } catch (Throwable $e) {

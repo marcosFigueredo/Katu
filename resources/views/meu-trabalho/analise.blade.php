@@ -107,6 +107,7 @@
             </div>
 
             {{-- ── Card do Ollama ────────────────────────────────────────────── --}}
+            @if ($ollama)
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
 
@@ -331,6 +332,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             {{-- ── Conformidade com as Normas (IA) ─────────────────────────────── --}}
             @php $conformidades = $analise->conformidadeRag ?? collect(); @endphp
