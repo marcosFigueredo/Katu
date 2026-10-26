@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DocumentoAnalise;
 use App\Models\DocumentoAnaliseOllama;
+use App\Models\LinhaPesquisa;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -19,6 +20,7 @@ class OllamaResumoService
         array $textosPorPagina,
         ?string $resumoFormulario = null,
         ?string $palavrasChaveFormulario = null,
+        ?LinhaPesquisa $linhaPesquisa = null,
     ): DocumentoAnaliseOllama {
         $registro = DocumentoAnaliseOllama::firstOrCreate(
             ['documento_analise_id' => $analise->id],
@@ -44,7 +46,7 @@ class OllamaResumoService
                 return $registro->fresh();
             }
 
-            $prompt   = $this->construirPrompt($textoResumo, $palavrasChave);
+            $prompt   = $this->construirPrompt($textoResumo, $palavrasChave, $linhaPesquisa);
             $resposta = $this->chamarOllama($prompt);
             $json     = $this->extrairJson($resposta);
 
@@ -158,16 +160,16 @@ CONTEXTO;
 
     // ── Prompt ────────────────────────────────────────────────────────────────
 
-    private function construirPrompt(string $textoResumo, ?string $palavrasChave): string
+    private function construirPrompt(string $textoResumo, ?string $palavrasChave, ?LinhaPesquisa $linhaPesquisa): string
     {
         $secaoKw = $palavrasChave
             ? "PALAVRAS-CHAVE INFORMADAS:\n{$palavrasChave}"
             : "PALAVRAS-CHAVE INFORMADAS:\nnão identificadas no documento";
 
-        $contexto = self::CONTEXTO_PPGMSB;
+        $contexto = $this->montarContexto($linhaPesquisa);
 
         return <<<PROMPT
-Você é um avaliador acadêmico do PPGMSB/UNEB. Use o contexto do programa abaixo para avaliar a aderência do resumo ao programa.
+Você é um avaliador acadêmico do PPGMSB/UNEB. Use o contexto abaixo para avaliar a aderência do resumo à linha de pesquisa declarada pelo discente (ou ao programa, caso nenhuma linha tenha sido declarada).
 
 === CONTEXTO DO PPGMSB ===
 {$contexto}
@@ -205,9 +207,31 @@ Critérios de avaliação:
 - palavras_chave_quantidade: número inteiro de palavras-chave informadas
 - palavras_chave_adequadas_ao_resumo: true se as palavras-chave são pertinentes ao conteúdo
 - palavras_chave_observacao: observação breve sobre palavras-chave (string vazia se adequadas)
-- aderencia_ao_programa: "aparente" = tema claramente de modelagem/simulação de biossistemas; "parcial" = alguma relação; "não aparente" = sem relação
+- aderencia_ao_programa: "aparente" = tema claramente aderente à linha de pesquisa (ou ao programa) descrita no contexto; "parcial" = alguma relação; "não aparente" = sem relação
 - observacoes: lista de até 5 strings com sugestões construtivas para o estudante melhorar o resumo
 PROMPT;
+    }
+
+    // ── Contexto dinâmico da linha de pesquisa declarada ─────────────────────
+
+    private function montarContexto(?LinhaPesquisa $linhaPesquisa): string
+    {
+        if (! $linhaPesquisa || ! $linhaPesquisa->objetivo) {
+            return self::CONTEXTO_PPGMSB;
+        }
+
+        $linhaPesquisa->loadMissing('areaConcentracao');
+        $area = $linhaPesquisa->areaConcentracao;
+
+        $partes = [];
+
+        if ($area?->objetivo) {
+            $partes[] = "ÁREA DE CONCENTRAÇÃO: {$area->nome}\n{$area->objetivo}";
+        }
+
+        $partes[] = "LINHA DE PESQUISA DECLARADA PELO DISCENTE: {$linhaPesquisa->nome}\n{$linhaPesquisa->objetivo}";
+
+        return implode("\n\n", $partes);
     }
 
     // ── Chamada à API do Ollama ───────────────────────────────────────────────

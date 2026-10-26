@@ -24,7 +24,7 @@ class AnalisarResumoOllamaJob implements ShouldQueue
     public function handle(OllamaResumoService $service): void
     {
         $documento = $this->analise->trabalhoDocumento;
-        $documento->load('trabalhoAcademico');
+        $documento->load('trabalhoAcademico.linhaPesquisa.areaConcentracao');
 
         $caminhoPdf = Storage::disk('local')->path($documento->arquivo_pdf_path);
 
@@ -38,6 +38,12 @@ class AnalisarResumoOllamaJob implements ShouldQueue
         $resumo        = $documento->trabalhoAcademico?->resumo;
         $palavrasChave = $documento->trabalhoAcademico?->palavras_chave;
 
-        $service->analisar($this->analise, $textosPorPagina, $resumo, $palavrasChave);
+        $service->analisar(
+            $this->analise,
+            $textosPorPagina,
+            $resumo,
+            $palavrasChave,
+            $documento->trabalhoAcademico?->linhaPesquisa,
+        );
     }
 }
