@@ -19,6 +19,7 @@ use App\Http\Controllers\BaremaItemController;
 use App\Http\Controllers\BaremaSecaoController;
 use App\Http\Controllers\OrientacaoController;
 use App\Http\Controllers\TrabalhoDocumentoController;
+use App\Http\Controllers\SubmissaoLatexController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
@@ -272,6 +273,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/meu-trabalho/enviar-homologacao/{documento}', [TrabalhoDocumentoController::class, 'enviarHomologacao'])
         ->name('meu-trabalho.enviar-homologacao');
+
+    // Programa com template LaTeX: o discente envia o projeto (.zip) em vez do PDF.
+    Route::post('/meu-trabalho/submissoes-latex', [SubmissaoLatexController::class, 'store'])
+        ->name('meu-trabalho.submissao-latex.store');
+
+    Route::get('/meu-trabalho/submissoes-latex/{submissao}', [SubmissaoLatexController::class, 'show'])
+        ->name('meu-trabalho.submissao-latex.show');
+
+    Route::get('/meu-trabalho/submissoes-latex/{submissao}/pdf/{versao}', [SubmissaoLatexController::class, 'pdf'])
+        ->whereIn('versao', ['banca', 'conferencia'])
+        ->name('meu-trabalho.submissao-latex.pdf');
+
+    Route::post('/meu-trabalho/submissoes-latex/{submissao}/enviar-homologacao', [SubmissaoLatexController::class, 'enviarHomologacao'])
+        ->name('meu-trabalho.submissao-latex.enviar-homologacao');
 
     Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
         ->name('trabalho-impacto.edit');

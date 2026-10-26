@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TrabalhoAcademico extends Model
@@ -69,6 +70,17 @@ class TrabalhoAcademico extends Model
     public function impacto(): HasOne
     {
         return $this->hasOne(TrabalhoImpacto::class);
+    }
+
+    public function submissoesLatex(): HasMany
+    {
+        return $this->hasMany(TrabalhoSubmissaoLatex::class);
+    }
+
+    /** Submissão LaTeX mais recente: a única que pode seguir à homologação. */
+    public function submissaoLatexVigente(): HasOne
+    {
+        return $this->hasOne(TrabalhoSubmissaoLatex::class)->latestOfMany();
     }
 
     public function bancaQualificacao()

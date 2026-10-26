@@ -48,8 +48,16 @@ class TrabalhoDocumentoController extends Controller
         // Banca em proposta|devolvida: o discente envia o trabalho e o pedido à homologação.
         $bancaPedido = $trabalho ? $this->pedidoHomologacao->bancaDoPedido($trabalho) : null;
 
+        // Programa com template LaTeX: envio do projeto .zip no lugar do PDF.
+        $programa = $vinculo?->programa;
+        $temTemplateLatex = (bool) $programa?->temTemplateLatex();
+        $submissoesLatex = $trabalho && $temTemplateLatex
+            ? $trabalho->submissoesLatex()->latest('id')->limit(10)->get()
+            : collect();
+
         return view('meu-trabalho.index', compact(
-            'usuario', 'vinculo', 'trabalho', 'documentos', 'bancas', 'bancaPedido'
+            'usuario', 'vinculo', 'trabalho', 'documentos', 'bancas', 'bancaPedido',
+            'programa', 'temTemplateLatex', 'submissoesLatex'
         ));
     }
 
@@ -94,6 +102,13 @@ class TrabalhoDocumentoController extends Controller
         if (! $this->pedidoHomologacao->bancaDoPedido($trabalho)) {
             return back()->withErrors([
                 'pdf' => 'Proponha a banca antes de enviar o trabalho.',
+            ])->withInput();
+        }
+
+        // Programa com template LaTeX: o trabalho vai como projeto .zip (SubmissaoLatexController).
+        if ($trabalho->programa?->temTemplateLatex()) {
+            return back()->withErrors([
+                'pdf' => 'Seu programa usa o template LaTeX: envie o projeto em .zip.',
             ])->withInput();
         }
 

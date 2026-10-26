@@ -8,6 +8,7 @@ class TrabalhoDocumento extends Model
 {
     protected $fillable = [
         'trabalho_academico_id',
+        'submissao_latex_id',
         'enviado_por_id',
         'tipo_documento',
         'versao',
@@ -32,6 +33,12 @@ class TrabalhoDocumento extends Model
     public function trabalhoAcademico()
     {
         return $this->belongsTo(TrabalhoAcademico::class);
+    }
+
+    /** Submissão LaTeX de onde veio o PDF numerado (null no fluxo PDF). */
+    public function submissaoLatex()
+    {
+        return $this->belongsTo(TrabalhoSubmissaoLatex::class, 'submissao_latex_id');
     }
 
     public function enviadoPor()

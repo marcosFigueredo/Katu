@@ -175,6 +175,62 @@
                                     Proponha a banca antes de enviar o trabalho.
                                 @endif
                             </div>
+                        @elseif ($temTemplateLatex)
+
+                        {{-- Programa com template LaTeX: projeto .zip no lugar do PDF --}}
+                        <p class="small text-muted">
+                            Envie o projeto LaTeX completo em <strong>.zip</strong>, feito sobre o template do programa.
+                            O sistema compila, confere os elementos com o cadastro e gera o PDF da banca com linhas numeradas.
+                            Título, resumo e palavras-chave vêm do próprio projeto.
+                        </p>
+                        <a href="{{ route('programa-template.download', $programa) }}" class="btn btn-sm btn-outline-secondary mb-3">
+                            <i class="bi bi-download me-1"></i>Baixar o template LaTeX do programa
+                        </a>
+
+                        <form id="form-envio-latex"
+                              method="POST"
+                              action="{{ route('meu-trabalho.submissao-latex.store') }}"
+                              enctype="multipart/form-data">
+                            @csrf
+
+                            <div class="mb-3">
+                                <label for="tipo_documento_latex" class="form-label fw-semibold">Tipo de documento</label>
+                                <select id="tipo_documento_latex"
+                                        name="tipo_documento"
+                                        class="form-select @error('tipo_documento') is-invalid @enderror"
+                                        required>
+                                    <option value="" disabled {{ old('tipo_documento') ? '' : 'selected' }}>Selecione…</option>
+                                    @if ($bancaPedido->tipo === 'qualificacao')
+                                        <option value="qualificacao" {{ old('tipo_documento') === 'qualificacao' ? 'selected' : '' }}>Exame de Qualificação</option>
+                                    @else
+                                        <option value="dissertacao" {{ old('tipo_documento') === 'dissertacao' ? 'selected' : '' }}>Dissertação</option>
+                                        <option value="tese" {{ old('tipo_documento') === 'tese' ? 'selected' : '' }}>Tese</option>
+                                    @endif
+                                </select>
+                                @error('tipo_documento')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="zip" class="form-label fw-semibold">Projeto LaTeX (.zip)</label>
+                                <input type="file"
+                                       id="zip"
+                                       name="zip"
+                                       accept=".zip,application/zip"
+                                       class="form-control @error('zip') is-invalid @enderror"
+                                       required>
+                                <div class="form-text">Tamanho máximo: 100 MB. Um único .tex principal (com \documentclass).</div>
+                                @error('zip')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                                <i class="bi bi-file-earmark-zip-fill me-2"></i>Enviar projeto LaTeX
+                            </button>
+                        </form>
+
                         @else
 
                         <form id="form-envio-documento"
@@ -287,6 +343,36 @@
                         </h2>
                     </div>
                     <div class="card-body p-0">
+
+                        @if ($submissoesLatex->isNotEmpty())
+                            <div class="px-4 pt-3">
+                                <h3 class="small fw-bold text-uppercase text-muted mb-2">Submissões LaTeX</h3>
+                                <ul class="list-group list-group-flush mb-3">
+                                    @foreach ($submissoesLatex as $sub)
+                                        @php
+                                            [$subCor, $subLabel] = match ($sub->status) {
+                                                'ok'     => ['success', 'Ok'],
+                                                'nao_ok' => ['danger', 'Não ok'],
+                                                'erro'   => ['secondary', 'Erro'],
+                                                default  => ['warning', 'Processando…'],
+                                            };
+                                        @endphp
+                                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                                            <span class="small">
+                                                {{ $sub->created_at?->format('d/m/Y H:i') }}
+                                                @if ($loop->first)
+                                                    <span class="badge text-bg-light border ms-1">vigente</span>
+                                                @endif
+                                            </span>
+                                            <span class="d-flex align-items-center gap-2">
+                                                <span class="badge text-bg-{{ $subCor }}">{{ $subLabel }}</span>
+                                                <a href="{{ route('meu-trabalho.submissao-latex.show', $sub) }}" class="btn btn-sm btn-outline-primary">Ver verificação</a>
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
 
                         @if ($documentos->isEmpty())
                             <div class="text-center py-5 text-muted">
