@@ -86,7 +86,9 @@ Route::resource('programas', ProgramaController::class)
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('criterios-cpa', CriterioCpaController::class)
         ->parameters(['criterios-cpa' => 'criterioCpa'])
-        ->except(['show']);
+        ->except(['show', 'destroy']);
+    Route::post('criterios-cpa/{criterioCpa}/inativar', [CriterioCpaController::class, 'inativar'])
+        ->name('criterios-cpa.inativar');
 
     Route::get('/membros-externos', [MembroExternoController::class, 'index'])
         ->name('membros-externos.index');

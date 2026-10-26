@@ -10,7 +10,6 @@ use Illuminate\Validation\ValidationException;
 class HomologacaoBancaService
 {
     public function __construct(
-        private readonly CriterioCpaService $criterioCpa,
         private readonly VerificacaoBancaService $verificacao,
     ) {
     }
@@ -18,15 +17,6 @@ class HomologacaoBancaService
     public function homologar(Banca $banca, User $responsavel): void
     {
         $this->verificacao->exigir($this->verificacao->verificarBanca($banca), 'homologacao');
-
-        $pendencias = $this->criterioCpa->pendenciasObrigatorias($banca);
-
-        if ($pendencias->isNotEmpty()) {
-            $itens = $pendencias->map(fn ($criterio) => $criterio->codigo . ' — ' . $criterio->titulo)->implode('; ');
-            throw ValidationException::withMessages([
-                'homologacao' => 'Não é possível homologar. Evidências pendentes: ' . $itens,
-            ]);
-        }
 
         if ($banca->status === 'cancelada') {
             throw ValidationException::withMessages([

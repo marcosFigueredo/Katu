@@ -34,7 +34,6 @@ class HomologacaoBancaController extends Controller
             ->with([
                 'trabalhoAcademico.discenteVinculo.discenteProfile.user',
                 'trabalhoAcademico.programa',
-                'evidencias.criterio',
                 'membros',
             ])
             ->orderByDesc('updated_at')

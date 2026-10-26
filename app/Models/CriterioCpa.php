@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CriterioCpa extends Model
 {
@@ -13,23 +12,19 @@ class CriterioCpa extends Model
     protected $fillable = [
         'programa_id',
         'criado_por',
-        'codigo',
-        'titulo',
-        'descricao',
+        'pergunta',
         'etapa',
-        'tipo_evidencia',
-        'obrigatorio',
         'nivel',
         'ordem',
-        'versao',
         'ativo',
+        'inativado_em',
     ];
 
     protected function casts(): array
     {
         return [
-            'obrigatorio' => 'boolean',
             'ativo' => 'boolean',
+            'inativado_em' => 'datetime',
         ];
     }
 
@@ -43,8 +38,9 @@ class CriterioCpa extends Model
         return $this->belongsTo(User::class, 'criado_por');
     }
 
-    public function evidencias(): HasMany
+    /** A pergunta nunca é apagada nem reativada: só inativada, com a data. */
+    public function inativar(): void
     {
-        return $this->hasMany(BancaEvidencia::class);
+        $this->update(['ativo' => false, 'inativado_em' => now()]);
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\CriterioCpa;
 use App\Models\Programa;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CriterioCpaController extends Controller
 {
@@ -32,9 +31,9 @@ class CriterioCpaController extends Controller
         $programa = $this->programaAtual();
         $criterios = CriterioCpa::query()
             ->when($programa, fn ($query) => $query->where('programa_id', $programa->id), fn ($query) => $query->whereKey(-1))
-            ->orderBy('etapa')
+            ->orderByDesc('ativo')
             ->orderBy('ordem')
-            ->orderBy('codigo')
+            ->orderBy('id')
             ->get();
 
         return view('criterios-cpa.index', compact('programa', 'criterios'));
@@ -46,7 +45,7 @@ class CriterioCpaController extends Controller
 
         return view('criterios-cpa.form', [
             'programa' => $this->programaAtual(),
-            'criterio' => new CriterioCpa(['ativo' => true, 'obrigatorio' => true, 'ordem' => 1, 'versao' => '1.0']),
+            'criterio' => new CriterioCpa(['ativo' => true, 'ordem' => 1]),
         ]);
     }
 
@@ -59,17 +58,16 @@ class CriterioCpaController extends Controller
         $data = $this->validar($request);
         $data['programa_id'] = $programa->id;
         $data['criado_por'] = auth()->id();
-        $data['obrigatorio'] = $request->boolean('obrigatorio');
-        $data['ativo'] = $request->boolean('ativo', true);
         CriterioCpa::create($data);
 
-        return redirect()->route('criterios-cpa.index')->with('status', 'Critério da CPA criado.');
+        return redirect()->route('criterios-cpa.index')->with('status', 'Pergunta da CPA cadastrada.');
     }
 
     public function edit(CriterioCpa $criterioCpa)
     {
         $this->autorizarSecretaria();
         $this->garantirPrograma($criterioCpa);
+        abort_unless($criterioCpa->ativo, 404);
 
         return view('criterios-cpa.form', [
             'programa' => $this->programaAtual(),
@@ -81,45 +79,37 @@ class CriterioCpaController extends Controller
     {
         $this->autorizarSecretaria();
         $this->garantirPrograma($criterioCpa);
+        abort_unless($criterioCpa->ativo, 404);
 
-        $data = $this->validar($request, $criterioCpa);
-        $data['obrigatorio'] = $request->boolean('obrigatorio');
-        $data['ativo'] = $request->boolean('ativo');
-        $criterioCpa->update($data);
+        $criterioCpa->update($this->validar($request));
 
-        return redirect()->route('criterios-cpa.index')->with('status', 'Critério da CPA atualizado.');
+        return redirect()->route('criterios-cpa.index')->with('status', 'Pergunta da CPA atualizada.');
     }
 
-    public function destroy(CriterioCpa $criterioCpa)
+    public function inativar(CriterioCpa $criterioCpa)
     {
         $this->autorizarSecretaria();
         $this->garantirPrograma($criterioCpa);
-        $criterioCpa->update(['ativo' => false]);
 
-        return redirect()->route('criterios-cpa.index')->with('status', 'Critério inativado; o histórico foi preservado.');
+        if ($criterioCpa->ativo) {
+            $criterioCpa->inativar();
+        }
+
+        return redirect()->route('criterios-cpa.index')->with('status', 'Pergunta inativada; o histórico foi preservado.');
     }
 
-    private function validar(Request $request, ?CriterioCpa $criterio = null): array
+    private function validar(Request $request): array
     {
-        return $request->validate([
-            'codigo' => [
-                'required', 'string', 'max:50',
-                Rule::unique('criterios_cpa', 'codigo')
-                    ->where('programa_id', $this->programaAtual()?->id)
-                    ->where('etapa', $request->input('etapa'))
-                    ->where('versao', $request->input('versao'))
-                    ->ignore($criterio?->id),
-            ],
-            'titulo' => ['required', 'string', 'max:255'],
-            'descricao' => ['nullable', 'string'],
-            'etapa' => ['required', 'in:qualificacao,defesa'],
-            'tipo_evidencia' => ['required', 'in:arquivo,texto,link,doi,numero,declaracao'],
+        $data = $request->validate([
+            'pergunta' => ['required', 'string', 'max:1000'],
+            'etapa' => ['nullable', 'in:qualificacao,defesa'],
             'nivel' => ['nullable', 'in:mestrado,doutorado'],
             'ordem' => ['required', 'integer', 'min:1', 'max:9999'],
-            'versao' => ['required', 'string', 'max:20'],
-            'obrigatorio' => ['nullable', 'boolean'],
-            'ativo' => ['nullable', 'boolean'],
         ]);
+        $data['etapa'] = $data['etapa'] ?: null;
+        $data['nivel'] = $data['nivel'] ?: null;
+
+        return $data;
     }
 
     private function garantirPrograma(CriterioCpa $criterio): void

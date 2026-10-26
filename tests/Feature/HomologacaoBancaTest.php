@@ -21,17 +21,9 @@ class HomologacaoBancaTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_secretaria_homologa_banca_com_evidencia_obrigatoria_validada(): void
+    public function test_secretaria_homologa_banca_que_cumpre_a_verificacao(): void
     {
-        [$secretaria, $programa, $banca] = $this->estrutura();
-        $criterioId = DB::table('criterios_cpa')->insertGetId($this->criterio($programa->id, $secretaria->id));
-        DB::table('banca_evidencias')->insert([
-            'banca_id' => $banca->id,
-            'criterio_cpa_id' => $criterioId,
-            'status' => 'validada',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        [$secretaria, , $banca] = $this->estrutura();
 
         $response = $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
 
@@ -41,21 +33,6 @@ class HomologacaoBancaTest extends TestCase
             'homologacao_status' => 'homologada',
             'libera_envio_trabalho' => true,
             'homologada_por' => $secretaria->id,
-        ]);
-    }
-
-    public function test_banca_nao_e_homologada_sem_evidencia_obrigatoria(): void
-    {
-        [$secretaria, $programa, $banca] = $this->estrutura();
-        DB::table('criterios_cpa')->insert($this->criterio($programa->id, $secretaria->id));
-
-        $response = $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
-
-        $response->assertRedirect()->assertSessionHasErrors('homologacao');
-        $this->assertDatabaseHas('bancas', [
-            'id' => $banca->id,
-            'homologacao_status' => 'aguardando',
-            'libera_envio_trabalho' => false,
         ]);
     }
 
@@ -272,26 +249,6 @@ class HomologacaoBancaTest extends TestCase
         }
 
         return [$secretaria, $programa, $banca->fresh()];
-    }
-
-    private function criterio(int $programaId, int $secretariaId): array
-    {
-        return [
-            'programa_id' => $programaId,
-            'criado_por' => $secretariaId,
-            'codigo' => 'CPA-DEF-01',
-            'titulo' => 'Produção científica',
-            'descricao' => 'Apresente o DOI da produção.',
-            'etapa' => 'qualificacao',
-            'tipo_evidencia' => 'doi',
-            'obrigatorio' => true,
-            'nivel' => null,
-            'ordem' => 1,
-            'versao' => '1.0',
-            'ativo' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
     }
 
     private function estruturaComComposicao(?string $orcid = 'https://orcid.org/0000-0002-1825-0097'): array
