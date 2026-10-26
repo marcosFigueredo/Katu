@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-{
-    $this->call([
-        DocumentoChecklistsSeeder::class,
-    ]);
-}
+    {
+        $this->call([
+            DocumentoChecklistsSeeder::class,
+            PerguntasEstrategicasSeeder::class,
+        ]);
+    }
 }

@@ -15,7 +15,8 @@
         ['rota'=>'relatorios.impacto',        'icone'=>'bi-lightbulb-fill',      'titulo'=>'Impacto das Dissertações',        'desc'=>'Dimensões de impacto declaradas pelos discentes (análises 23–24)'],
         ['rota'=>'relatorios.discentes',      'icone'=>'bi-journal-richtext',    'titulo'=>'Bibliometria dos Discentes',      'desc'=>'Publicações, DOI, coautoria, correlação com nota (análises 25–26)'],
         ['rota'=>'relatorios.documentos',     'icone'=>'bi-file-earmark-check',  'titulo'=>'Conformidade Documental',         'desc'=>'Conformidade, itens pendentes, LaTeX, PDFs (análises 27–28)'],
-        ['rota'=>'relatorios.autoavaliacao',  'icone'=>'bi-clipboard2-data',     'titulo'=>'Autoavaliação Institucional',     'desc'=>'Indicadores A01–A16, histórico, por linha (análises 29–31)'],
+        ['rota'=>'relatorios.autoavaliacao',  'icone'=>'bi-clipboard2-data',     'titulo'=>'Autoavaliação Institucional',     'desc'=>'Indicadores A01–A18, histórico, por linha (análises 29–31)'],
+        ['rota'=>'perguntas-estrategicas.index','icone'=>'bi-question-circle',   'titulo'=>'Perguntas Estratégicas',          'desc'=>'Perguntas da CAPES e da comissão respondidas automaticamente a partir dos indicadores', 'subtitulo'=>'Painel orientado a perguntas'],
         ['rota'=>'relatorios.mabac',          'icone'=>'bi-bar-chart-steps',     'titulo'=>'Análise MABAC',                   'desc'=>'Rankings multicritério por análise (análises 32–33)'],
         ['rota'=>'relatorios.swara',          'icone'=>'bi-sliders',             'titulo'=>'Pesos SWARA',                     'desc'=>'Pesos calibrados dos critérios por barema (análise 34)'],
         ['rota'=>'relatorios.corpo-docente',  'icone'=>'bi-people-fill',         'titulo'=>'Corpo Docente',                   'desc'=>'Participação, diversidade institucional e de formação (análises 35–37)'],
@@ -37,7 +38,7 @@
                             <div>
                                 <div class="fw-bold" style="color:#00303A;">{{ $b['titulo'] }}</div>
                                 <div class="text-muted" style="font-size:.78rem;">
-                                    Análises {{ $i*3+1 }}–{{ $i*3+3 }}
+                                    {{ $b['subtitulo'] ?? 'Análises '.($i*3+1).'–'.($i*3+3) }}
                                 </div>
                             </div>
                         </div>

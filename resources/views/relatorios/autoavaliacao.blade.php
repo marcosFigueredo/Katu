@@ -1,6 +1,6 @@
 <x-app-layout>
 <div class="container-fluid">
-    <nav aria-label="breadcrumb" class="mb-1"><ol class="breadcrumb small mb-0"><li class="breadcrumb-item"><a href="{{ route('relatorios.index') }}">Relatórios</a></li><li class="breadcrumb-item active">Autoavaliação A01–A16</li></ol></nav>
+    <nav aria-label="breadcrumb" class="mb-1"><ol class="breadcrumb small mb-0"><li class="breadcrumb-item"><a href="{{ route('relatorios.index') }}">Relatórios</a></li><li class="breadcrumb-item active">Autoavaliação A01–A18</li></ol></nav>
     <h1 class="h3 fw-bold mb-3" style="color:#00303A;">Autoavaliação do Programa — A01 a A16</h1>
 
     @if ($periodos->isEmpty())
@@ -22,10 +22,10 @@
                         @foreach ($indicadoresAtuais->sortKeys() as $codigo => $ind)
                         <tr>
                             <td class="ps-3 fw-bold small">{{ $codigo }}</td>
-                            <td class="small">{{ $ind->descricao ?? $ind->codigo }}</td>
+                            <td class="small">{{ $ind->nome ?? $ind->codigo }}</td>
                             <td class="text-center fw-semibold">
                                 @if ($ind->valor_numerico !== null)
-                                    {{ number_format($ind->valor_numerico, 1) }}{{ str_contains($ind->unidade ?? '', '%') ? '%' : '' }}
+                                    {{ number_format($ind->valor_numerico, 1) }}{{ str_contains($ind->nome ?? '', '(%)') ? '%' : '' }}
                                 @else
                                     <span class="text-muted small">{{ Str::limit($ind->valor_texto ?? '—', 30) }}</span>
                                 @endif
@@ -61,19 +61,19 @@
     @if ($a12)
     <div class="card border-0 shadow-sm mb-3">
         <div class="card-header bg-white py-3">
-            <h6 class="fw-bold mb-0" style="color:#00303A;"><i class="bi bi-diagram-3 me-2"></i>A12 — Produção Bibliométrica por Linha de Pesquisa</h6>
+            <h6 class="fw-bold mb-0" style="color:#00303A;"><i class="bi bi-diagram-3 me-2"></i>A12 — Bancas por Linha de Pesquisa: Aprovação, Nota Média e Aderência (IA)</h6>
         </div>
         <div class="card-body p-0">
             <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light"><tr><th class="ps-3">Linha</th><th class="text-center">Média H</th><th class="text-center">Média Citações</th><th class="text-center">Obras</th><th class="text-center">% DOI</th></tr></thead>
+                <thead class="table-light"><tr><th class="ps-3">Linha</th><th class="text-center">Bancas</th><th class="text-center">% Aprovadas</th><th class="text-center">Nota Média</th><th class="text-center">% Aderência (IA)</th></tr></thead>
                 <tbody>
                     @foreach ($a12 as $linha => $dados)
                     <tr>
                         <td class="ps-3 fw-semibold small">{{ $linha }}</td>
-                        <td class="text-center">{{ $dados['media_h'] ?? '—' }}</td>
-                        <td class="text-center">{{ $dados['media_citacoes'] ?? '—' }}</td>
-                        <td class="text-center">{{ $dados['obras'] ?? '—' }}</td>
-                        <td class="text-center">{{ isset($dados['pct_doi']) ? $dados['pct_doi'].'%' : '—' }}</td>
+                        <td class="text-center">{{ $dados['total'] ?? '—' }}</td>
+                        <td class="text-center">{{ isset($dados['total'], $dados['aprovadas']) && $dados['total'] > 0 ? round($dados['aprovadas'] / $dados['total'] * 100, 1).'%' : '—' }}</td>
+                        <td class="text-center">{{ $dados['nota_media'] ?? '—' }}</td>
+                        <td class="text-center">{{ isset($dados['aderencia_aparente_pct']) ? $dados['aderencia_aparente_pct'].'%' : '—' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
