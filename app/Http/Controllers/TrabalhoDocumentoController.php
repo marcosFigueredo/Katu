@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\AnalisarConformidadeRagJob;
-use App\Mail\TrabalhoEnviadoBancaMail;
 use App\Models\DocumentoAnalise;
 use App\Models\ProgramaDocumentoReferencia;
 use App\Models\TrabalhoAcademico;
@@ -12,11 +11,10 @@ use App\Services\ArquivoTrabalhoService;
 use App\Services\ConformidadeNormasService;
 use App\Services\DocumentoAnaliseService;
 use App\Services\OllamaResumoService;
+use App\Services\PedidoHomologacaoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Smalot\PdfParser\Parser;
 
 class TrabalhoDocumentoController extends Controller
@@ -26,6 +24,7 @@ class TrabalhoDocumentoController extends Controller
         private readonly DocumentoAnaliseService $analiseService,
         private readonly OllamaResumoService $ollamaService,
         private readonly ConformidadeNormasService $conformidadeService,
+        private readonly PedidoHomologacaoService $pedidoHomologacao,
     ) {}
 
     public function index()
@@ -46,12 +45,11 @@ class TrabalhoDocumentoController extends Controller
             ? $trabalho->documentos()->with('ultimaAnalise.ollama')->latest('id')->get()
             : collect();
 
-        $bancaLiberada = $bancas->contains(
-            fn ($b) => $b->libera_envio_trabalho && $b->status !== 'cancelada'
-        );
+        // Banca em proposta|devolvida: o discente envia o trabalho e o pedido à homologação.
+        $bancaPedido = $trabalho ? $this->pedidoHomologacao->bancaDoPedido($trabalho) : null;
 
         return view('meu-trabalho.index', compact(
-            'usuario', 'vinculo', 'trabalho', 'documentos', 'bancas', 'bancaLiberada'
+            'usuario', 'vinculo', 'trabalho', 'documentos', 'bancas', 'bancaPedido'
         ));
     }
 
@@ -93,15 +91,9 @@ class TrabalhoDocumentoController extends Controller
             ]
         );
 
-        $trabalho->load('bancas');
-
-        $bancaAtiva = $trabalho->bancas->first(
-            fn (\App\Models\Banca $b) => $b->libera_envio_trabalho && $b->status !== 'cancelada'
-        );
-
-        if (! $bancaAtiva) {
+        if (! $this->pedidoHomologacao->bancaDoPedido($trabalho)) {
             return back()->withErrors([
-                'pdf' => 'O envio do trabalho ainda não foi liberado pela secretaria. Aguarde o cadastro da banca.',
+                'pdf' => 'Proponha a banca antes de enviar o trabalho.',
             ])->withInput();
         }
 
@@ -197,51 +189,25 @@ class TrabalhoDocumentoController extends Controller
         return response()->download($caminho, $documento->arquivo_pdf_nome_original);
     }
 
-    public function enviarParaBanca(TrabalhoDocumento $documento)
+    /** Envia o pedido (banca proposta + este documento) à homologação da Secretaria. */
+    public function enviarHomologacao(TrabalhoDocumento $documento)
     {
-        $usuario  = auth()->user()->load('discenteProfile.vinculosPrograma.trabalhoAcademico.bancas.membros.docenteProgramaVinculo.docenteProfile.user');
+        $usuario  = auth()->user()->load('discenteProfile.vinculosPrograma.trabalhoAcademico');
         $trabalho = $usuario->discenteProfile?->vinculosPrograma?->first()?->trabalhoAcademico;
 
         if (! $trabalho || $documento->trabalho_academico_id !== $trabalho->id) {
             abort(403);
         }
 
-        if (blank($usuario->discenteProfile?->orcid_url)) {
-            return back()->withErrors(['orcid' => 'Informe seu ORCID no seu cadastro antes de enviar o trabalho para a banca.']);
-        }
-
-        $documento->load('trabalhoAcademico.discenteVinculo.discenteProfile.user');
-
-        $banca = $trabalho->bancas
-            ->where('status', '!=', 'cancelada')
-            ->sortByDesc('id')
-            ->first();
+        $banca = $this->pedidoHomologacao->bancaDoPedido($trabalho);
 
         if (! $banca) {
-            return back()->withErrors(['banca' => 'Nenhuma banca ativa encontrada.']);
+            return back()->withErrors(['homologacao' => 'Não há banca proposta ou devolvida para enviar à homologação.']);
         }
 
-        $avaliadores = $banca->membros
-            ->where('papel', 'avaliador')
-            ->filter(fn ($m) => $m->docenteProgramaVinculo?->docenteProfile?->user?->email);
+        $this->pedidoHomologacao->enviar($banca, $documento);
 
-        if ($avaliadores->isEmpty()) {
-            return back()->with('warning', 'A banca não possui avaliadores com e-mail cadastrado.');
-        }
-
-        $urlDownload = URL::temporarySignedRoute(
-            'meu-trabalho.download',
-            now()->addDays(7),
-            ['documento' => $documento->id],
-        );
-
-        foreach ($avaliadores as $membro) {
-            $destinatario = $membro->docenteProgramaVinculo->docenteProfile->user;
-            Mail::to($destinatario->email)
-                ->send(new TrabalhoEnviadoBancaMail($documento, $urlDownload, $destinatario->name));
-        }
-
-        return back()->with('success', "Trabalho enviado para {$avaliadores->count()} avaliador(es) da banca.");
+        return back()->with('success', 'Pedido enviado à homologação da Secretaria.');
     }
 
     public function avaliarResumo(DocumentoAnalise $analise): JsonResponse

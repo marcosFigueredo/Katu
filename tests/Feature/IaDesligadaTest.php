@@ -37,7 +37,7 @@ class IaDesligadaTest extends TestCase
         ]);
         Banca::create([
             'trabalho_academico_id' => $trabalho->id, 'tipo' => 'qualificacao', 'status' => 'cadastrada',
-            'libera_envio_trabalho' => true,
+            'homologacao_status' => 'proposta', 'libera_envio_trabalho' => false,
         ]);
         ProgramaDocumentoReferencia::create([
             'programa_id' => $programa->id, 'tipo' => 'normas',

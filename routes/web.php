@@ -270,8 +270,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/meu-trabalho/analise/{analise}/avaliar-resumo', [TrabalhoDocumentoController::class, 'avaliarResumo'])
         ->name('meu-trabalho.avaliar-resumo');
 
-    Route::post('/meu-trabalho/enviar-banca/{documento}', [TrabalhoDocumentoController::class, 'enviarParaBanca'])
-        ->name('meu-trabalho.enviar-banca');
+    Route::post('/meu-trabalho/enviar-homologacao/{documento}', [TrabalhoDocumentoController::class, 'enviarHomologacao'])
+        ->name('meu-trabalho.enviar-homologacao');
 
     Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
         ->name('trabalho-impacto.edit');

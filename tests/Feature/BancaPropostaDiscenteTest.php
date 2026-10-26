@@ -12,6 +12,7 @@ use App\Models\Instituicao;
 use App\Models\Orientacao;
 use App\Models\Programa;
 use App\Models\TrabalhoAcademico;
+use App\Models\TrabalhoDocumento;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -21,7 +22,7 @@ class BancaPropostaDiscenteTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_discente_propoe_banca_e_fica_aguardando_homologacao(): void
+    public function test_discente_propoe_banca_e_fica_proposta_sem_liberar_envio(): void
     {
         [$discente, , $trabalho] = $this->estrutura();
 
@@ -31,7 +32,7 @@ class BancaPropostaDiscenteTest extends TestCase
         $this->assertDatabaseHas('bancas', [
             'trabalho_academico_id' => $trabalho->id,
             'tipo' => 'qualificacao',
-            'homologacao_status' => 'aguardando',
+            'homologacao_status' => 'proposta',
             'libera_envio_trabalho' => false,
             'homologada_por' => null,
         ]);
@@ -62,40 +63,65 @@ class BancaPropostaDiscenteTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_secretaria_homologa_banca_proposta_pelo_discente_e_dispara_email(): void
+    public function test_secretaria_homologa_pedido_do_discente_sem_banca_cadastrada_mail(): void
     {
         Mail::fake();
-        [, $secretaria, $trabalho, $banca] = $this->estruturaComBanca();
+        [$discente, $secretaria, $trabalho, $banca] = $this->estruturaComBanca();
+        $this->enviarPedido($discente, $trabalho);
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
 
         $this->actingAs($secretaria)->post(route('bancas.homologar', $banca))->assertRedirect();
 
         $this->assertDatabaseHas('bancas', [
             'id' => $banca->id,
             'homologacao_status' => 'homologada',
+            'homologada_por' => $secretaria->id,
             'libera_envio_trabalho' => true,
         ]);
-        Mail::assertSent(BancaCadastradaMail::class);
+        // Os e-mails da homologação única são definidos na Tarefa 11; o BancaCadastradaMail não sai mais.
+        Mail::assertNotSent(BancaCadastradaMail::class);
     }
 
     public function test_discente_corrige_banca_devolvida_e_reenvia_para_homologacao(): void
     {
         [$discente, $secretaria, $trabalho, $banca] = $this->estruturaComBanca();
+        $this->enviarPedido($discente, $trabalho);
         $this->actingAs($secretaria)->post(route('bancas.devolver', $banca), [
             'observacoes' => 'Ajuste o horário da banca.',
         ]);
 
         $response = $this->actingAs($discente)->put(route('bancas.update', $banca), $this->dadosQualificacao($trabalho, local: 'Sala 2'));
 
+        // A correção mantém o pedido devolvido (com a não conformidade) até o reenvio.
         $response->assertRedirect(route('meu-trabalho.index'));
         $this->assertDatabaseHas('bancas', [
             'id' => $banca->id,
             'local' => 'Sala 2',
-            'homologacao_status' => 'aguardando',
-            'homologacao_observacoes' => null,
-            'devolvida_por' => null,
-            'devolvida_em' => null,
+            'homologacao_status' => 'devolvida',
+            'homologacao_observacoes' => 'Ajuste o horário da banca.',
             'libera_envio_trabalho' => false,
         ]);
+
+        $this->enviarPedido($discente, $trabalho);
+
+        $this->assertDatabaseHas('bancas', [
+            'id' => $banca->id,
+            'local' => 'Sala 2',
+            'homologacao_status' => 'aguardando',
+            'homologacao_tentativa' => 2,
+            'libera_envio_trabalho' => false,
+        ]);
+    }
+
+    private function enviarPedido(User $discente, TrabalhoAcademico $trabalho): void
+    {
+        $documento = TrabalhoDocumento::firstOrCreate(
+            ['trabalho_academico_id' => $trabalho->id, 'tipo_documento' => 'qualificacao'],
+            ['enviado_por_id' => $discente->id, 'arquivo_pdf_path' => 'x.pdf', 'arquivo_pdf_nome_original' => 'x.pdf'],
+        );
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
     }
 
     public function test_discente_nao_acessa_index_nem_exclui_bancas(): void

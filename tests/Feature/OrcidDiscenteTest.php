@@ -42,7 +42,7 @@ class OrcidDiscenteTest extends TestCase
         ])->assertSessionHasErrors('orcid_url');
     }
 
-    public function test_envio_para_banca_sem_orcid_e_recusado(): void
+    public function test_envio_a_homologacao_sem_orcid_e_recusado(): void
     {
         $user = User::factory()->discente()->create();
         $profile = DiscenteProfile::create(['user_id' => $user->id, 'ativo' => true]);
@@ -55,14 +55,15 @@ class OrcidDiscenteTest extends TestCase
             'programa_id' => $programa->id, 'discente_programa_vinculo_id' => $vinculo->id,
             'nivel' => 'mestrado', 'status' => 'em_andamento',
         ]);
-        Banca::create(['trabalho_academico_id' => $trabalho->id, 'tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => true]);
+        $banca = Banca::create(['trabalho_academico_id' => $trabalho->id, 'tipo' => 'qualificacao', 'status' => 'cadastrada', 'homologacao_status' => 'proposta', 'libera_envio_trabalho' => false]);
         $documento = TrabalhoDocumento::create([
             'trabalho_academico_id' => $trabalho->id, 'enviado_por_id' => $user->id, 'tipo_documento' => 'qualificacao',
             'arquivo_pdf_path' => 'x.pdf', 'arquivo_pdf_nome_original' => 'x.pdf',
         ]);
 
-        $this->actingAs($user)->post(route('meu-trabalho.enviar-banca', $documento))
+        $this->actingAs($user)->post(route('meu-trabalho.enviar-homologacao', $documento))
             ->assertSessionHasErrors('orcid');
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
     }
 
     public function test_secretaria_cadastra_discente_sem_orcid_com_lattes_e_curso(): void

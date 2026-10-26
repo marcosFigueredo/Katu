@@ -55,12 +55,15 @@
                         $homologacaoCor = match($banca->homologacao_status) {
                             'homologada' => 'success',
                             'devolvida'  => 'danger',
+                            'proposta'   => 'info',
                             default      => 'secondary',
                         };
                         $homologacaoLabel = match($banca->homologacao_status) {
+                            'proposta'   => 'Proposta — envie o trabalho',
+                            'aguardando' => 'Aguardando homologação',
+                            'devolvida'  => 'Devolvida — veja a não conformidade',
                             'homologada' => 'Homologada',
-                            'devolvida'  => 'Devolvida para ajustes',
-                            default      => 'Aguardando homologação',
+                            default      => $banca->homologacao_status,
                         };
                     @endphp
                     <div class="col-md-6">
@@ -112,10 +115,18 @@
                                     @endif
                                 </dl>
 
-                                @if (in_array($banca->homologacao_status, ['aguardando', 'devolvida']))
+                                @if ($banca->homologacao_status === 'aguardando')
+                                    <div class="alert alert-secondary small mt-3 mb-0">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        Pedido na fila da Secretaria{{ (int) $banca->homologacao_tentativa > 1 ? ' (tentativa ' . $banca->homologacao_tentativa . ')' : '' }}.
+                                        A banca e o trabalho não podem ser alterados até a resposta.
+                                    </div>
+                                @endif
+
+                                @if (in_array($banca->homologacao_status, ['proposta', 'devolvida'], true))
                                     @if ($banca->homologacao_status === 'devolvida' && $banca->homologacao_observacoes)
                                         <div class="alert alert-danger small mt-3 mb-2">
-                                            <strong>Motivo da devolução:</strong> {{ $banca->homologacao_observacoes }}
+                                            <strong>Não conformidade indicada pela Secretaria:</strong> {{ $banca->homologacao_observacoes }}
                                         </div>
                                     @endif
                                     <a href="{{ route('bancas.edit', $banca) }}" class="btn btn-sm btn-outline-primary mt-2">
@@ -132,7 +143,7 @@
             <div class="alert alert-warning mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div>
                     <i class="bi bi-hourglass-split me-2"></i>
-                    Nenhuma banca cadastrada ainda. O envio do trabalho é liberado após a Secretaria homologar sua proposta de banca.
+                    Nenhuma banca proposta ainda. Proponha a banca, envie o trabalho e envie o pedido à Secretaria para homologação.
                 </div>
                 @if ($trabalho)
                     <a href="{{ route('bancas.create') }}" class="btn btn-sm btn-primary">
@@ -155,10 +166,14 @@
                     </div>
                     <div class="card-body">
 
-                        @if (! $bancaLiberada)
+                        @if (! $bancaPedido)
                             <div class="alert alert-warning small mb-0">
                                 <i class="bi bi-lock-fill me-2"></i>
-                                O envio será liberado após a Secretaria homologar a proposta de banca do seu trabalho.
+                                @if ($bancas->contains(fn ($b) => $b->homologacao_status === 'aguardando'))
+                                    O pedido está na fila da Secretaria. Aguarde a homologação ou a devolução.
+                                @else
+                                    Proponha a banca antes de enviar o trabalho.
+                                @endif
                             </div>
                         @else
 
@@ -340,13 +355,13 @@
                                                             <span class="text-muted small">Processando…</span>
                                                         @endif
 
-                                                        @if ($bancaLiberada)
+                                                        @if ($bancaPedido)
                                                             <form method="POST"
-                                                                  action="{{ route('meu-trabalho.enviar-banca', $doc) }}"
-                                                                  onsubmit="return confirm('Enviar este trabalho por e-mail para os avaliadores da banca?')">
+                                                                  action="{{ route('meu-trabalho.enviar-homologacao', $doc) }}"
+                                                                  onsubmit="return confirm('Enviar a banca proposta e este documento à homologação da Secretaria? Enquanto o pedido estiver na fila, não será possível alterá-lo.')">
                                                                 @csrf
                                                                 <button type="submit" class="btn btn-sm btn-outline-success">
-                                                                    <i class="bi bi-envelope-fill me-1"></i>Enviar à banca
+                                                                    <i class="bi bi-send-fill me-1"></i>Enviar à homologação
                                                                 </button>
                                                             </form>
                                                         @endif

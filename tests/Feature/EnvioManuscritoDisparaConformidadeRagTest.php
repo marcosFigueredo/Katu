@@ -28,7 +28,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
         config(['ia.conformidade_rag' => true]);
     }
 
-    private function discenteComBancaLiberada(): array
+    private function discenteComBancaProposta(): array
     {
         $programa = Programa::create(['nome' => 'PPG']);
         $discente = User::factory()->discente()->create(['primeiro_acesso' => false]);
@@ -43,7 +43,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
         ]);
         Banca::create([
             'trabalho_academico_id' => $trabalho->id, 'tipo' => 'qualificacao', 'status' => 'cadastrada',
-            'libera_envio_trabalho' => true,
+            'homologacao_status' => 'proposta', 'libera_envio_trabalho' => false,
         ]);
 
         return [$discente, $programa];
@@ -53,7 +53,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
     {
         Storage::fake('local');
         Queue::fake();
-        [$discente, $programa] = $this->discenteComBancaLiberada();
+        [$discente, $programa] = $this->discenteComBancaProposta();
         ProgramaDocumentoReferencia::create([
             'programa_id' => $programa->id, 'tipo' => 'normas',
             'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'concluido',
@@ -74,7 +74,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
     {
         Storage::fake('local');
         Queue::fake();
-        [$discente, $programa] = $this->discenteComBancaLiberada();
+        [$discente, $programa] = $this->discenteComBancaProposta();
         ProgramaDocumentoReferencia::create([
             'programa_id' => $programa->id, 'tipo' => 'normas',
             'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'concluido',
@@ -96,7 +96,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
     {
         Storage::fake('local');
         Queue::fake();
-        [$discente] = $this->discenteComBancaLiberada();
+        [$discente] = $this->discenteComBancaProposta();
 
         $response = $this->actingAs($discente)->post(route('meu-trabalho.store'), [
             'tipo_documento' => 'qualificacao',
@@ -116,7 +116,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
     {
         Storage::fake('local');
         Queue::fake();
-        [$discente, $programa] = $this->discenteComBancaLiberada();
+        [$discente, $programa] = $this->discenteComBancaProposta();
         ProgramaDocumentoReferencia::create([
             'programa_id' => $programa->id, 'tipo' => 'normas',
             'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'processando',
@@ -139,7 +139,7 @@ class EnvioManuscritoDisparaConformidadeRagTest extends TestCase
     {
         Storage::fake('local');
         Queue::fake();
-        [$discente, $programa] = $this->discenteComBancaLiberada();
+        [$discente, $programa] = $this->discenteComBancaProposta();
         ProgramaDocumentoReferencia::create([
             'programa_id' => $programa->id, 'tipo' => 'normas',
             'arquivo_path' => 'x', 'arquivo_nome_original' => 'normas.pdf', 'status_indexacao' => 'concluido',

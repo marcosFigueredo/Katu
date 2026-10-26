@@ -270,11 +270,11 @@
                             </div>
 
                             @php
-                                $bancaLiberada = $bancas->contains(
-                                    fn ($b) => $b->libera_envio_trabalho && $b->status !== 'cancelada'
+                                $podeEnviarTrabalho = $bancas->contains(
+                                    fn ($b) => in_array($b->homologacao_status, ['proposta', 'devolvida'], true) && $b->status !== 'cancelada'
                                 );
                             @endphp
-                            @if ($bancaLiberada)
+                            @if ($podeEnviarTrabalho)
                                 <div class="mt-3">
                                     <a href="{{ route('meu-trabalho.index') }}" class="btn btn-primary btn-sm">
                                         <i class="bi bi-cloud-upload-fill me-1"></i>Enviar trabalho em PDF

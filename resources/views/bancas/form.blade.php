@@ -20,7 +20,7 @@
             </h1>
             <p class="text-muted mb-0">
                 @if ($modoDiscente)
-                    A Secretaria homologa sua proposta antes de liberar o envio do trabalho aos avaliadores.
+                    Proponha a banca, envie o trabalho em Meu Trabalho e clique em "Enviar à homologação". A Secretaria homologa o pedido e só então os avaliadores recebem o trabalho.
                 @else
                     O orientador preside a banca, coorientadores aparecem em ata e apenas avaliadores lançam nota.
                 @endif
@@ -346,7 +346,7 @@
                                             class="btn btn-primary fw-semibold"
                                             {{ ! $trabalho ? 'disabled' : '' }}>
                                         <i class="bi bi-floppy-fill me-2"></i>
-                                        {{ $banca->exists ? 'Reenviar proposta' : 'Propor banca' }}
+                                        {{ $banca->exists ? 'Salvar proposta' : 'Propor banca' }}
                                     </button>
                                 @else
                                     <button type="button"

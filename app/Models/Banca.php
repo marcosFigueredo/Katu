@@ -13,6 +13,8 @@ class Banca extends Model
         'tipo',
         'status',
         'homologacao_status',
+        'documento_homologacao_id',
+        'homologacao_tentativa',
         'resultado',
         'nota_media',
         'data_hora',
@@ -34,6 +36,7 @@ class Banca extends Model
             'nota_media'            => 'float',
             'homologada_em'         => 'datetime',
             'devolvida_em'          => 'datetime',
+            'homologacao_tentativa' => 'integer',
         ];
     }
 
@@ -50,6 +53,12 @@ class Banca extends Model
     public function trabalhoAcademico()
     {
         return $this->belongsTo(TrabalhoAcademico::class);
+    }
+
+    /** Documento (PDF) enviado pelo discente no pedido de homologação. */
+    public function documentoHomologacao()
+    {
+        return $this->belongsTo(TrabalhoDocumento::class, 'documento_homologacao_id');
     }
 
     public function membros()

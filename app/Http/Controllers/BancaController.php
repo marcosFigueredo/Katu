@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Services\BancaNotificacaoService;
+use App\Services\PedidoHomologacaoService;
 use App\Services\VerificacaoBancaService;
 
 class BancaController extends Controller
@@ -47,7 +48,8 @@ class BancaController extends Controller
     /**
      * Autoriza acesso a uma banca existente (edit/update) e informa se o autor é o discente.
      * Secretaria: acesso completo dentro do próprio programa. Discente: apenas a própria
-     * banca, e só enquanto ela não estiver homologada.
+     * banca, e só enquanto o pedido estiver com ele (proposta ou devolvida); na fila da
+     * Secretaria (aguardando) ou homologada, não edita.
      */
     private function autorizarAcessoBanca(Banca $banca): bool
     {
@@ -62,7 +64,7 @@ class BancaController extends Controller
         if ($user->categoria === 'discente') {
             $trabalho = $this->trabalhoDoDiscenteAutenticado();
             abort_unless($trabalho && $trabalho->id === $banca->trabalho_academico_id, 403);
-            abort_unless(in_array($banca->homologacao_status, ['aguardando', 'devolvida'], true), 403);
+            abort_unless(in_array($banca->homologacao_status, PedidoHomologacaoService::ESTADOS_EDITAVEIS, true), 403);
 
             return true;
         }
@@ -180,7 +182,7 @@ class BancaController extends Controller
         $dataHora = $this->montarDataHora($data);
 
         $homologacao = $modoDiscente
-            ? ['homologacao_status' => 'aguardando', 'homologada_por' => null, 'homologada_em' => null, 'libera_envio_trabalho' => false]
+            ? ['homologacao_status' => 'proposta', 'homologada_por' => null, 'homologada_em' => null, 'libera_envio_trabalho' => false]
             : ['homologacao_status' => 'homologada', 'homologada_por' => auth()->id(), 'homologada_em' => now(), 'libera_envio_trabalho' => true];
 
         $banca = DB::transaction(function () use ($data, $dataHora, $homologacao) {
@@ -203,7 +205,7 @@ class BancaController extends Controller
         if ($modoDiscente) {
             return redirect()
                 ->route('meu-trabalho.index')
-                ->with('success', 'Proposta de banca enviada. Aguarde a homologação da Secretaria.');
+                ->with('success', 'Banca proposta. Agora envie o trabalho e, em seguida, o pedido à homologação.');
         }
 
         if ($request->boolean('enviar_email_participantes')) {
@@ -257,14 +259,13 @@ class BancaController extends Controller
         $this->validarComposicao($banca->trabalhoAcademico, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
+        // Discente: a proposta segue com ele. Uma banca devolvida continua "devolvida"
+        // (com a não conformidade visível) até o reenvio, que conta nova tentativa.
         $homologacao = $modoDiscente
             ? [
-                'homologacao_status' => 'aguardando',
-                'homologacao_observacoes' => null,
+                'homologacao_status' => $banca->homologacao_status === 'devolvida' ? 'devolvida' : 'proposta',
                 'homologada_por' => null,
                 'homologada_em' => null,
-                'devolvida_por' => null,
-                'devolvida_em' => null,
                 'libera_envio_trabalho' => false,
             ]
             : [
@@ -292,7 +293,7 @@ class BancaController extends Controller
         if ($modoDiscente) {
             return redirect()
                 ->route('meu-trabalho.index')
-                ->with('success', 'Proposta de banca reenviada. Aguarde a homologação da Secretaria.');
+                ->with('success', 'Banca atualizada. Envie o pedido à homologação quando o trabalho estiver pronto.');
         }
 
         if ($request->boolean('enviar_email_participantes')) {
