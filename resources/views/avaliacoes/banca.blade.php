@@ -311,12 +311,17 @@
                             @endif
                         </div>
                     </div>
+
                     <div class="d-flex gap-2 flex-wrap mt-2">
                         <a href="{{ route('avaliacoes.ata', $banca) }}"
                            target="_blank"
                            class="btn btn-sm"
                            style="background:#00303A; color:#fff;">
                             <i class="bi bi-file-earmark-text me-1"></i>Ata da banca
+                        </a>
+                        <a href="{{ route('avaliacoes.folha-aprovacao', $banca) }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Folha de aprovação
                         </a>
                         <a href="{{ route('avaliacoes.relatorio-consolidado', $banca) }}"
                            target="_blank"
