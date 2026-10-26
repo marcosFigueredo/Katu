@@ -355,7 +355,7 @@
                                                             <span class="text-muted small">Processando…</span>
                                                         @endif
 
-                                                        @if ($bancaPedido)
+                                                        @if ($bancaPedido && \App\Services\PedidoHomologacaoService::documentoCompativel($bancaPedido, $doc))
                                                             <form method="POST"
                                                                   action="{{ route('meu-trabalho.enviar-homologacao', $doc) }}"
                                                                   onsubmit="return confirm('Enviar a banca proposta e este documento à homologação da Secretaria? Enquanto o pedido estiver na fila, não será possível alterá-lo.')">

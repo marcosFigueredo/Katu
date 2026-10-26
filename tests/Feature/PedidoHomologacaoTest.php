@@ -216,6 +216,80 @@ class PedidoHomologacaoTest extends TestCase
             ->assertDontSee('Enviar à homologação');
     }
 
+    public function test_enviar_homologacao_exige_documento_do_tipo_da_banca(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $qualificacao = $this->proporBanca($discente, $trabalho);
+        $docQualificacao = $this->documento($trabalho, $discente);
+        $docDissertacao = $this->documento($trabalho, $discente, 'defesa'); // enum do banco: qualificacao|defesa|...
+
+        // Banca de qualificação não aceita a dissertação, e o botão só aparece no documento certo.
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $docDissertacao))
+            ->assertSessionHasErrors(['homologacao' => 'Para a banca de qualificação, envie o documento de qualificação.']);
+        $this->assertSame('proposta', $qualificacao->fresh()->homologacao_status);
+        $this->actingAs($discente)->get(route('meu-trabalho.index'))
+            ->assertSee(route('meu-trabalho.enviar-homologacao', $docQualificacao), false)
+            ->assertDontSee(route('meu-trabalho.enviar-homologacao', $docDissertacao), false);
+
+        // Banca de defesa não aceita o PDF antigo da qualificação.
+        $qualificacao->update(['status' => 'finalizada', 'resultado' => 'aprovado', 'homologacao_status' => 'homologada']);
+        $this->actingAs($discente)->post(route('bancas.store'), ['tipo' => 'defesa'] + $this->dadosQualificacao($trabalho))
+            ->assertSessionHasNoErrors();
+        $defesa = Banca::where('trabalho_academico_id', $trabalho->id)->where('tipo', 'defesa')->firstOrFail();
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $docQualificacao))
+            ->assertSessionHasErrors(['homologacao' => 'Para a banca de defesa, envie a dissertação ou a tese, não o documento de qualificação.']);
+        $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
+        $this->actingAs($discente)->get(route('meu-trabalho.index'))
+            ->assertSee(route('meu-trabalho.enviar-homologacao', $docDissertacao), false)
+            ->assertDontSee(route('meu-trabalho.enviar-homologacao', $docQualificacao), false);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $docDissertacao))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
+        $this->assertSame($docDissertacao->id, (int) $defesa->fresh()->documento_homologacao_id);
+    }
+
+    public function test_banca_cadastrada_pela_secretaria_tambem_passa_pela_homologacao(): void
+    {
+        Storage::fake('local');
+        [$discente, $secretaria, $trabalho] = $this->estrutura();
+
+        $this->actingAs($secretaria)->post(route('bancas.store'), [
+            'trabalho_academico_id' => $trabalho->id,
+            'status' => 'cadastrada',
+        ] + $this->dadosQualificacao($trabalho))->assertSessionHasNoErrors();
+
+        $banca = Banca::where('trabalho_academico_id', $trabalho->id)->firstOrFail();
+        $this->assertSame('proposta', $banca->homologacao_status);
+        $this->assertFalse($banca->libera_envio_trabalho);
+        $this->assertNull($banca->homologada_por);
+
+        // Editar pela Secretaria não homologa a banca.
+        $this->actingAs($secretaria)->put(route('bancas.update', $banca), [
+            'trabalho_academico_id' => $trabalho->id,
+            'status' => 'cadastrada',
+        ] + $this->dadosQualificacao($trabalho, local: 'Auditório'))->assertSessionHasNoErrors();
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+        $this->assertSame('Auditório', $banca->fresh()->local);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.store'), $this->dadosPdf())
+            ->assertSessionHasNoErrors();
+        $documento = TrabalhoDocumento::where('trabalho_academico_id', $trabalho->id)->firstOrFail();
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+        $this->assertSame($documento->id, (int) $banca->fresh()->documento_homologacao_id);
+
+        // E editar pela Secretaria também preserva "aguardando".
+        $this->actingAs($secretaria)->put(route('bancas.update', $banca), [
+            'trabalho_academico_id' => $trabalho->id,
+            'status' => 'cadastrada',
+        ] + $this->dadosQualificacao($trabalho, local: 'Sala 3'))->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
     public function test_rota_enviar_banca_nao_existe_mais(): void
     {
         $this->assertFalse(Route::has('meu-trabalho.enviar-banca'));
@@ -230,12 +304,12 @@ class PedidoHomologacaoTest extends TestCase
         return Banca::where('trabalho_academico_id', $trabalho->id)->latest('id')->firstOrFail();
     }
 
-    private function documento(TrabalhoAcademico $trabalho, User $discente): TrabalhoDocumento
+    private function documento(TrabalhoAcademico $trabalho, User $discente, string $tipo = 'qualificacao'): TrabalhoDocumento
     {
         return TrabalhoDocumento::create([
             'trabalho_academico_id' => $trabalho->id,
             'enviado_por_id' => $discente->id,
-            'tipo_documento' => 'qualificacao',
+            'tipo_documento' => $tipo,
             'arquivo_pdf_path' => 'trabalhos/x.pdf',
             'arquivo_pdf_nome_original' => 'x.pdf',
             'enviado_em' => now(),

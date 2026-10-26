@@ -132,7 +132,7 @@ class BancaController extends Controller
 
         $avaliadores = $trabalho ? $this->avaliadoresDisponiveis($trabalho) : collect();
         $avaliadoresAtuais = collect();
-        $banca = new Banca(['tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => ! $modoDiscente]);
+        $banca = new Banca(['tipo' => 'qualificacao', 'status' => 'cadastrada', 'libera_envio_trabalho' => false]);
 
         return view('bancas.form', $this->dadosFormulario($banca, $trabalho, $trabalhos, $avaliadores, $avaliadoresAtuais)
             + ['indicadores' => null, 'modoDiscente' => $modoDiscente]);
@@ -181,9 +181,9 @@ class BancaController extends Controller
         $this->validarComposicao($trabalho, $data['tipo'], collect($data['avaliadores'] ?? []));
         $dataHora = $this->montarDataHora($data);
 
-        $homologacao = $modoDiscente
-            ? ['homologacao_status' => 'proposta', 'homologada_por' => null, 'homologada_em' => null, 'libera_envio_trabalho' => false]
-            : ['homologacao_status' => 'homologada', 'homologada_por' => auth()->id(), 'homologada_em' => now(), 'libera_envio_trabalho' => true];
+        // Homologação única (regra 9): a banca nasce "proposta", seja do discente ou da Secretaria,
+        // e só é homologada depois que o discente envia o trabalho no pedido.
+        $homologacao = ['homologacao_status' => 'proposta', 'homologada_por' => null, 'homologada_em' => null, 'libera_envio_trabalho' => false];
 
         $banca = DB::transaction(function () use ($data, $dataHora, $homologacao) {
             $banca = Banca::create(array_merge([
@@ -216,7 +216,7 @@ class BancaController extends Controller
             ->route('bancas.edit', $banca)
             ->with('success', $request->boolean('enviar_email_participantes')
                 ? 'Banca cadastrada com sucesso. E-mail enviado aos participantes.'
-                : 'Banca cadastrada com sucesso. O envio do trabalho pelo discente foi liberado.');
+                : 'Banca cadastrada como proposta. O discente envia o trabalho e o pedido à homologação.');
     }
 
     public function edit(Banca $banca)
@@ -268,12 +268,7 @@ class BancaController extends Controller
                 'homologada_em' => null,
                 'libera_envio_trabalho' => false,
             ]
-            : [
-                'homologacao_status' => 'homologada',
-                'homologada_por' => auth()->id(),
-                'homologada_em' => now(),
-                'libera_envio_trabalho' => true,
-            ];
+            : []; // Secretaria: editar não muda o estado da homologação.
 
         DB::transaction(function () use ($banca, $data, $dataHora, $homologacao) {
             $banca->update(array_merge([

@@ -17,6 +17,19 @@ class PedidoHomologacaoService
     /** Estados em que o discente ainda monta/corrige o pedido. */
     public const ESTADOS_EDITAVEIS = ['proposta', 'devolvida'];
 
+    /** Tipos de documento aceitos por tipo de banca. */
+    public const TIPOS_DOCUMENTO = [
+        'qualificacao' => ['qualificacao'],
+        // 'defesa' é o valor do enum de trabalho_documentos.tipo_documento; o formulário envia dissertacao|tese.
+        'defesa' => ['dissertacao', 'tese', 'defesa'],
+    ];
+
+    /** O documento é do tipo esperado para a banca (qualificação ↔ qualificação; defesa ↔ dissertação/tese)? */
+    public static function documentoCompativel(Banca $banca, TrabalhoDocumento $documento): bool
+    {
+        return in_array($documento->tipo_documento, self::TIPOS_DOCUMENTO[$banca->tipo] ?? [], true);
+    }
+
     public function __construct(
         private readonly VerificacaoBancaService $verificacao,
     ) {
@@ -43,6 +56,14 @@ class PedidoHomologacaoService
         if ($documento->trabalho_academico_id !== $banca->trabalho_academico_id) {
             throw ValidationException::withMessages([
                 'homologacao' => 'O documento não pertence ao trabalho desta banca.',
+            ]);
+        }
+
+        if (! self::documentoCompativel($banca, $documento)) {
+            throw ValidationException::withMessages([
+                'homologacao' => $banca->tipo === 'defesa'
+                    ? 'Para a banca de defesa, envie a dissertação ou a tese, não o documento de qualificação.'
+                    : 'Para a banca de qualificação, envie o documento de qualificação.',
             ]);
         }
 
