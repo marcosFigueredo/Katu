@@ -291,18 +291,46 @@
 
                         <div id="menu-usuarios" class="collapse {{ $usuariosAberto ? 'show' : '' }} mt-1 ms-3 space-y-1">
 
-                            <a href="{{ route('usuarios.index') }}"
-                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
-                                      {{ request()->routeIs('usuarios.index', 'usuarios.edit', 'usuarios.show') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
-                                <i class="bi bi-people-fill" style="font-size: 15px; flex-shrink:0;"></i>
-                                Listar usuários
-                            </a>
-
                             <a href="{{ route('usuarios.create') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
                                       {{ request()->routeIs('usuarios.create') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-person-plus-fill" style="font-size: 15px; flex-shrink:0;"></i>
                                 Novo usuário
+                            </a>
+
+                            <a href="{{ route('usuarios.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('usuarios.index') && (!request()->filled('classe') || request('classe') === 'todos') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-people-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Todos os usuários
+                            </a>
+
+                            <a href="{{ route('usuarios.index', ['classe' => 'docentes']) }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('usuarios.index') && request('classe') === 'docentes' ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-person-badge-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Docentes
+                            </a>
+
+                            <a href="{{ route('usuarios.index', ['classe' => 'discentes']) }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('usuarios.index') && request('classe') === 'discentes' ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-mortarboard-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Discentes
+                            </a>
+
+                            <a href="{{ route('usuarios.index', ['classe' => 'externos']) }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('usuarios.index') && request('classe') === 'externos' ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-globe2" style="font-size: 15px; flex-shrink:0;"></i>
+                                Docentes externos
+                            </a>
+
+                            <a href="{{ route('usuarios.index', ['classe' => 'coordenador']) }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('usuarios.index') && request('classe') === 'coordenador' ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-award-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                Coordenador
                             </a>
 
                         </div>
