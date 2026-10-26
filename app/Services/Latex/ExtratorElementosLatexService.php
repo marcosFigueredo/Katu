@@ -42,7 +42,7 @@ class ExtratorElementosLatexService
      */
     public function descobrirMapa(string $fonte): array
     {
-        $fonte = FonteLatex::removerComentarios($fonte);
+        $fonte = FonteLatex::preparar($fonte);
         $mapa = [];
         foreach (E::todos() as $codigo) {
             foreach ($this->regras($codigo) as $entrada) {
@@ -64,7 +64,7 @@ class ExtratorElementosLatexService
      */
     public function extrair(string $fonte, ?array $mapa = null): array
     {
-        $fonte = FonteLatex::removerComentarios($fonte);
+        $fonte = FonteLatex::preparar($fonte);
         $resultado = [];
         foreach (E::todos() as $codigo) {
             $candidatas = $this->regras($codigo);
@@ -89,6 +89,7 @@ class ExtratorElementosLatexService
     /** Motor de compilação: comentário mágico, senão xelatex se usar fontspec/unicode-math, senão pdflatex. */
     public function detectarMotor(string $fonte): string
     {
+        $fonte = FonteLatex::paraUtf8($fonte);
         if (preg_match('/^[ \t]*%[ \t]*!\s*TeX\s+(?:TS-)?program\s*=\s*(pdflatex|xelatex|lualatex)\b/im', $fonte, $m)) {
             return strtolower($m[1]);
         }
@@ -143,7 +144,7 @@ class ExtratorElementosLatexService
     }
 
     /** @return string|list<string>|null */
-    private function valorDe(string $fonte, string $codigo, array $entrada): string|array|null
+    private function valorDe(FonteLatex $fonte, string $codigo, array $entrada): string|array|null
     {
         $lista = in_array($codigo, E::LISTAS, true);
 
@@ -152,7 +153,7 @@ class ExtratorElementosLatexService
                 ? fn (string $n) => strcasecmp($n, $entrada['nome']) === 0
                 : fn (string $n) => preg_match(self::regexPadrao($entrada['nome']), $n) === 1;
             $valores = array_values(array_unique(array_filter(
-                array_map([FonteLatex::class, 'normalizar'], FonteLatex::argumentosDeComandos($fonte, $casa)),
+                array_map([FonteLatex::class, 'normalizar'], $fonte->argumentosDeComandos($casa)),
                 fn (string $v) => $v !== ''
             )));
             if ($valores === []) {
@@ -178,13 +179,13 @@ class ExtratorElementosLatexService
         return $valor === '' ? null : $valor;
     }
 
-    private function bloco(string $fonte, array $entrada): ?string
+    private function bloco(FonteLatex $fonte, array $entrada): ?string
     {
         if ($entrada['tipo'] === 'secao') {
-            return FonteLatex::secao($fonte, $entrada['nome']);
+            return $fonte->secao($entrada['nome']);
         }
 
-        foreach (FonteLatex::ambientes($fonte, $entrada['nome']) as $ocorrencia) {
+        foreach ($fonte->ambientes($entrada['nome']) as $ocorrencia) {
             $aceita = $entrada['tipo'] === 'ambiente'
                 ? $ocorrencia['opcao'] === null
                 : $ocorrencia['opcao'] !== null && mb_strtolower($ocorrencia['opcao']) === mb_strtolower($entrada['opcao']);
@@ -200,15 +201,18 @@ class ExtratorElementosLatexService
     private function textoDoBloco(string $bloco): string
     {
         if (preg_match(self::ROTULO_PALAVRAS_CHAVE, $bloco, $m, PREG_OFFSET_CAPTURE)) {
-            $bloco = substr($bloco, 0, $m[0][1]);
-            // remove o que sobra do rótulo: \textbf{, \noindent, \vspace{...}
-            $bloco = (string) preg_replace(
-                '/(?:\s+|\\\\(?:textbf|textit|emph|textsc|noindent|par|bigskip|medskip|smallskip)\b\s*\{?|\\\\vspace\*?\s*\{[^{}]*\})+$/u',
-                '',
-                $bloco
-            );
+            $bloco = rtrim(substr($bloco, 0, $m[0][1]));
+            // remove, um token por vez a partir do fim, o que sobra do rótulo: \textbf{, \noindent, \vspace{...}
+            do {
+                $antes = $bloco;
+                $bloco = rtrim(preg_replace(
+                    '/\\\\(?:(?:textbf|textit|emph|textsc|noindent|par|bigskip|medskip|smallskip)(?![A-Za-z])\s*+\{?|vspace\*?\s*+\{[^{}]*+\})$/',
+                    '',
+                    $bloco
+                ) ?? $bloco);
+            } while ($bloco !== $antes);
         }
-        $bloco = (string) preg_replace('/\\\\(?:begin|end)\s*\{otherlanguage\*?\}(?:\s*\{[^}]*\})?|\\\\selectlanguage\s*\{[^}]*\}/', ' ', $bloco);
+        $bloco = preg_replace('/\\\\(?:begin|end)\s*+\{otherlanguage\*?\}(?:\s*+\{[^}]*+\})?|\\\\selectlanguage\s*+\{[^}]*+\}/', ' ', $bloco) ?? $bloco;
 
         return FonteLatex::normalizar($bloco);
     }
@@ -220,7 +224,8 @@ class ExtratorElementosLatexService
             return '';
         }
         $resto = substr($bloco, $m[0][1] + strlen($m[0][0]));
-        $resto = preg_split('/\R[ \t]*\R|\\\\end\s*\{|\\\\par\b/', $resto, 2)[0];
+        $partes = preg_split('/\R[ \t]*+\R|\\\\end\s*+\{|\\\\par(?![A-Za-z])/', $resto, 2);
+        $resto = $partes === false ? $resto : $partes[0];
 
         return FonteLatex::normalizar($resto);
     }

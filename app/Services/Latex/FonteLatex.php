@@ -3,23 +3,78 @@
 namespace App\Services\Latex;
 
 /**
- * Leitura de baixo nível do fonte LaTeX: comentários, argumentos com chaves
- * balanceadas, corpo de ambientes e de seções. Sem regras de negócio.
+ * Leitura de baixo nível do fonte LaTeX: codificação, comentários, argumentos com
+ * chaves balanceadas, corpo de ambientes e de seções. Sem regras de negócio.
+ *
+ * A instância indexa os comandos e casa as chaves numa única passada linear, de
+ * modo que várias consultas sobre o mesmo fonte não reprocessam o texto inteiro
+ * (e entradas desbalanceadas não ficam quadráticas).
  */
 class FonteLatex
 {
     private const DEFINICAO_ANTES = '/\\\\(?:(?:re|provide)?newcommand|DeclareRobustCommand|[gex]?def|let|(?:New|Renew|Provide|Declare)DocumentCommand)\s*\*?\s*\{?\s*$/';
 
-    /** Remove o que vem depois de um % não escapado em cada linha. */
-    public static function removerComentarios(string $fonte): string
+    /** Tamanho máximo de um argumento opcional [..] lido. */
+    private const MAX_OPCIONAL = 2000;
+
+    /** @var array<int, int>|null posição de cada { => posição do } correspondente */
+    private ?array $fechamentos = null;
+
+    /** @var array<string, list<array{0: string, 1: int}>>|null nome em minúsculas => [nome, posição do nome] */
+    private ?array $indice = null;
+
+    /** @var array<int, string|null> posição do nome => argumento lido (cache) */
+    private array $argumentos = [];
+
+    public function __construct(public readonly string $texto) {}
+
+    /** Converte para UTF-8 e remove comentários. */
+    public static function preparar(string $fonte): self
     {
-        return (string) preg_replace('/^((?:[^%\\\\\r\n]|\\\\.)*)%[^\r\n]*/m', '$1', $fonte);
+        return new self(self::removerComentarios(self::paraUtf8($fonte)));
     }
 
-    /** Colapsa espaços em branco (inclusive quebras de linha) e apara. */
+    /** Fonte que não é UTF-8 válido é tratado como Windows-1252 (Latin-1). */
+    public static function paraUtf8(string $fonte): string
+    {
+        return mb_check_encoding($fonte, 'UTF-8') ? $fonte : mb_convert_encoding($fonte, 'UTF-8', 'Windows-1252');
+    }
+
+    /** Remove o que vem depois de um % não escapado em cada linha (varredura linear, sem regex). */
+    public static function removerComentarios(string $fonte): string
+    {
+        if (! str_contains($fonte, '%')) {
+            return $fonte;
+        }
+        $saida = '';
+        $n = strlen($fonte);
+        $i = 0;
+        while ($i < $n) {
+            $p = strcspn($fonte, '%\\', $i);
+            $saida .= substr($fonte, $i, $p);
+            $i += $p;
+            if ($i >= $n) {
+                break;
+            }
+            if ($fonte[$i] === '\\') {
+                $saida .= substr($fonte, $i, 2);
+                $i += 2;
+
+                continue;
+            }
+            // % não escapado: pula até o fim da linha (mantém a quebra)
+            $i += strcspn($fonte, "\r\n", $i);
+        }
+
+        return $saida;
+    }
+
+    /** Colapsa espaços em branco (inclusive quebras de linha) e apara. Nunca devolve '' por falha de regex. */
     public static function normalizar(string $texto): string
     {
-        return trim((string) preg_replace('/\s+/u', ' ', $texto));
+        $r = preg_replace('/\s+/u', ' ', $texto) ?? preg_replace('/\s+/', ' ', $texto) ?? $texto;
+
+        return trim($r);
     }
 
     /**
@@ -30,31 +85,28 @@ class FonteLatex
      * @param  callable(string):bool  $casa
      * @return list<string>
      */
-    public static function argumentosDeComandos(string $fonte, callable $casa): array
+    public function argumentosDeComandos(callable $casa): array
     {
-        if (! preg_match_all('/\\\\([A-Za-z@]{1,64})/', $fonte, $m, PREG_OFFSET_CAPTURE)) {
-            return [];
+        $posicoes = [];
+        foreach ($this->indice() as $ocorrencias) {
+            if (! $casa($ocorrencias[0][0])) {
+                continue;
+            }
+            foreach ($ocorrencias as [, $pos]) {
+                $posicoes[] = $pos;
+            }
         }
+        sort($posicoes);
 
         $valores = [];
-        foreach ($m[1] as [$nome, $pos]) {
-            if (! $casa($nome)) {
-                continue;
+        foreach ($posicoes as $pos) {
+            if (! array_key_exists($pos, $this->argumentos)) {
+                $this->argumentos[$pos] = $this->lerArgumento($pos);
             }
-            $inicio = $pos - 1;
-            if (preg_match(self::DEFINICAO_ANTES, substr($fonte, max(0, $inicio - 60), min(60, $inicio)))) {
-                continue;
+            $valor = $this->argumentos[$pos];
+            if ($valor !== null) {
+                $valores[] = $valor;
             }
-            $i = $pos + strlen($nome);
-            if (($fonte[$i] ?? '') === '*') {
-                $i++;
-            }
-            $i = self::pularOpcionais($fonte, $i);
-            $arg = self::lerGrupo($fonte, $i, '{', '}');
-            if ($arg === null || str_contains($arg[0], '#')) {
-                continue;
-            }
-            $valores[] = $arg[0];
         }
 
         return $valores;
@@ -65,70 +117,98 @@ class FonteLatex
      *
      * @return list<array{opcao: ?string, corpo: string}>
      */
-    public static function ambientes(string $fonte, string $nome): array
+    public function ambientes(string $nome): array
     {
         $q = preg_quote($nome, '/');
-        $abre = '/\\\\begin\s*\{'.$q.'\}/i';
-        $tokens = '/\\\\(begin|end)\s*\{'.$q.'\}/i';
+        if (! preg_match_all('/\\\\(begin|end)\s*\{'.$q.'\}/i', $this->texto, $m, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+            return [];
+        }
+
         $ocorrencias = [];
-        $desloc = 0;
-
-        while (preg_match($abre, $fonte, $m, PREG_OFFSET_CAPTURE, $desloc)) {
-            $i = $m[0][1] + strlen($m[0][0]);
-            $opcao = null;
-            $j = self::pularEspacos($fonte, $i);
-            if (($fonte[$j] ?? '') === '[') {
-                $grupo = self::lerGrupo($fonte, $j, '[', ']');
-                if ($grupo !== null) {
-                    $opcao = self::normalizar($grupo[0]);
-                    $i = $grupo[1];
+        $nivel = 0;
+        $inicio = 0;
+        $opcao = null;
+        foreach ($m as $t) {
+            $fimToken = $t[0][1] + strlen($t[0][0]);
+            if (strtolower($t[1][0]) === 'begin') {
+                if ($nivel++ === 0) {
+                    [$opcao, $inicio] = $this->opcaoAposBegin($fimToken);
                 }
+            } elseif ($nivel > 0 && --$nivel === 0) {
+                $ocorrencias[] = ['opcao' => $opcao, 'corpo' => substr($this->texto, $inicio, $t[0][1] - $inicio)];
             }
-
-            $nivel = 1;
-            $cursor = $i;
-            $fim = null;
-            while (preg_match($tokens, $fonte, $t, PREG_OFFSET_CAPTURE, $cursor)) {
-                $nivel += strtolower($t[1][0]) === 'begin' ? 1 : -1;
-                $cursor = $t[0][1] + strlen($t[0][0]);
-                if ($nivel === 0) {
-                    $fim = $t[0][1];
-                    break;
-                }
-            }
-            if ($fim === null) {
-                break;
-            }
-            $ocorrencias[] = ['opcao' => $opcao, 'corpo' => substr($fonte, $i, $fim - $i)];
-            $desloc = $cursor;
         }
 
         return $ocorrencias;
     }
 
     /** Corpo de \chapter*{Titulo} (ou \section) até o próximo capítulo/seção/fim do documento. */
-    public static function secao(string $fonte, string $titulo): ?string
+    public function secao(string $titulo): ?string
     {
         $q = preg_quote($titulo, '/');
-        if (! preg_match('/\\\\(?:chapter|section)\*?\s*(?:\[[^\]]*\])?\s*\{\s*'.$q.'\s*\}/iu', $fonte, $m, PREG_OFFSET_CAPTURE)) {
+        if (! preg_match('/\\\\(?:chapter|section)\*?\s*(?:\[[^\]]*\])?\s*\{\s*'.$q.'\s*\}/iu', $this->texto, $m, PREG_OFFSET_CAPTURE)) {
             return null;
         }
         $inicio = $m[0][1] + strlen($m[0][0]);
-        $fim = preg_match('/\\\\(?:chapter|section|part)\b|\\\\end\s*\{document\}|\\\\(?:mainmatter|backmatter|appendix|textual)\b/', $fonte, $p, PREG_OFFSET_CAPTURE, $inicio)
-            ? $p[0][1] : strlen($fonte);
+        $fim = preg_match('/\\\\(?:chapter|section|part)\b|\\\\end\s*\{document\}|\\\\(?:mainmatter|backmatter|appendix|textual)\b/', $this->texto, $p, PREG_OFFSET_CAPTURE, $inicio)
+            ? $p[0][1] : strlen($this->texto);
 
-        return substr($fonte, $inicio, $fim - $inicio);
+        return substr($this->texto, $inicio, $fim - $inicio);
     }
 
-    /** Pula espaços e grupos opcionais [..] a partir de $i. */
-    private static function pularOpcionais(string $fonte, int $i): int
+    /** @return array<string, list<array{0: string, 1: int}>> */
+    private function indice(): array
+    {
+        if ($this->indice === null) {
+            $this->indice = [];
+            if (preg_match_all('/\\\\([A-Za-z@]{1,64})/', $this->texto, $m, PREG_OFFSET_CAPTURE)) {
+                foreach ($m[1] as [$nome, $pos]) {
+                    $this->indice[strtolower($nome)][] = [$nome, $pos];
+                }
+            }
+        }
+
+        return $this->indice;
+    }
+
+    private function lerArgumento(int $posNome): ?string
+    {
+        $inicio = $posNome - 1;
+        if (preg_match(self::DEFINICAO_ANTES, substr($this->texto, max(0, $inicio - 60), min(60, $inicio)))) {
+            return null;
+        }
+        $i = $posNome + strspn($this->texto, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@', $posNome);
+        if (($this->texto[$i] ?? '') === '*') {
+            $i++;
+        }
+        $i = $this->pularOpcionais($i);
+        $arg = $this->lerChaves($i);
+
+        return $arg === null || str_contains($arg[0], '#') ? null : $arg[0];
+    }
+
+    /** @return array{0: ?string, 1: int} [opção normalizada ou null, início do corpo] */
+    private function opcaoAposBegin(int $i): array
+    {
+        $j = $this->pularEspacos($i);
+        if (($this->texto[$j] ?? '') === '[') {
+            $grupo = $this->lerColchetes($j);
+            if ($grupo !== null) {
+                return [self::normalizar($grupo[0]), $grupo[1]];
+            }
+        }
+
+        return [null, $i];
+    }
+
+    private function pularOpcionais(int $i): int
     {
         while (true) {
-            $i = self::pularEspacos($fonte, $i);
-            if (($fonte[$i] ?? '') !== '[') {
+            $i = $this->pularEspacos($i);
+            if (($this->texto[$i] ?? '') !== '[') {
                 return $i;
             }
-            $grupo = self::lerGrupo($fonte, $i, '[', ']');
+            $grupo = $this->lerColchetes($i);
             if ($grupo === null) {
                 return $i;
             }
@@ -136,51 +216,68 @@ class FonteLatex
         }
     }
 
-    private static function pularEspacos(string $fonte, int $i): int
+    private function pularEspacos(int $i): int
     {
-        $n = strlen($fonte);
-        while ($i < $n && ctype_space($fonte[$i])) {
-            $i++;
-        }
-
-        return $i;
+        return $i + strspn($this->texto, " \t\r\n\f\v", $i);
     }
 
-    /**
-     * Lê um grupo balanceado que começa em $i com $abre (ignorando escapes como \{).
-     * Colchetes respeitam chaves internas. Devolve [conteúdo, posição após o fechamento].
-     *
-     * @return array{0: string, 1: int}|null
-     */
-    private static function lerGrupo(string $fonte, int $i, string $abre, string $fecha): ?array
+    /** @return array{0: string, 1: int}|null [conteúdo, posição após o }] */
+    private function lerChaves(int $i): ?array
     {
-        if (($fonte[$i] ?? '') !== $abre) {
+        if (($this->texto[$i] ?? '') !== '{') {
             return null;
         }
-        $n = strlen($fonte);
-        $nivel = 0;
-        $chaves = 0;
-        for ($j = $i; $j < $n; $j++) {
-            $c = $fonte[$j];
+        $fecha = $this->fechamentos()[$i] ?? null;
+
+        return $fecha === null ? null : [substr($this->texto, $i + 1, $fecha - $i - 1), $fecha + 1];
+    }
+
+    /** Grupo [..] (limitado a MAX_OPCIONAL bytes), pulando grupos de chaves internos. */
+    private function lerColchetes(int $i): ?array
+    {
+        $limite = min(strlen($this->texto), $i + self::MAX_OPCIONAL);
+        $fechaColchete = strpos($this->texto, ']', $i);
+        if ($fechaColchete === false || $fechaColchete >= $limite) {
+            return null;
+        }
+        for ($j = $i + 1; $j < $limite; $j++) {
+            $j += strcspn($this->texto, '\\{]', $j, $limite - $j);
+            if ($j >= $limite) {
+                return null;
+            }
+            $c = $this->texto[$j];
             if ($c === '\\') {
                 $j++;
-
-                continue;
-            }
-            if ($abre === '[' && $c === '{') {
-                $chaves++;
-            } elseif ($abre === '[' && $c === '}') {
-                $chaves--;
-            } elseif ($c === $abre && $chaves === 0) {
-                $nivel++;
-            } elseif ($c === $fecha && $chaves === 0) {
-                $nivel--;
-                if ($nivel === 0) {
-                    return [substr($fonte, $i + 1, $j - $i - 1), $j + 1];
+            } elseif ($c === '{') {
+                $fecha = $this->fechamentos()[$j] ?? null;
+                if ($fecha === null) {
+                    return null;
                 }
+                $j = $fecha;
+            } elseif ($c === ']') {
+                return [substr($this->texto, $i + 1, $j - $i - 1), $j + 1];
             }
         }
 
         return null;
+    }
+
+    /** Casa todas as chaves do fonte numa passada (escapes \{ \} ignorados). */
+    private function fechamentos(): array
+    {
+        if ($this->fechamentos === null) {
+            $this->fechamentos = [];
+            $pilha = [];
+            preg_match_all('/\\\\.|[{}]/s', $this->texto, $m, PREG_OFFSET_CAPTURE);
+            foreach ($m[0] as [$token, $pos]) {
+                if ($token === '{') {
+                    $pilha[] = $pos;
+                } elseif ($token === '}' && $pilha !== []) {
+                    $this->fechamentos[array_pop($pilha)] = $pos;
+                }
+            }
+        }
+
+        return $this->fechamentos;
     }
 }

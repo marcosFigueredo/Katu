@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SugerirMapaTemplateJob;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\Programa;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use ZipArchive;
@@ -205,6 +207,7 @@ class ProgramaTemplateLatexTest extends TestCase
     {
         Storage::fake('local');
         Http::fake();
+        Queue::fake();
         [$sec] = $this->secretariaComPrograma();
 
         $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipValido()])
@@ -215,42 +218,85 @@ class ProgramaTemplateLatexTest extends TestCase
         $this->assertSame(['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'], $t->mapa_elementos['membros_banca']);
         $this->assertSame('pdflatex', $t->motor);
         Http::assertNothingSent();
+        // as regras resolveram todos os códigos: nada para o Ollama
+        Queue::assertNotPushed(SugerirMapaTemplateJob::class);
     }
 
     public function test_ollama_sugere_codigos_faltantes(): void
     {
         Storage::fake('local');
-        $foraDoAr = false;
-        Http::fake(function () use (&$foraDoAr) {
-            if ($foraDoAr) {
-                throw new ConnectionException('fora do ar');
-            }
-
-            return Http::response(['response' => json_encode([
-                'membros_banca' => ['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'],
-                'titulo_en' => ['tipo' => 'comando', 'nome' => 'naoPedido'],
-            ])]);
-        });
+        Http::fake();
+        Queue::fake();
         [$sec] = $this->secretariaComPrograma();
 
         $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipArticle()])
             ->assertRedirect(route('programa-template.index'));
 
+        // template, mapa por regras e motor gravados antes de qualquer chamada ao Ollama
         $t = ProgramaTemplateLatex::firstOrFail();
+        Storage::disk('local')->assertExists($t->arquivo_path);
+        $this->assertSame(['tipo' => 'comando', 'nome' => 'title'], $t->mapa_elementos['titulo_en']);
+        $this->assertArrayNotHasKey('membros_banca', $t->mapa_elementos);
+        $this->assertSame('pdflatex', $t->motor);
+        Http::assertNothingSent();
+        Queue::assertPushed(SugerirMapaTemplateJob::class, fn ($job) => $job->templateId === $t->id && $job->hash === $t->hash_sha256);
+    }
+
+    private function templateArticleSalvo(): ProgramaTemplateLatex
+    {
+        Storage::fake('local');
+        Queue::fake();
+        [$sec] = $this->secretariaComPrograma();
+        $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipArticle()]);
+
+        return ProgramaTemplateLatex::firstOrFail();
+    }
+
+    private function respostaOllama(): \Closure
+    {
+        return fn () => Http::response(['response' => json_encode([
+            'membros_banca' => ['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'],
+            'titulo_en' => ['tipo' => 'comando', 'nome' => 'naoPedido'],
+        ])]);
+    }
+
+    public function test_job_mescla_sugestoes_do_ollama(): void
+    {
+        $t = $this->templateArticleSalvo();
+        Http::fake($this->respostaOllama());
+
+        app()->call([new SugerirMapaTemplateJob($t->id, $t->hash_sha256), 'handle']);
+
+        $t->refresh();
         $this->assertSame(['tipo' => 'padrao_comando', 'nome' => 'Membro[A-Z]Nome'], $t->mapa_elementos['membros_banca']);
+        // sugestão para código já resolvido pelas regras é ignorada
         $this->assertSame(['tipo' => 'comando', 'nome' => 'title'], $t->mapa_elementos['titulo_en']);
         $this->assertSame(['tipo' => 'ambiente', 'nome' => 'abstract'], $t->mapa_elementos['abstract_en']);
-        $this->assertSame('pdflatex', $t->motor);
-        Http::assertSent(fn ($r) => str_contains($r['prompt'], 'membros_banca'));
+        Http::assertSent(fn ($r) => str_contains($r['prompt'], 'membros_banca')
+            && ! str_contains($r['prompt'], '- titulo_en:'));
+        $this->assertSame([], array_values(array_diff(scandir(storage_path('app/private/tmp')), ['.', '..'])));
+    }
 
-        // Ollama fora do ar: o upload continua funcionando
-        $foraDoAr = true;
-        $this->actingAs($sec)->post(route('programa-template.store'), ['arquivo' => $this->zipArticle()])
-            ->assertRedirect(route('programa-template.index'))
-            ->assertSessionHasNoErrors();
+    public function test_job_com_ollama_falhando_mantem_mapa(): void
+    {
+        $t = $this->templateArticleSalvo();
+        $antes = $t->mapa_elementos;
+        Http::fake(fn () => throw new ConnectionException('fora do ar'));
 
-        $t = ProgramaTemplateLatex::firstOrFail();
-        $this->assertArrayNotHasKey('membros_banca', $t->mapa_elementos);
-        $this->assertSame(['tipo' => 'ambiente', 'nome' => 'abstract'], $t->mapa_elementos['abstract_en']);
+        app()->call([new SugerirMapaTemplateJob($t->id, $t->hash_sha256), 'handle']);
+
+        $this->assertSame($antes, $t->fresh()->mapa_elementos);
+    }
+
+    public function test_job_ignora_template_substituido(): void
+    {
+        $t = $this->templateArticleSalvo();
+        $antes = $t->mapa_elementos;
+        Http::fake($this->respostaOllama());
+
+        app()->call([new SugerirMapaTemplateJob($t->id, 'hash-de-outro-envio'), 'handle']);
+
+        $this->assertSame($antes, $t->fresh()->mapa_elementos);
+        Http::assertNothingSent();
     }
 }

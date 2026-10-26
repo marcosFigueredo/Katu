@@ -27,7 +27,7 @@ class MapaTemplateOllamaService
         }
 
         try {
-            $resposta = Http::timeout((int) config('ollama.timeout'))
+            $resposta = Http::timeout((int) config('ollama.timeout_mapa', 20))
                 ->post(rtrim((string) config('ollama.url'), '/').'/api/generate', [
                     'model' => config('ollama.model'),
                     'prompt' => $this->prompt($fonte, $codigos),
@@ -98,7 +98,7 @@ PROMPT;
     /** Pré-texto do template (até o início do texto principal), limitado em tamanho. */
     private function trecho(string $fonte): string
     {
-        $fonte = FonteLatex::removerComentarios($fonte);
+        $fonte = FonteLatex::removerComentarios(FonteLatex::paraUtf8($fonte));
         if (preg_match('/\\\\(?:mainmatter|textual)\b/', $fonte, $m, PREG_OFFSET_CAPTURE)) {
             $fonte = substr($fonte, 0, $m[0][1]);
         }

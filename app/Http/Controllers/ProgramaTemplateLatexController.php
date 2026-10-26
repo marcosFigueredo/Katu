@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ProjetoLatexInvalidoException;
+use App\Jobs\SugerirMapaTemplateJob;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\Programa;
 use App\Models\ProgramaTemplateLatex;
 use App\Services\Latex\ElementosVitais;
 use App\Services\Latex\ExtratorElementosLatexService;
-use App\Services\Latex\MapaTemplateOllamaService;
 use App\Services\Latex\ProjetoLatexZipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -36,7 +36,6 @@ class ProgramaTemplateLatexController extends Controller
         Request $request,
         ProjetoLatexZipService $servico,
         ExtratorElementosLatexService $extrator,
-        MapaTemplateOllamaService $ollama,
     ) {
         $this->autorizarSecretaria();
         $programa = $this->programaDaSecretaria();
@@ -66,16 +65,10 @@ class ProgramaTemplateLatexController extends Controller
             File::deleteDirectory($tmp);
         }
 
-        // o Ollama só completa o que as regras não acharam; falha dele devolve []
-        $faltantes = array_values(array_diff(ElementosVitais::todos(), array_keys($mapa)));
-        if ($faltantes !== []) {
-            $mapa += $ollama->sugerir($fonte, $faltantes);
-        }
-
         $destino = "programas/{$programa->id}/template-latex/template.zip";
         Storage::disk('local')->put($destino, file_get_contents($arquivo->path()));
 
-        ProgramaTemplateLatex::updateOrCreate(
+        $template = ProgramaTemplateLatex::updateOrCreate(
             ['programa_id' => $programa->id],
             [
                 'arquivo_path' => $destino,
@@ -89,6 +82,11 @@ class ProgramaTemplateLatexController extends Controller
                 'enviado_em' => now(),
             ]
         );
+
+        // o Ollama só completa, em fila, o que as regras não acharam (o upload já está salvo)
+        if (array_diff(ElementosVitais::todos(), array_keys($mapa)) !== []) {
+            SugerirMapaTemplateJob::dispatch($template->id, $template->hash_sha256);
+        }
 
         return redirect()->route('programa-template.index')
             ->with('status', 'Template LaTeX enviado.');

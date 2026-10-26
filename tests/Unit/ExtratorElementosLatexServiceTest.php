@@ -195,6 +195,62 @@ class ExtratorElementosLatexServiceTest extends TestCase
         $this->assertSame(['Fulano', 'Beltrano'], $r[E::MEMBROS_BANCA]);
     }
 
+    public function test_resumo_com_sequencia_longa_de_espacos(): void
+    {
+        foreach ([20, 200, 5000] as $n) {
+            $fonte = "\\begin{resumo}Texto.".str_repeat(' ', $n)."Mais texto.\n\nPalavras-chave: a; b.\\end{resumo}";
+            $r = $this->extrator->extrair($fonte);
+
+            $this->assertSame('Texto. Mais texto.', $r[E::RESUMO_PT], "n={$n}");
+            $this->assertSame('a; b.', $r[E::PALAVRAS_CHAVE_PT], "n={$n}");
+        }
+    }
+
+    public function test_resumo_com_indentacao_realista(): void
+    {
+        $fonte = "\\begin{resumo}\n\tTexto do resumo.\n\n\n\n        \n          \\vspace{\\onelineskip}\n"
+            ."          \\noindent\n          \\textbf{Palavras-chave}: a; b.\n\\end{resumo}";
+        $r = $this->extrator->extrair($fonte);
+
+        $this->assertSame('Texto do resumo.', $r[E::RESUMO_PT]);
+        $this->assertSame('a; b.', $r[E::PALAVRAS_CHAVE_PT]);
+    }
+
+    public function test_linha_muito_longa_nao_apaga_o_fonte(): void
+    {
+        $fonte = "\\TituloBR{Real}\n".str_repeat('a\\% b ', 200000)."% comentário\n\\NomeAutor{Fulano}\n"
+            ."\\begin{resumo}".str_repeat('palavra ', 150000)."\\end{resumo}";
+        $r = $this->extrator->extrair($fonte);
+
+        $this->assertSame('Real', $r[E::TITULO_PT]);
+        $this->assertSame('Fulano', $r[E::AUTOR]);
+        $this->assertStringStartsWith('palavra palavra', $r[E::RESUMO_PT]);
+    }
+
+    public function test_fonte_em_latin1(): void
+    {
+        $fonte = "\\TituloBR{Modelagem em sa\xFAde}\n\\NomeAutor{Jo\xE3o}\n% !TEX program = xelatex";
+        $r = $this->extrator->extrair($fonte);
+
+        $this->assertSame('Modelagem em saúde', $r[E::TITULO_PT]);
+        $this->assertSame('João', $r[E::AUTOR]);
+        $this->assertSame(['tipo' => 'comando', 'nome' => 'TituloBR'], $this->extrator->descobrirMapa($fonte)['titulo_pt']);
+        $this->assertSame('xelatex', $this->extrator->detectarMotor($fonte));
+    }
+
+    public function test_entrada_desbalanceada_e_linear(): void
+    {
+        $fonte = str_repeat('\\titulo{x ', 8000).str_repeat('\\autor[x ', 8000).str_repeat('\\begin{resumo} ', 8000);
+        $inicio = microtime(true);
+        $r = $this->extrator->extrair($fonte);
+        $this->extrator->descobrirMapa($fonte);
+
+        $this->assertLessThan(2.0, microtime(true) - $inicio);
+        $this->assertNull($r[E::TITULO_PT]);
+        $this->assertNull($r[E::AUTOR]);
+        $this->assertNull($r[E::RESUMO_PT]);
+    }
+
     public function test_detectar_motor(): void
     {
         $this->assertSame('xelatex', $this->extrator->detectarMotor("% !TEX program = xelatex\n\\documentclass{article}"));
