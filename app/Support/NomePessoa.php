@@ -24,7 +24,7 @@ final class NomePessoa
     public static function limparLatex(string $texto): string
     {
         $texto = preg_replace_callback(
-            '/\\\\([\'`^"~cv])\s*(?:\{\s*(\\\\?[A-Za-z])\s*\}|(\\\\?[A-Za-z]))/u',
+            '/\\\\([\'`^"~]|[cv](?![A-Za-z]))\s*(?:\{\s*(\\\\?[A-Za-z])\s*\}|(\\\\?[A-Za-z]))/u',
             function (array $m): string {
                 $letra = ltrim($m[2] !== '' ? $m[2] : ($m[3] ?? ''), '\\');
                 [$bases, $acentuadas] = self::ACENTOS[$m[1]];

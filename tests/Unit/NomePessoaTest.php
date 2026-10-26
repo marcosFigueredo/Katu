@@ -23,6 +23,13 @@ class NomePessoaTest extends TestCase
         $this->assertTrue(NomePessoa::equivalentes("Gild\'asio Moreira", 'Gildásio Moreira'));
     }
 
+    public function test_comandos_c_e_v_longos_nao_sao_acentos(): void
+    {
+        $this->assertSame('x a y 1cm z', NomePessoa::limparLatex('x \cite{a} y \vspace{1cm} z'));
+        $this->assertSame('a b', NomePessoa::limparLatex('\citep{a} \url{b}'));
+        $this->assertSame('ç š', NomePessoa::limparLatex('\c{c} \v{s}'));
+    }
+
     public function test_remove_marcacao(): void
     {
         $this->assertSame('Modelagem em saúde', NomePessoa::limparLatex('{\em Modelagem}\, em sa\\\'ude'));
