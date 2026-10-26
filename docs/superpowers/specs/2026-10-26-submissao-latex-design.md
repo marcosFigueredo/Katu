@@ -61,7 +61,7 @@ Cada item mostra ao discente: ✔ encontrado (com o conteúdo extraído) / ✖ n
 
 ## Fluxo
 
-1. **Secretaria** cadastra o template LaTeX do programa (`.zip`) na tela atual de "Normas e Template", que passa a aceitar `.zip` para o tipo template. Ao receber, o sistema **analisa o template** (ver D1) e mostra o **mapa de elementos vitais** descoberto (ex.: "Resumo → ambiente `resumo`", "Palavras-chave PT → comando `\palavrasChavePT`"). A Secretaria confere ou corrige o mapa e opcionalmente informa o motor (`pdflatex`, `xelatex`, `lualatex`; padrão: detectado ou `pdflatex`). O template também fica disponível para download pelo discente.
+1. **Secretaria** cadastra o template LaTeX do programa (`.zip`). A tela atual "Base de Conhecimento (IA)" (`ProgramaDocumentoReferenciaController`) passa a ter **apenas o template do programa**: o card de "Normas e Procedimentos" sai, e o título, o texto explicativo e o item de menu passam a falar de "Template LaTeX do programa". O texto explica que, sem template, o programa usa o envio de PDF sem análise por IA. Ao receber, o sistema **analisa o template** (ver D1) e mostra o **mapa de elementos vitais** descoberto (ex.: "Resumo → ambiente `resumo`", "Palavras-chave PT → comando `\palavrasChavePT`"). A Secretaria confere ou corrige o mapa e opcionalmente informa o motor (`pdflatex`, `xelatex`, `lualatex`; padrão: detectado ou `pdflatex`). O template também fica disponível para download pelo discente.
 2. **Discente** (programa com template, banca liberada para envio) envia o `.zip` do projeto. Não preenche mais título, resumo e palavras-chave à mão: eles vêm da extração.
 3. **Job em fila** (`QUEUE_CONNECTION=database`):
    1. descompacta com segurança num diretório temporário isolado;
