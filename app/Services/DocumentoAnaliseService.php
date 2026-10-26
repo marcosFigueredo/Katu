@@ -251,7 +251,7 @@ class DocumentoAnaliseService
 
         return DocumentoChecklist::query()
             ->where('ativo', true)
-            ->where('tipo_documento', $documento->tipo_documento)
+            ->where('tipo_documento', DocumentoChecklist::tipoDoChecklist($documento->tipo_documento))
             ->where(function ($q) use ($trabalho) {
                 $q->where('nivel', 'ambos')->orWhere('nivel', $trabalho->nivel);
             })

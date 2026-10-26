@@ -16,6 +16,12 @@ class DocumentoChecklist extends Model
         'descricao',
     ];
 
+    /** Tipo de checklist de um tipo de documento: dissertação e tese seguem o checklist de defesa. */
+    public static function tipoDoChecklist(string $tipoDocumento): string
+    {
+        return in_array($tipoDocumento, ['dissertacao', 'tese'], true) ? 'defesa' : $tipoDocumento;
+    }
+
     protected function casts(): array
     {
         return [
