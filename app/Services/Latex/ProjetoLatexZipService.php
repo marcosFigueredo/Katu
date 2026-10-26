@@ -5,6 +5,7 @@ namespace App\Services\Latex;
 use App\Exceptions\ProjetoLatexInvalidoException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Throwable;
 use ZipArchive;
 
 class ProjetoLatexZipService
@@ -12,6 +13,12 @@ class ProjetoLatexZipService
     private const MAX_ARQUIVOS = 2000;
 
     private const MAX_BYTES = 200 * 1024 * 1024;
+
+    private const MAX_PROFUNDIDADE = 30;
+
+    private const MAX_NOME = 255;
+
+    private const MAX_TEX_BYTES = 20 * 1024 * 1024;
 
     private const IGNORADOS = ['.ds_store', 'desktop.ini'];
 
@@ -30,12 +37,18 @@ class ProjetoLatexZipService
             }
             $destino = realpath($destino);
 
-            $this->gravar($zip, $entradas, $destino);
+            try {
+                $this->gravar($zip, $entradas, $destino);
+                $projeto = $this->localizarPrincipal($destino, $principalPreferido);
+            } catch (Throwable $e) {
+                $this->limpar($destino);
+                throw $e;
+            }
         } finally {
             $zip->close();
         }
 
-        return $this->localizarPrincipal($destino, $principalPreferido);
+        return $projeto;
     }
 
     /**
@@ -57,9 +70,26 @@ class ProjetoLatexZipService
                 || str_starts_with($nome, '/') || preg_match('/^[A-Za-z]:/', $nome)) {
                 throw new ProjetoLatexInvalidoException('O zip contém caminho absoluto ou inválido: '.$this->exibir($nome));
             }
+            if (strlen($nome) > self::MAX_NOME) {
+                throw new ProjetoLatexInvalidoException('O zip contém nome de arquivo longo demais.');
+            }
+            if (str_contains($nome, ':')) {
+                throw new ProjetoLatexInvalidoException('O zip contém nome inválido (":"): '.$this->exibir($nome));
+            }
             $segmentos = explode('/', $nome);
-            if (in_array('..', $segmentos, true)) {
-                throw new ProjetoLatexInvalidoException('O zip contém caminho com "..": '.$this->exibir($nome));
+            if (count($segmentos) > self::MAX_PROFUNDIDADE) {
+                throw new ProjetoLatexInvalidoException('O zip contém pastas aninhadas demais.');
+            }
+            foreach ($segmentos as $seg) {
+                // o Windows ignora pontos e espaços finais: ".. " e "..." equivalem a ".."
+                $norm = rtrim($seg, ' .');
+                if ($seg === '..' || ($norm === '' && $seg !== '' && $seg !== '.')) {
+                    throw new ProjetoLatexInvalidoException('O zip contém caminho com "..": '.$this->exibir($nome));
+                }
+                $base = rtrim(explode('.', $norm)[0], ' ');
+                if (preg_match('/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i', $base)) {
+                    throw new ProjetoLatexInvalidoException('O zip contém nome reservado do Windows: '.$this->exibir($nome));
+                }
             }
             if ($this->ignorado($segmentos)) {
                 continue;
@@ -67,12 +97,12 @@ class ProjetoLatexZipService
 
             $dir = str_ends_with($nome, '/');
             $entradas[$i] = ['nome' => rtrim($nome, '/'), 'dir' => $dir];
+            $total++; // diretórios também contam
             if (! $dir) {
-                $total++;
                 $bytes += (int) $stat['size'];
             }
             if ($total > self::MAX_ARQUIVOS) {
-                throw new ProjetoLatexInvalidoException('O zip contém arquivos demais (máximo '.self::MAX_ARQUIVOS.').');
+                throw new ProjetoLatexInvalidoException('O zip contém entradas demais (máximo '.self::MAX_ARQUIVOS.').');
             }
             if ($bytes > self::MAX_BYTES) {
                 throw new ProjetoLatexInvalidoException('O conteúdo descompactado excede 200 MB.');
@@ -99,9 +129,17 @@ class ProjetoLatexZipService
             if (! is_dir($pasta)) {
                 @mkdir($pasta, 0775, true);
             }
+            $realPasta = realpath($pasta);
+            if ($realPasta === false
+                || ($realPasta !== $destino && ! str_starts_with($realPasta, $destino.DIRECTORY_SEPARATOR))) {
+                throw new ProjetoLatexInvalidoException('O zip contém caminho fora da pasta de extração.');
+            }
             $in = $zip->getStream($zip->getNameIndex($i));
             $out = $in ? @fopen($alvo, 'wb') : false;
             if (! $in || ! $out) {
+                if ($in) {
+                    fclose($in);
+                }
                 throw new ProjetoLatexInvalidoException('Falha ao extrair '.$this->exibir($e['nome']).'.');
             }
             while (! feof($in)) {
@@ -116,6 +154,25 @@ class ProjetoLatexZipService
             }
             fclose($in);
             fclose($out);
+        }
+    }
+
+    /** Remove tudo o que foi gravado em $destino (mantém a pasta). */
+    private function limpar(string $destino): void
+    {
+        if (! is_dir($destino)) {
+            return;
+        }
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($destino, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $item) {
+            if ($item->isDir() && ! $item->isLink()) {
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
         }
     }
 
@@ -134,7 +191,7 @@ class ProjetoLatexZipService
         $candidatos = [];
         $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($destino, RecursiveDirectoryIterator::SKIP_DOTS));
         foreach ($it as $arq) {
-            if (! $arq->isFile() || strtolower($arq->getExtension()) !== 'tex') {
+            if (! $arq->isFile() || strtolower($arq->getExtension()) !== 'tex' || $arq->getSize() > self::MAX_TEX_BYTES) {
                 continue;
             }
             if ($this->ehDocumentoPrincipal((string) file_get_contents($arq->getPathname()))) {

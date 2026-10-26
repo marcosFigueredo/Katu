@@ -178,12 +178,91 @@ class ProjetoLatexZipServiceTest extends TestCase
         (new ProjetoLatexZipService)->extrair($f, $this->base.'/dest');
     }
 
+    public function test_input_exponencial_termina_rapido_sem_estourar(): void
+    {
+        $arqs = ['main.tex' => self::DOC.'\\input{f0}'];
+        for ($i = 0; $i < 12; $i++) {
+            $n = $i + 1;
+            $arqs["f$i.tex"] = "x \\input{f$n} \\input{f$n} \\input{f$n} \\input{f$n} \\input{f$n}\n";
+        }
+        $arqs['f12.tex'] = 'FIM';
+        $p = $this->extrair($arqs);
+        $ini = microtime(true);
+        $f = $p->fonteExpandido();
+        $this->assertLessThan(5, microtime(true) - $ini);
+        $this->assertLessThan(6 * 1024 * 1024, strlen($f));
+    }
+
+    public function test_auto_inclusoes_na_mesma_linha_nao_explodem(): void
+    {
+        $p = $this->extrair(['main.tex' => self::DOC.'\\input{a}', 'a.tex' => 'A\\input{a}\\input{a}\\input{a}\\input{a}\\input{a}']);
+        $this->assertSame(1, substr_count($p->fonteExpandido(), 'A'));
+    }
+
+    public function test_rejeita_mais_de_2000_diretorios(): void
+    {
+        $zipPath = $this->base.'/dirs.zip';
+        $zip = new ZipArchive;
+        $zip->open($zipPath, ZipArchive::CREATE);
+        $zip->addFromString('main.tex', self::DOC);
+        for ($i = 0; $i < 2001; $i++) {
+            $zip->addEmptyDir("d$i");
+        }
+        $zip->close();
+        $this->expectException(ProjetoLatexInvalidoException::class);
+        (new ProjetoLatexZipService)->extrair($zipPath, $this->base.'/dd');
+    }
+
+    public function test_rejeita_aninhamento_profundo(): void
+    {
+        $this->expectException(ProjetoLatexInvalidoException::class);
+        $this->extrair(['main.tex' => self::DOC, str_repeat('a/', 31).'x.tex' => 'x']);
+    }
+
+    public function test_rejeita_nome_longo(): void
+    {
+        $this->expectException(ProjetoLatexInvalidoException::class);
+        $this->extrair(['main.tex' => self::DOC, str_repeat('n', 300).'.tex' => 'x']);
+    }
+
+    /** @dataProvider nomesPerigososWindows */
+    public function test_rejeita_nomes_perigosos_do_windows(string $nome): void
+    {
+        $this->expectException(ProjetoLatexInvalidoException::class);
+        $this->extrair(['main.tex' => self::DOC, $nome => 'x']);
+    }
+
+    public static function nomesPerigososWindows(): array
+    {
+        return [
+            'ponto ponto espaco' => ['.. /x.tex'],
+            'ponto ponto ponto' => ['.../x.tex'],
+            'quatro pontos' => ['a/..../x.tex'],
+            'dois pontos' => ['a:b.tex'],
+            'stream ntfs' => ['main.tex:evil'],
+            'CON' => ['CON.tex'],
+            'con minusculo em subpasta' => ['p/con/x.tex'],
+            'COM1' => ['com1'],
+            'LPT9 com extensao' => ['lpt9.txt'],
+        ];
+    }
+
+    public function test_extracao_com_falha_deixa_destino_vazio(): void
+    {
+        $destino = $this->base.'/falha';
+        $zip = $this->zip(['sub/a.txt' => 'x', 'sub/b.txt' => 'y']); // sem .tex principal
+        try {
+            (new ProjetoLatexZipService)->extrair($zip, $destino);
+            $this->fail('esperava exceção');
+        } catch (ProjetoLatexInvalidoException) {
+            $this->assertSame([], array_values(array_diff(scandir($destino), ['.', '..'])));
+        }
+    }
+
     public function test_zip_real_do_modelo_extrai_com_dissertacao_preferida(): void
     {
         $zip = dirname(__DIR__, 2).'/docs/classppgmsb.zip';
-        if (! is_file($zip)) {
-            $this->markTestSkipped('docs/classppgmsb.zip ausente');
-        }
+        $this->assertFileExists($zip, 'fixture docs/classppgmsb.zip deve estar versionada');
         $p = (new ProjetoLatexZipService)->extrair($zip, $this->base.'/real', 'dissertacao.tex');
         $this->assertSame('dissertacao.tex', $p->texPrincipal);
         $this->assertSame('classPPGMSB', $p->classeDocumento());

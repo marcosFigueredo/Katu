@@ -6,6 +6,10 @@ class ProjetoLatex
 {
     private const PROFUNDIDADE_MAXIMA = 20;
 
+    private const MAX_RESOLUCOES = 500;
+
+    private const MAX_BYTES_SAIDA = 5 * 1024 * 1024;
+
     public function __construct(
         public readonly string $raiz,
         public readonly string $texPrincipal,
@@ -16,7 +20,11 @@ class ProjetoLatex
     {
         $conteudo = (string) @file_get_contents($this->raiz.DIRECTORY_SEPARATOR.$this->texPrincipal);
 
-        return $this->expandir($conteudo, 0);
+        $orcamento = ['resolucoes' => 0, 'bytes' => strlen($conteudo)];
+        $real = realpath($this->raiz.DIRECTORY_SEPARATOR.$this->texPrincipal);
+        $pilha = $real === false ? [] : [$real];
+
+        return $this->expandir($conteudo, 0, $orcamento, $pilha);
     }
 
     public function classeDocumento(): ?string
@@ -31,7 +39,11 @@ class ProjetoLatex
         return null;
     }
 
-    private function expandir(string $texto, int $profundidade): string
+    /**
+     * @param array{resolucoes:int, bytes:int} $orcamento orçamento global compartilhado pela recursão
+     * @param string[] $pilha arquivos em expansão (evita ciclos)
+     */
+    private function expandir(string $texto, int $profundidade, array &$orcamento, array $pilha): string
     {
         $linhas = preg_split('/(\R)/', $texto, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -41,7 +53,7 @@ class ProjetoLatex
             }
             $linhas[$i] = preg_replace_callback(
                 '/\\\\(?:input|include)\s*\{([^}]*)\}/',
-                function (array $m) use ($linha, $profundidade) {
+                function (array $m) use ($linha, $profundidade, &$orcamento, $pilha) {
                     // ignora ocorrências após um % não escapado (comentário)
                     $antes = substr($linha, 0, strpos($linha, $m[0]));
                     if (preg_match('/(?<!\\\\)%/', $antes)) {
@@ -50,11 +62,18 @@ class ProjetoLatex
                     if ($profundidade >= self::PROFUNDIDADE_MAXIMA) {
                         return '';
                     }
+                    if ($orcamento['resolucoes'] >= self::MAX_RESOLUCOES || $orcamento['bytes'] >= self::MAX_BYTES_SAIDA) {
+                        return '';
+                    }
+                    $orcamento['resolucoes']++;
                     $arquivo = $this->resolver(trim($m[1]));
+                    if ($arquivo === null || in_array($arquivo, $pilha, true)) {
+                        return '';
+                    }
+                    $conteudo = (string) file_get_contents($arquivo);
+                    $orcamento['bytes'] += strlen($conteudo);
 
-                    return $arquivo === null
-                        ? ''
-                        : $this->expandir((string) file_get_contents($arquivo), $profundidade + 1);
+                    return $this->expandir($conteudo, $profundidade + 1, $orcamento, [...$pilha, $arquivo]);
                 },
                 $linha
             );
