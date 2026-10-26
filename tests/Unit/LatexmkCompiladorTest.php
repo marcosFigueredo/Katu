@@ -242,6 +242,10 @@ class LatexmkCompiladorTest extends TestCase
             'bibliography lista' => ['\bibliography{ok,/etc/passwd}', '\bibliography'],
             'usepackage com caminho' => ['\usepackage{../evil}', '\usepackage'],
             'import' => ['\import{/etc/}{passwd}', '\import'],
+            'input absoluto entre aspas' => ['\input{"C:/x/.env"}', '\input'],
+            'input com .. entre aspas' => ['\input{"../segredo"}', '\input'],
+            'openin entre aspas' => ['\openin5="C:/x/.env"', '\openin'],
+            'openin com espacos e aspas' => ['\openin5 = "/etc/passwd"', '\openin'],
             'em sty' => ['\input{~/x}', '\input'],
         ];
     }
@@ -249,7 +253,7 @@ class LatexmkCompiladorTest extends TestCase
     public function test_varredura_olha_arquivos_de_apoio_e_ignora_comentarios_e_caminhos_relativos(): void
     {
         $projeto = $this->projetoEmDisco([
-            'main.tex' => "\\input{capitulos/um}\n\\includegraphics{figuras/a.png}\n% \\input{/etc/passwd}\n\\bibliography{refs}",
+            'main.tex' => "\\input{capitulos/um}\n\\input{\"capitulos/intro\"}\n\\includegraphics{figuras/a.png}\n% \\input{/etc/passwd}\n\\bibliography{refs}",
             'capitulos/um.tex' => 'texto',
         ]);
 

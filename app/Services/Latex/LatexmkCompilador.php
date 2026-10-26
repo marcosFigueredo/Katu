@@ -266,7 +266,8 @@ class LatexmkCompilador implements CompiladorLatex
 
     private function caminhoPerigoso(string $caminho): bool
     {
-        $caminho = trim($caminho);
+        // MiKTeX/kpathsea removem aspas ao resolver o caminho
+        $caminho = trim(trim($caminho), '"'."'");
         if ($caminho === '') {
             return false;
         }
