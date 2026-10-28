@@ -107,7 +107,7 @@ class HomologacaoBancaTest extends TestCase
     {
         [$secretaria] = $this->estrutura(orcid: null);
 
-        $this->actingAs($secretaria)->get(route('bancas.homologacao'))
+        $this->actingAs($secretaria)->get(route('bancas.index'))
             ->assertOk()
             ->assertSee('ORCID do discente')
             ->assertSee('Número de avaliadores');

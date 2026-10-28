@@ -1,211 +1,267 @@
 <x-app-layout>
+    @php
+        $nomeDiscente = fn ($banca) => $banca->trabalhoAcademico?->discenteVinculo?->discenteProfile?->user?->name ?? '—';
+        $matricula = fn ($banca) => $banca->trabalhoAcademico?->discenteVinculo?->matricula;
+        $presidente = fn ($banca) => $banca->trabalhoAcademico?->orientacoes?->firstWhere('tipo', 'orientador')
+            ?->docenteProgramaVinculo?->docenteProfile?->user?->name ?? '—';
+        $etapa = fn ($banca) => $banca->tipo === 'defesa' ? 'Defesa' : 'Qualificação';
+        $avaliadores = fn ($banca) => $banca->membros->where('papel', 'avaliador')->where('ativo', true)
+            ->map(fn ($m) => $m->docenteProgramaVinculo?->docenteProfile?->user?->name)->filter();
+    @endphp
+
     <div class="container-fluid">
 
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div>
-                <h1 class="h3 fw-bold mb-1" style="color: #00303A;">Bancas</h1>
-                <p class="text-muted mb-0">
-                    Composição da banca com orientador, coorientadores em ata e avaliadores habilitados.
-                </p>
-            </div>
-            <div class="d-flex gap-2"><a href="{{ route('bancas.homologacao') }}" class="btn btn-outline-warning fw-semibold"><i class="bi bi-check2-square me-1"></i>Homologação</a><a href="{{ route('bancas.create') }}" class="btn btn-primary fw-semibold">
-                <i class="bi bi-plus-lg me-1"></i>Nova banca
-            </a></div>
+        <div class="mb-4">
+            <h1 class="h3 fw-bold mb-1" style="color: #00303A;">Bancas</h1>
+            <p class="text-muted mb-0">
+                Bancas solicitadas pelos discentes: analise o pedido, responda os critérios da CPA e homologue ou devolva.
+            </p>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        @foreach (['success', 'status'] as $chave)
+            @if (session($chave))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>{{ session($chave) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+        @endforeach
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
-        @if ($trabalhos->isEmpty())
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-person-workspace fs-1 text-muted mb-3 d-block"></i>
-                    <p class="text-muted mb-0">Nenhum trabalho acadêmico cadastrado ainda.</p>
-                </div>
+        {{-- Aguardando homologação --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0" style="color:#00303A;">
+                    <i class="bi bi-hourglass-split me-1"></i>Aguardando homologação
+                </h2>
+                <span class="badge text-bg-primary">{{ $aguardando->count() }}</span>
             </div>
-        @else
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-4">Discente</th>
-                                    <th>Nível / Linha</th>
-                                    <th>Presidência</th>
-                                    <th>Bancas</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($trabalhos as $trabalho)
-                                    @php
-                                        $discente    = $trabalho->discenteVinculo?->discenteProfile?->user;
-                                        $vinculo     = $trabalho->discenteVinculo;
-                                        $orientador  = $trabalho->orientacoes->firstWhere('tipo', 'orientador');
-                                        $bancaQualif = $trabalho->bancas->firstWhere('tipo', 'qualificacao');
-                                        $bancaDefesa = $trabalho->bancas->firstWhere('tipo', 'defesa');
-                                        $qualificou  = $bancaQualif?->status === 'finalizada';
-
-                                        $statusBadge = fn ($status) => match($status) {
-                                            'cadastrada'   => ['Agendada',     'secondary'],
-                                            'em_avaliacao' => ['Em avaliação', 'warning'],
-                                            'finalizada'   => ['Finalizada',   'success'],
-                                            'cancelada'    => ['Cancelada',    'danger'],
-                                            default        => ['—',            'light border'],
-                                        };
-                                    @endphp
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="fw-semibold text-dark">{{ $discente?->name ?? '-' }}</div>
-                                            <div class="text-muted small">{{ $vinculo?->matricula ?? '' }}</div>
-                                        </td>
-                                        <td>
-                                            <div>{{ match($trabalho->nivel) {
-                                                'mestrado'  => 'Mestrado',
-                                                'doutorado' => 'Doutorado',
-                                                default     => $trabalho->nivel ?? '-',
-                                            } }}</div>
-                                            <div class="text-muted small">{{ $vinculo?->linhaPesquisa?->nome ?? '-' }}</div>
-                                        </td>
-                                        <td>
-                                            @if ($orientador)
-                                                <div class="fw-semibold">
-                                                    {{ $orientador->docenteProgramaVinculo?->docenteProfile?->user?->name ?? '-' }}
-                                                </div>
-                                                <div class="text-muted small">Orientador, presidente da banca</div>
-                                            @else
-                                                <span class="badge text-bg-warning">Sem orientador</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($trabalho->bancas->isEmpty())
-                                                <span class="text-muted small">Nenhuma banca cadastrada</span>
-                                            @else
-                                                @foreach ($trabalho->bancas->sortBy('tipo') as $banca)
-                                                    @php
-                                                        [$lbl, $cor] = $statusBadge($banca->status);
-                                                        $tipoLabel   = match(true) {
-                                                            str_starts_with($banca->tipo, 'qualificacao') => 'Qualificação',
-                                                            str_starts_with($banca->tipo, 'defesa')       => 'Defesa',
-                                                            default                                        => $banca->tipo,
-                                                        };
-                                                    @endphp
-                                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                                        <span class="text-dark small fw-semibold">{{ $tipoLabel }}</span>
-                                                        <span class="badge text-bg-{{ $cor }}">{{ $lbl }}</span>
-                                                        @php
-                                                            $homolCor = match($banca->homologacao_status) {
-                                                                'homologada' => 'success',
-                                                                'aguardando' => 'primary',
-                                                                'devolvida'  => 'warning',
-                                                                default      => 'light border text-dark',
-                                                            };
-                                                            $homolLabel = match($banca->homologacao_status) {
-                                                                'homologada' => 'Homologada',
-                                                                'aguardando' => 'Aguardando homologação',
-                                                                'devolvida'  => 'Devolvida',
-                                                                default      => 'Proposta',
-                                                            };
-                                                        @endphp
-                                                        <a href="{{ route('bancas.homologacao.show', $banca) }}"
-                                                           class="badge text-bg-{{ $homolCor }} text-decoration-none">
-                                                            {{ $homolLabel }}
-                                                        </a>
-                                                        @if ($banca->homologacao_status === 'homologada' && ($banca->enviada_banca_em ?? $banca->homologada_em))
-                                                            <span class="text-muted small">
-                                                                <i class="bi bi-send-check me-1"></i>Enviada em {{ ($banca->enviada_banca_em ?? $banca->homologada_em)->format('d/m/Y H:i') }}
-                                                            </span>
-                                                        @endif
-                                                        @if ($banca->status === 'finalizada' && $banca->resultado)
-                                                            @php
-                                                                $resCor = match($banca->resultado) {
-                                                                    'aprovado'              => 'success',
-                                                                    'aprovado_modificacoes' => 'warning',
-                                                                    'reprovado'             => 'danger',
-                                                                    default                 => 'secondary',
-                                                                };
-                                                            @endphp
-                                                            <span class="badge text-bg-{{ $resCor }}">
-                                                                {{ \App\Models\Banca::resultadoLabel($banca->resultado) }}
-                                                            </span>
-                                                            <a href="{{ route('avaliacoes.relatorio-consolidado', $banca) }}"
-                                                               target="_blank"
-                                                               class="badge text-decoration-none"
-                                                               style="background:#00303A; color:#fff;">
-                                                                <i class="bi bi-file-text me-1"></i>Relatório
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            @if (! $orientador)
-                                                <a href="{{ $discente ? route('usuarios.edit', $discente).'#orientacao' : '#' }}"
-                                                   class="btn btn-sm btn-outline-warning">
-                                                    Definir orientador
-                                                </a>
-                                            @else
-                                                <div class="d-flex flex-column gap-1 align-items-end">
-                                                    @if ($bancaQualif)
-                                                        <a href="{{ route('bancas.edit', $bancaQualif) }}"
-                                                           class="btn btn-sm btn-outline-primary">
-                                                            <i class="bi bi-pencil-fill me-1"></i>Qualificação
-                                                        </a>
-                                                        @if ($bancaQualif->status === 'finalizada')
-                                                            <form method="POST" action="{{ route('bancas.reabrir', $bancaQualif) }}">
-                                                                @csrf
-                                                                <button type="submit" class="btn btn-sm btn-outline-warning"
-                                                                        onclick="return confirm('Reabrir a banca de qualificação? Os avaliadores poderão editar suas avaliações.')">
-                                                                    <i class="bi bi-unlock me-1"></i>Reabrir Qualif.
-                                                                </button>
-                                                            </form>
-                                                        @endif
-                                                    @else
-                                                        <a href="{{ route('bancas.create', ['trabalho_id' => $trabalho->id]) }}"
-                                                           class="btn btn-sm btn-primary">
-                                                            <i class="bi bi-plus-lg me-1"></i>Qualificação
-                                                        </a>
-                                                    @endif
-
-                                                    @if ($qualificou)
-                                                        @if ($bancaDefesa)
-                                                            <a href="{{ route('bancas.edit', $bancaDefesa) }}"
-                                                               class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-fill me-1"></i>Defesa
-                                                            </a>
-                                                            @if ($bancaDefesa->status === 'finalizada')
-                                                                <form method="POST" action="{{ route('bancas.reabrir', $bancaDefesa) }}">
-                                                                    @csrf
-                                                                    <button type="submit" class="btn btn-sm btn-outline-warning"
-                                                                            onclick="return confirm('Reabrir a banca de defesa? Os avaliadores poderão editar suas avaliações.')">
-                                                                        <i class="bi bi-unlock me-1"></i>Reabrir Defesa
-                                                                    </button>
-                                                                </form>
-                                                            @endif
-                                                        @else
-                                                            <a href="{{ route('bancas.create', ['trabalho_id' => $trabalho->id]) }}"
-                                                               class="btn btn-sm btn-outline-secondary">
-                                                                <i class="bi bi-plus-lg me-1"></i>Defesa
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Discente</th>
+                            <th>Etapa</th>
+                            <th>Presidência e avaliadores</th>
+                            <th>Verificações</th>
+                            <th class="text-end pe-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($aguardando as $banca)
+                            @php
+                                $analise = $analises[$banca->id];
+                                $itens = $analise['composicao']->map(fn ($i) => $i)->push($analise['template'])->push([
+                                    'descricao' => 'Critérios da CPA', 'exigido' => '100% Sim',
+                                    'encontrado' => $analise['cpa_ok'] ? 'Conformes' : 'Pendente / Não conforme', 'ok' => $analise['cpa_ok'],
+                                ]);
+                            @endphp
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ $nomeDiscente($banca) }}</div>
+                                    <small class="text-muted">{{ $matricula($banca) }}</small>
+                                    @if ((int) $banca->homologacao_tentativa > 1)
+                                        <div><span class="badge text-bg-light border">Reenvio — tentativa {{ $banca->homologacao_tentativa }}</span></div>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $etapa($banca) }}<br>
+                                    <small class="text-muted">{{ ucfirst($banca->trabalhoAcademico?->nivel ?? '') }}</small>
+                                </td>
+                                <td class="small">
+                                    <div class="fw-semibold">{{ $presidente($banca) }}</div>
+                                    <div class="text-muted">{{ $avaliadores($banca)->implode(', ') ?: 'Sem avaliadores' }}</div>
+                                </td>
+                                <td class="small">
+                                    @foreach ($itens as $item)
+                                        <div title="Exigido: {{ $item['exigido'] }} · Encontrado: {{ $item['encontrado'] }}">
+                                            <i class="bi bi-{{ $item['ok'] ? 'check-circle-fill text-success' : 'x-circle-fill text-danger' }} me-1"></i>{{ $item['descricao'] }}
+                                        </div>
+                                    @endforeach
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{{ route('bancas.homologacao.show', $banca) }}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-clipboard-check me-1"></i>Iniciar homologação
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Nenhuma banca aguardando homologação.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        @endif
+        </div>
+
+        {{-- Devolvidas ao discente --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0" style="color:#00303A;">
+                    <i class="bi bi-arrow-return-left me-1"></i>Devolvidas ao discente
+                </h2>
+                <span class="badge text-bg-warning">{{ $devolvidas->count() }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Discente</th>
+                            <th>Etapa</th>
+                            <th>Motivo</th>
+                            <th class="text-end pe-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($devolvidas as $banca)
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ $nomeDiscente($banca) }}</div>
+                                    <small class="text-muted">{{ $matricula($banca) }}</small>
+                                </td>
+                                <td>{{ $etapa($banca) }}</td>
+                                <td class="small" style="white-space: pre-line;">{{ \Illuminate\Support\Str::limit($banca->homologacao_observacoes ?? '—', 240) }}
+                                    @if ($banca->devolvida_em)
+                                        <div class="text-muted">Devolvida em {{ $banca->devolvida_em->format('d/m/Y') }}{{ $banca->devolvidaPor ? ' por '.$banca->devolvidaPor->name : '' }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{{ route('bancas.homologacao.show', $banca) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye me-1"></i>Ver registro
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Nenhuma banca devolvida aguardando ajustes do discente.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Homologadas, em avaliação --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0" style="color:#00303A;">
+                    <i class="bi bi-send-check me-1"></i>Homologadas — em avaliação
+                </h2>
+                <span class="badge text-bg-success">{{ $homologadas->count() }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Discente</th>
+                            <th>Etapa</th>
+                            <th>Homologação</th>
+                            <th class="text-end pe-4">Documentos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($homologadas as $banca)
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ $nomeDiscente($banca) }}</div>
+                                    <small class="text-muted">Presidente: {{ $presidente($banca) }}</small>
+                                </td>
+                                <td>
+                                    {{ $etapa($banca) }}<br>
+                                    <small class="text-muted">{{ $banca->data_hora?->format('d/m/Y H:i') ?? 'Data a definir' }}</small>
+                                </td>
+                                <td class="small">
+                                    <span class="badge text-bg-success mb-1"><i class="bi bi-check2-all me-1"></i>Homologada e enviada</span>
+                                    <div class="text-muted">
+                                        {{ $banca->homologadaPor?->name ?? 'Secretaria' }}
+                                        @if ($banca->homologada_em) em {{ $banca->homologada_em->format('d/m/Y \à\s H:i') }} @endif
+                                        · PDF a {{ $avaliadores($banca)->count() }} avaliador(es)
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        <a href="{{ route('bancas.homologacao.show', $banca) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>Ver registro
+                                        </a>
+                                        <a href="{{ route('avaliacoes.ata', $banca) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-file-earmark-text me-1"></i>Ata
+                                        </a>
+                                        <a href="{{ route('avaliacoes.folha-aprovacao', $banca) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i>Folha de assinaturas
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Nenhuma banca homologada em avaliação.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Finalizadas --}}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0" style="color:#00303A;">
+                    <i class="bi bi-flag me-1"></i>Finalizadas
+                </h2>
+                <span class="badge text-bg-secondary">{{ $finalizadas->count() }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Discente</th>
+                            <th>Etapa</th>
+                            <th>Resultado</th>
+                            <th class="text-end pe-4">Documentos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($finalizadas as $banca)
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ $nomeDiscente($banca) }}</div>
+                                    <small class="text-muted">Presidente: {{ $presidente($banca) }}</small>
+                                </td>
+                                <td>
+                                    {{ $etapa($banca) }}<br>
+                                    <small class="text-muted">{{ $banca->data_hora?->format('d/m/Y') }}</small>
+                                </td>
+                                <td class="small">
+                                    {{ $banca->resultado ? ucfirst(str_replace('_', ' ', $banca->resultado)) : '—' }}
+                                    @if ($banca->nota_media !== null)
+                                        · nota {{ number_format($banca->nota_media, 2, ',', '.') }}
+                                    @endif
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{{ route('avaliacoes.ata', $banca) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-file-earmark-text me-1"></i>Ata
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Nenhuma banca finalizada.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </div>
 </x-app-layout>

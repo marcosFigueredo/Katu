@@ -16,8 +16,8 @@
 
     <div class="container-fluid" style="max-width: 1050px;">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <a href="{{ route('bancas.homologacao') }}" class="text-muted text-decoration-none small">
-                <i class="bi bi-arrow-left me-1"></i>Voltar para Homologação de bancas
+            <a href="{{ route('bancas.index') }}" class="text-muted text-decoration-none small">
+                <i class="bi bi-arrow-left me-1"></i>Voltar para Bancas
             </a>
             <span class="badge text-bg-{{ match($banca->homologacao_status) {
                 'homologada' => 'success',

@@ -41,9 +41,9 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertNull($banca->documento_homologacao_id);
         Mail::assertNothingSent();
 
-        $this->actingAs($secretaria)->get(route('bancas.homologacao'))
+        $this->actingAs($secretaria)->get(route('bancas.index'))
             ->assertOk()
-            ->assertDontSee(route('bancas.homologar', $banca), false);
+            ->assertDontSee(route('bancas.homologacao.show', $banca), false);
     }
 
     public function test_discente_envia_pdf_com_banca_proposta(): void
@@ -94,9 +94,9 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertFalse($banca->libera_envio_trabalho);
         Mail::assertNothingSent();
 
-        $this->actingAs($secretaria)->get(route('bancas.homologacao'))
+        $this->actingAs($secretaria)->get(route('bancas.index'))
             ->assertOk()
-            ->assertSee(route('bancas.homologar', $banca), false);
+            ->assertSee(route('bancas.homologacao.show', $banca), false);
     }
 
     public function test_enviar_homologacao_exige_composicao_valida(): void

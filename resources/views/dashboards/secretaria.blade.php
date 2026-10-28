@@ -258,7 +258,7 @@
             </div>
 
             <div class="col-md-6 col-xl-4">
-                <a href="{{ route('bancas.homologacao') }}" class="card border-0 shadow-sm h-100 text-decoration-none module-card">
+                <a href="{{ route('bancas.index') }}" class="card border-0 shadow-sm h-100 text-decoration-none module-card">
                     <div class="card-body p-4"><div class="d-flex align-items-start justify-content-between mb-3"><div class="rounded-3 p-3" style="background:rgba(253,126,20,.12);"><i class="bi bi-check2-square fs-3" style="color:#fd7e14;"></i></div><span class="badge text-bg-warning">Ação</span></div><h5 class="fw-bold mb-1 text-dark">Homologar bancas</h5><p class="text-muted small mb-0">Analise as propostas, devolva pendências ou libere a avaliação.</p></div>
                     <div class="card-footer bg-transparent border-top-0 px-4 pb-3"><span class="small fw-semibold" style="color:#00303A;">Acessar fila <i class="bi bi-arrow-right ms-1"></i></span></div>
                 </a>

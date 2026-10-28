@@ -20,47 +20,12 @@ class HomologacaoBancaController extends Controller
         }
     }
 
+    /** A fila de homologação faz parte da tela Bancas. */
     public function index()
     {
         $this->autorizarSecretaria();
-        $programaId = auth()->user()->programaUsuarios()->where('ativo', true)->value('programa_id');
 
-        $bancas = Banca::query()
-            ->where('homologacao_status', 'aguardando')
-            ->whereHas('trabalhoAcademico', fn ($query) => $query->where('programa_id', $programaId))
-            ->with([
-                'trabalhoAcademico.discenteVinculo.discenteProfile.user',
-                'trabalhoAcademico.programa',
-                'membros.docenteProgramaVinculo.docenteProfile.user',
-                'documentoHomologacao.submissaoLatex',
-                'respostasCpa',
-            ])
-            ->orderByDesc('updated_at')
-            ->get();
-
-        $analises = $bancas->mapWithKeys(
-            fn (Banca $banca) => [$banca->id => $this->service->podeHomologar($banca)]
-        );
-
-        $verificacoes = $bancas->mapWithKeys(
-            fn (Banca $banca) => [$banca->id => $analises[$banca->id]['composicao']]
-        );
-
-        $homologadas = Banca::query()
-            ->where('homologacao_status', 'homologada')
-            ->whereHas('trabalhoAcademico', fn ($query) => $query->where('programa_id', $programaId))
-            ->with([
-                'trabalhoAcademico.discenteVinculo.discenteProfile.user',
-                'trabalhoAcademico.programa',
-                'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
-                'membros.docenteProgramaVinculo.docenteProfile.user',
-                'documentoHomologacao.submissaoLatex',
-                'homologadaPor',
-            ])
-            ->orderByDesc('homologada_em')
-            ->get();
-
-        return view('bancas.homologacao', compact('bancas', 'verificacoes', 'analises', 'homologadas'));
+        return redirect()->route('bancas.index');
     }
 
     public function show(Banca $banca)

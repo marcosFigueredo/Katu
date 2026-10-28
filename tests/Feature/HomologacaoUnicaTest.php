@@ -41,11 +41,65 @@ class HomologacaoUnicaTest extends TestCase
             'homologacao_status' => 'proposta',
         ]);
 
-        $response = $this->actingAs($secretaria)->get(route('bancas.homologacao'));
+        $response = $this->actingAs($secretaria)->get(route('bancas.index'));
 
         $response->assertOk();
         $response->assertSee(route('bancas.homologacao.show', $bancaAguardando), false);
         $response->assertDontSee(route('bancas.homologacao.show', $bancaProposta), false);
+    }
+
+    public function test_tela_bancas_da_secretaria_lista_solicitacoes_por_situacao(): void
+    {
+        [$secretaria, $programa, $aguardando] = $this->criarCenarioCompleto();
+        $nova = function (string $status, string $homologacao) use ($programa) {
+            $profile = DiscenteProfile::create(['user_id' => User::factory()->discente()->create()->id, 'ativo' => true]);
+            $vinculo = DiscenteProgramaVinculo::create([
+                'programa_id' => $programa->id, 'discente_profile_id' => $profile->id,
+                'nivel' => 'mestrado', 'status' => 'ativo', 'ativo' => true,
+            ]);
+            $trabalho = TrabalhoAcademico::create([
+                'programa_id' => $programa->id, 'discente_programa_vinculo_id' => $vinculo->id,
+                'nivel' => 'mestrado', 'status' => 'em_andamento',
+            ]);
+
+            return Banca::create([
+                'trabalho_academico_id' => $trabalho->id,
+                'tipo' => 'qualificacao', 'status' => $status, 'homologacao_status' => $homologacao,
+            ]);
+        };
+        $proposta = $nova('cadastrada', 'proposta');
+        $devolvida = $nova('cadastrada', 'devolvida');
+        $homologada = $nova('em_avaliacao', 'homologada');
+        $finalizada = $nova('finalizada', 'homologada');
+
+        $this->actingAs($secretaria)->get(route('bancas.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['Aguardando homologação', 'Devolvidas ao discente', 'Homologadas', 'Finalizadas'])
+            ->assertSee('Iniciar homologação')
+            ->assertSee(route('bancas.homologacao.show', $aguardando), false)
+            ->assertSee(route('bancas.homologacao.show', $devolvida), false)
+            ->assertSee(route('bancas.homologacao.show', $homologada), false)
+            ->assertSee(route('avaliacoes.ata', $finalizada), false)
+            ->assertDontSee(route('bancas.homologacao.show', $proposta), false);
+    }
+
+    public function test_tela_bancas_da_secretaria_nao_cria_banca(): void
+    {
+        [$secretaria] = $this->criarCenarioCompleto();
+
+        $this->actingAs($secretaria)->get(route('bancas.index'))
+            ->assertOk()
+            ->assertDontSee('Nova banca')
+            ->assertDontSee(route('bancas.create'), false)
+            ->assertDontSee(route('bancas.homologacao'), false);
+    }
+
+    public function test_rota_da_fila_de_homologacao_leva_a_tela_bancas(): void
+    {
+        [$secretaria] = $this->criarCenarioCompleto();
+
+        $this->actingAs($secretaria)->get(route('bancas.homologacao'))
+            ->assertRedirect(route('bancas.index'));
     }
 
     public function test_secretaria_salva_respostas_das_perguntas_da_cpa(): void
@@ -237,9 +291,9 @@ class HomologacaoUnicaTest extends TestCase
         $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
 
         $this->actingAs($secretaria)
-            ->get(route('bancas.homologacao'))
+            ->get(route('bancas.index'))
             ->assertOk()
-            ->assertSee('Registro de homologações e envios realizados')
+            ->assertSee('Homologadas — em avaliação')
             ->assertSee('Homologada e enviada');
 
         $this->actingAs($secretaria)
@@ -534,7 +588,7 @@ class HomologacaoUnicaTest extends TestCase
             'status' => 'nao_localizada',
         ]);
 
-        foreach ([route('bancas.homologacao'), route('bancas.homologacao.show', $banca)] as $url) {
+        foreach ([route('bancas.index'), route('bancas.homologacao.show', $banca)] as $url) {
             $response = $this->actingAs($secretaria)->get($url);
             $response->assertOk();
             $response->assertDontSee('Relatório de verificação das referências');

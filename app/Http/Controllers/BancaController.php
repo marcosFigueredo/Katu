@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Services\BancaNotificacaoService;
+use App\Services\HomologacaoBancaService;
 use App\Services\PedidoHomologacaoService;
 use App\Services\VerificacaoBancaService;
 
@@ -76,19 +77,33 @@ class BancaController extends Controller
     {
         $this->autorizarSecretaria();
 
-        $trabalhos = TrabalhoAcademico::with([
-            'discenteVinculo.discenteProfile.user',
-            'discenteVinculo.linhaPesquisa',
-            'programa',
-            'orientacoes' => fn ($q) => $q->where('ativo', true)->orderBy('tipo')->orderBy('ordem'),
-            'orientacoes.docenteProgramaVinculo.docenteProfile.user',
-            'bancas.membros.docenteProgramaVinculo.docenteProfile.user',
-        ])
-            ->where('programa_id', $this->programaDaSecretaria()->id)
-            ->orderByDesc('created_at')
+        // A Secretaria vê as bancas solicitadas pelos discentes; propostas ainda não enviadas ficam com o discente.
+        $bancas = Banca::query()
+            ->whereHas('trabalhoAcademico', fn ($q) => $q->where('programa_id', $this->programaDaSecretaria()->id))
+            ->whereIn('homologacao_status', ['aguardando', 'devolvida', 'homologada'])
+            ->where('status', '!=', 'cancelada')
+            ->with([
+                'trabalhoAcademico.discenteVinculo.discenteProfile.user',
+                'trabalhoAcademico.programa',
+                'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
+                'membros.docenteProgramaVinculo.docenteProfile.user',
+                'documentoHomologacao.submissaoLatex',
+                'respostasCpa',
+                'homologadaPor',
+                'devolvidaPor',
+            ])
+            ->orderByDesc('updated_at')
             ->get();
 
-        return view('bancas.index', compact('trabalhos'));
+        $aguardando = $bancas->where('homologacao_status', 'aguardando')->values();
+        $devolvidas = $bancas->where('homologacao_status', 'devolvida')->values();
+        $homologadas = $bancas->where('homologacao_status', 'homologada')->where('status', '!=', 'finalizada')->values();
+        $finalizadas = $bancas->where('status', 'finalizada')->where('homologacao_status', 'homologada')->values();
+
+        $homologacao = app(HomologacaoBancaService::class);
+        $analises = $aguardando->mapWithKeys(fn (Banca $banca) => [$banca->id => $homologacao->podeHomologar($banca)]);
+
+        return view('bancas.index', compact('aguardando', 'devolvidas', 'homologadas', 'finalizadas', 'analises'));
     }
 
     public function create(Request $request)
