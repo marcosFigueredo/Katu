@@ -209,7 +209,7 @@
 
                     @if (auth()->user()?->categoria === 'sec')
                     @php
-                        $configAberto = request()->routeIs('instituicao.*', 'instituicoes.*', 'programas.*', 'programa-cursos.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
+                        $configAberto = request()->routeIs('instituicao.*', 'instituicoes.*', 'programas.*', 'programa-cursos.*', 'programa-template.*', 'criterios-cpa.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
                         $usuariosAberto = request()->routeIs('usuarios.*');
                         $bancasAberto = request()->routeIs('bancas.*', 'orientacoes.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*');
                         $avaliaAberto = request()->routeIs('mabac.*', 'bibliometria.*', 'autoavaliacao.*', 'orientacao-avaliacao.*');
@@ -259,6 +259,13 @@
                                       {{ request()->routeIs('programa-template.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-file-earmark-zip" style="font-size: 15px; flex-shrink:0;"></i>
                                 Template LaTeX
+                            </a>
+
+                            <a href="{{ route('criterios-cpa.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('criterios-cpa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-list-check" style="font-size: 15px; flex-shrink:0;"></i>
+                                Critérios CPA
                             </a>
 
                             @php($programaMenu = app(\App\Services\ContextoSecretaria::class)->programa(auth()->user()))

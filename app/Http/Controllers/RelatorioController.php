@@ -774,7 +774,7 @@ class RelatorioController extends Controller
     {
         $this->guardaSec();
         [$inicio, $fim] = $this->periodo($request);
-        $tipo = $request->get('tipo', 'bancas');
+        $tipo = $request->input('tipo', 'bancas');
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',

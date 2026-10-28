@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Exceptions\ProjetoLatexInvalidoException;
 use App\Services\Latex\ProjetoLatexZipService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ZipArchive;
 
@@ -225,7 +226,7 @@ class ProjetoLatexZipServiceTest extends TestCase
         $this->extrair(['main.tex' => self::DOC, str_repeat('n', 300).'.tex' => 'x']);
     }
 
-    /** @dataProvider nomesPerigososWindows */
+    #[DataProvider('nomesPerigososWindows')]
     public function test_rejeita_nomes_perigosos_do_windows(string $nome): void
     {
         $this->expectException(ProjetoLatexInvalidoException::class);

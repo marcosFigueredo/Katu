@@ -92,8 +92,8 @@ class UsuarioController extends Controller
 
         $programa = $this->programaDaSecretaria();
         $programaId = $programa->id;
-        $classe = $request->get('classe', 'todos');
-        $busca = trim((string) $request->get('busca', ''));
+        $classe = $request->input('classe', 'todos');
+        $busca = trim((string) $request->input('busca', ''));
 
         // Query base restrita ao programa atual
         $baseQuery = fn () => User::with([

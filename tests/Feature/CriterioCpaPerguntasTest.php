@@ -165,6 +165,16 @@ class CriterioCpaPerguntasTest extends TestCase
         $this->actingAs($docente)->get(route('criterios-cpa.index'))->assertStatus(403);
     }
 
+    public function test_menu_de_configuracoes_exibe_link_para_criterios_cpa(): void
+    {
+        [$secretaria] = $this->secretariaComPrograma();
+
+        $this->actingAs($secretaria)->get(route('criterios-cpa.index'))
+            ->assertOk()
+            ->assertSee('href="'.route('criterios-cpa.index').'"', false)
+            ->assertSee('Critérios CPA');
+    }
+
     private function pergunta(Programa $programa, array $atributos = []): CriterioCpa
     {
         return CriterioCpa::create(array_merge([
