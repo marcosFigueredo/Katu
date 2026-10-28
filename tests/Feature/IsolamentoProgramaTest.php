@@ -93,8 +93,6 @@ class IsolamentoProgramaTest extends TestCase
 
         $this->actingAs($a['secretaria'])->get(route('bancas.index'))
             ->assertOk()->assertSee('Discente A')->assertDontSee('Discente B');
-        $this->actingAs($a['secretaria'])->get(route('orientacoes.index'))
-            ->assertOk()->assertSee('Discente A')->assertDontSee('Discente B');
     }
 
     public function test_secretaria_nao_altera_banca_ou_orientacao_de_outro_programa(): void
@@ -105,7 +103,7 @@ class IsolamentoProgramaTest extends TestCase
 
         $this->actingAs($sec)->get(route('bancas.edit', $b['banca']))->assertForbidden();
         $this->actingAs($sec)->delete(route('bancas.destroy', $b['banca']))->assertForbidden();
-        $this->actingAs($sec)->get(route('orientacoes.edit', $b['trabalho']))->assertForbidden();
+        $this->actingAs($sec)->post(route('usuarios.orientacao.definir', $b['discente']), ['orientador_vinculo_id' => 1])->assertForbidden();
         $this->assertDatabaseHas('bancas', ['id' => $b['banca']->id]);
     }
 

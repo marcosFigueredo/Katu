@@ -3,7 +3,7 @@
 
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('orientacoes.index') }}">Orientações</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('usuarios.index', ['classe' => 'discentes']) }}">Discentes</a></li>
                 <li class="breadcrumb-item active">Bibliometria — {{ $trabalho->discenteVinculo?->discenteProfile?->user?->name }}</li>
             </ol>
         </nav>

@@ -146,7 +146,7 @@
                                         </td>
                                         <td class="text-end pe-4">
                                             @if (! $orientador)
-                                                <a href="{{ route('orientacoes.edit', $trabalho) }}"
+                                                <a href="{{ $discente ? route('usuarios.edit', $discente).'#orientacao' : '#' }}"
                                                    class="btn btn-sm btn-outline-warning">
                                                     Definir orientador
                                                 </a>

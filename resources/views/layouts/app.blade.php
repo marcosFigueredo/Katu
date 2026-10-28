@@ -28,7 +28,6 @@
         if (request()->routeIs('instituicao.*'))                              $secaoAtual = 'Instituição';
         elseif (request()->routeIs('programas.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*')) $secaoAtual = 'Programas';
         elseif (request()->routeIs('usuarios.*'))                             $secaoAtual = 'Usuários';
-        elseif (request()->routeIs('orientacoes.*'))                          $secaoAtual = 'Orientações';
         elseif (request()->routeIs('bancas.*'))                               $secaoAtual = 'Bancas';
         elseif (request()->routeIs('baremas.*', 'barema-secoes.*', 'barema-itens.*')) $secaoAtual = 'Baremas';
         elseif (request()->routeIs('meu-trabalho.*', 'trabalho-impacto.*'))    $secaoAtual = 'Meu Trabalho';
@@ -211,7 +210,7 @@
                     @php
                         $configAberto = request()->routeIs('instituicao.*', 'instituicoes.*', 'programas.*', 'programa-cursos.*', 'programa-template.*', 'criterios-cpa.*', 'areas-concentracao.*', 'areas.linhas.*', 'linhas-pesquisa.*');
                         $usuariosAberto = request()->routeIs('usuarios.*');
-                        $bancasAberto = request()->routeIs('bancas.*', 'orientacoes.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*');
+                        $bancasAberto = request()->routeIs('bancas.*', 'baremas.*', 'barema-secoes.*', 'barema-itens.*', 'swara.*');
                         $avaliaAberto = request()->routeIs('mabac.*', 'bibliometria.*', 'autoavaliacao.*', 'orientacao-avaliacao.*');
                         $relatoriosAberto = request()->routeIs('relatorios.*');
                     @endphp
@@ -367,12 +366,6 @@
                                 Bancas
                             </a>
 
-                            <a href="{{ route('orientacoes.index') }}"
-                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
-                                      {{ request()->routeIs('orientacoes.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
-                                <i class="bi bi-arrow-left-right" style="font-size: 15px; flex-shrink:0;"></i>
-                                Orientações
-                            </a>
 
                             <a href="{{ route('baremas.index') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium

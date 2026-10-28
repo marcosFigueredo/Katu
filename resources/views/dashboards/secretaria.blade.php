@@ -187,7 +187,7 @@
 
             {{-- Orientações --}}
             <div class="col-md-6 col-xl-4">
-                <a href="{{ route('orientacoes.index') }}"
+                <a href="{{ route('usuarios.index', ['classe' => 'discentes']) }}"
                    class="card border-0 shadow-sm h-100 text-decoration-none module-card">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-start justify-content-between mb-3">
@@ -198,7 +198,7 @@
                         </div>
                         <h5 class="fw-bold mb-1 text-dark">Orientações</h5>
                         <p class="text-muted small mb-0">
-                            Vínculo entre discentes, orientadores e coorientadores do programa.
+                            Orientador e coorientadores de cada discente, na edição do discente em Usuários.
                         </p>
                     </div>
                     <div class="card-footer bg-transparent border-top-0 px-4 pb-3">

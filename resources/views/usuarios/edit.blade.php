@@ -401,6 +401,10 @@
             </div>
         </div>
 
+        @if ($trabalhoOrientacao)
+            @include('usuarios.partials.orientacao')
+        @endif
+
     </div>
 
     <script>

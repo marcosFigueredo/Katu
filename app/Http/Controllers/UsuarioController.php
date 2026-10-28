@@ -467,7 +467,29 @@ class UsuarioController extends Controller
         $ehViceCoordenador = $programaAtual && $programaAtual->vice_coordenador_id === $usuario->id;
         $usuarioAtualId = $usuario->id;
 
+        // Bloco "Orientação": só para discente com trabalho no programa da Secretaria.
+        $trabalhoOrientacao = $programaAtual && $usuario->discenteProfile
+            ? TrabalhoAcademico::where('programa_id', $programaAtual->id)
+                ->whereHas('discenteVinculo', fn ($q) => $q->where('discente_profile_id', $usuario->discenteProfile->id))
+                ->with([
+                    'programa',
+                    'orientacoesHistorico.docenteProgramaVinculo.docenteProfile.user',
+                    'orientacoesHistorico.registradoPor',
+                ])
+                ->first()
+            : null;
+        $docentesOrientacao = $trabalhoOrientacao
+            ? DocenteProgramaVinculo::where('programa_id', $programaAtual->id)
+                ->where('ativo', true)
+                ->with('docenteProfile.user')
+                ->get()
+                ->sortBy(fn ($v) => $v->docenteProfile?->user?->name)
+                ->values()
+            : collect();
+
         return view('usuarios.edit', compact(
+            'trabalhoOrientacao',
+            'docentesOrientacao',
             'usuario',
             'programaAtual',
             'linhasPesquisa',

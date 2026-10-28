@@ -835,7 +835,7 @@ class RelatorioController extends Controller
                 'tipo'    => 'danger',
                 'icone'   => 'bi-calendar-x-fill',
                 'mensagem'=> "{$atrasados} trabalho(s) com data prevista de defesa vencida.",
-                'link'    => route('orientacoes.index'),
+                'link'    => route('usuarios.index', ['classe' => 'discentes']),
             ];
         }
 

@@ -17,7 +17,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\BaremaController;
 use App\Http\Controllers\BaremaItemController;
 use App\Http\Controllers\BaremaSecaoController;
-use App\Http\Controllers\OrientacaoController;
+use App\Http\Controllers\OrientacaoDiscenteController;
 use App\Http\Controllers\TrabalhoDocumentoController;
 use App\Http\Controllers\SubmissaoLatexController;
 use App\Http\Controllers\AvaliacaoController;
@@ -202,16 +202,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('barema-itens.destroy');
 });
 
-// Orientações – gestão de orientadores e coorientadores
+// Orientação do discente – gerida pela Secretaria na edição do usuário
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/orientacoes', [OrientacaoController::class, 'index'])
-        ->name('orientacoes.index');
+    Route::post('/usuarios/{usuario}/orientacao/orientador', [OrientacaoDiscenteController::class, 'definir'])
+        ->name('usuarios.orientacao.definir');
 
-    Route::get('/orientacoes/{trabalho}/edit', [OrientacaoController::class, 'edit'])
-        ->name('orientacoes.edit');
+    Route::post('/usuarios/{usuario}/orientacao/troca', [OrientacaoDiscenteController::class, 'trocar'])
+        ->name('usuarios.orientacao.trocar');
 
-    Route::put('/orientacoes/{trabalho}', [OrientacaoController::class, 'update'])
-        ->name('orientacoes.update');
+    Route::post('/usuarios/{usuario}/orientacao/coorientadores', [OrientacaoDiscenteController::class, 'incluirCoorientador'])
+        ->name('usuarios.orientacao.coorientador.incluir');
+
+    Route::delete('/usuarios/{usuario}/orientacao/coorientadores/{orientacao}', [OrientacaoDiscenteController::class, 'retirarCoorientador'])
+        ->name('usuarios.orientacao.coorientador.retirar');
 });
 
 // Bancas – composição da banca examinadora
