@@ -313,7 +313,7 @@ class SubmissaoLatexTest extends TestCase
         $this->actingAs($outraSec)->get(route('meu-trabalho.submissao-latex.pdf', [$submissao, 'banca']))->assertForbidden();
     }
 
-    public function test_programa_sem_template_continua_no_pdf(): void
+    public function test_programa_sem_template_tambem_recebe_so_o_zip(): void
     {
         Queue::fake();
         [$discente, , $trabalho] = $this->estrutura(comTemplate: false);
@@ -321,14 +321,46 @@ class SubmissaoLatexTest extends TestCase
 
         $this->actingAs($discente)->get(route('meu-trabalho.index'))
             ->assertOk()
-            ->assertSee('name="pdf"', false)
-            ->assertDontSee('name="zip"', false);
+            ->assertSee('name="zip"', false)
+            ->assertDontSee('name="pdf"', false)
+            ->assertDontSee(route('programa-template.download', $trabalho->programa_id), false);
 
         $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
-            'tipo_documento' => 'qualificacao',
             'zip' => $this->zipUpload(),
-        ])->assertSessionHasErrors('zip');
-        $this->assertDatabaseCount('trabalho_submissoes_latex', 0);
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('qualificacao', TrabalhoSubmissaoLatex::firstOrFail()->tipo_documento);
+        Queue::assertPushed(ProcessarSubmissaoLatexJob::class);
+    }
+
+    public function test_tela_nao_pede_tipo_nem_titulo_resumo(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $this->proporBanca($discente, $trabalho);
+
+        $this->actingAs($discente)->get(route('meu-trabalho.index'))
+            ->assertOk()
+            ->assertDontSee('name="tipo_documento"', false)
+            ->assertDontSee('name="titulo"', false)
+            ->assertDontSee('name="resumo"', false)
+            ->assertSee('Exame de Qualificação');
+    }
+
+    public function test_tipo_do_documento_vem_da_banca_e_do_nivel(): void
+    {
+        Queue::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+        $banca->update(['tipo' => 'defesa']);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('dissertacao', TrabalhoSubmissaoLatex::latest('id')->firstOrFail()->tipo_documento);
+
+        $trabalho->update(['nivel' => 'doutorado']);
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('tese', TrabalhoSubmissaoLatex::latest('id')->firstOrFail()->tipo_documento);
     }
 
     public function test_rota_pdf_de_homologacao_e_recusada_com_template(): void

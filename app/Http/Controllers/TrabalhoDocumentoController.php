@@ -48,10 +48,10 @@ class TrabalhoDocumentoController extends Controller
         // Banca em proposta|devolvida: o discente envia o trabalho e o pedido à homologação.
         $bancaPedido = $trabalho ? $this->pedidoHomologacao->bancaDoPedido($trabalho) : null;
 
-        // Programa com template LaTeX: envio do projeto .zip no lugar do PDF.
+        // O discente envia o projeto LaTeX (.zip); o template do programa, quando existe, fica para download.
         $programa = $vinculo?->programa;
         $temTemplateLatex = (bool) $programa?->temTemplateLatex();
-        $submissoesLatex = $trabalho && $temTemplateLatex
+        $submissoesLatex = $trabalho
             ? $trabalho->submissoesLatex()->latest('id')->limit(10)->get()
             : collect();
 

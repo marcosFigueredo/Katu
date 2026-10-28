@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessarSubmissaoLatexJob;
+use App\Models\Banca;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
 use App\Models\TrabalhoSubmissaoLatex;
@@ -26,10 +27,9 @@ class SubmissaoLatexController extends Controller
         abort_unless(auth()->user()->categoria === 'discente', 403);
 
         $request->validate([
-            'tipo_documento' => ['required', 'in:qualificacao,dissertacao,tese'],
+            'tipo_documento' => ['nullable', 'in:qualificacao,dissertacao,tese'],
             'zip' => ['required', 'file', 'mimes:zip', 'max:102400'],
         ], [
-            'tipo_documento.required' => 'Selecione o tipo de documento.',
             'zip.required' => 'Selecione o arquivo .zip do projeto LaTeX.',
             'zip.mimes' => 'O arquivo deve ser um .zip com o projeto LaTeX.',
             'zip.max' => 'O arquivo não pode ultrapassar 100 MB.',
@@ -40,16 +40,15 @@ class SubmissaoLatexController extends Controller
             return back()->withErrors(['zip' => 'Proponha a banca antes de enviar o trabalho.'])->withInput();
         }
 
-        if (! $trabalho->programa?->temTemplateLatex()) {
-            return back()->withErrors(['zip' => 'O programa não tem template LaTeX cadastrado; envie o trabalho em PDF.'])->withInput();
-        }
-
         $banca = $this->pedidoHomologacao->bancaDoPedido($trabalho);
         if (! $banca) {
             return back()->withErrors(['zip' => 'Proponha a banca antes de enviar o trabalho.'])->withInput();
         }
 
-        $tipo = $request->string('tipo_documento')->toString();
+        // O discente só envia o .zip: o tipo vem da banca (qualificação) ou do nível do trabalho (dissertação/tese).
+        $tipo = $request->filled('tipo_documento')
+            ? $request->string('tipo_documento')->toString()
+            : self::tipoDocumentoDaBanca($banca, $trabalho);
         if (! in_array($tipo, PedidoHomologacaoService::TIPOS_DOCUMENTO[$banca->tipo] ?? [], true)) {
             return back()->withErrors([
                 'tipo_documento' => $banca->tipo === 'defesa'
@@ -237,5 +236,14 @@ class SubmissaoLatexController extends Controller
         return $submissao->banca?->avaliadores()
             ->whereHas('docenteProgramaVinculo.docenteProfile', fn ($q) => $q->where('user_id', $userId))
             ->exists() ?? false;
+    }
+
+    public static function tipoDocumentoDaBanca(Banca $banca, TrabalhoAcademico $trabalho): string
+    {
+        if ($banca->tipo === 'qualificacao') {
+            return 'qualificacao';
+        }
+
+        return $trabalho->nivel === 'doutorado' ? 'tese' : 'dissertacao';
     }
 }

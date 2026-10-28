@@ -175,17 +175,23 @@
                                     Proponha a banca antes de enviar o trabalho.
                                 @endif
                             </div>
-                        @elseif ($temTemplateLatex)
+                        @else
 
-                        {{-- Programa com template LaTeX: projeto .zip no lugar do PDF --}}
+                        @php
+                            $tipoDocumentoEnvio = \App\Http\Controllers\SubmissaoLatexController::tipoDocumentoDaBanca($bancaPedido, $trabalho);
+                        @endphp
+
+                        {{-- O discente envia só o projeto LaTeX; título, resumo, palavras-chave e demais elementos saem do próprio projeto --}}
                         <p class="small text-muted">
-                            Envie o projeto LaTeX completo em <strong>.zip</strong>, feito sobre o template do programa.
-                            O sistema compila, confere os elementos com o cadastro e gera o PDF da banca com linhas numeradas.
-                            Título, resumo e palavras-chave vêm do próprio projeto.
+                            Envie o projeto LaTeX completo em <strong>.zip</strong> (o .tex principal com <code>\documentclass</code>, bibliografia e figuras).
+                            O sistema compila, extrai título, resumo, palavras-chave, autor, orientação e banca, confere com o cadastro
+                            e gera o PDF da banca com linhas numeradas.
                         </p>
-                        <a href="{{ route('programa-template.download', $programa) }}" class="btn btn-sm btn-outline-secondary mb-3">
-                            <i class="bi bi-download me-1"></i>Baixar o template LaTeX do programa
-                        </a>
+                        @if ($temTemplateLatex)
+                            <a href="{{ route('programa-template.download', $programa) }}" class="btn btn-sm btn-outline-secondary mb-3">
+                                <i class="bi bi-download me-1"></i>Baixar o template LaTeX do programa
+                            </a>
+                        @endif
 
                         <form id="form-envio-latex"
                               method="POST"
@@ -193,23 +199,10 @@
                               enctype="multipart/form-data">
                             @csrf
 
-                            <div class="mb-3">
-                                <label for="tipo_documento_latex" class="form-label fw-semibold">Tipo de documento</label>
-                                <select id="tipo_documento_latex"
-                                        name="tipo_documento"
-                                        class="form-select @error('tipo_documento') is-invalid @enderror"
-                                        required>
-                                    <option value="" disabled {{ old('tipo_documento') ? '' : 'selected' }}>Selecione…</option>
-                                    @if ($bancaPedido->tipo === 'qualificacao')
-                                        <option value="qualificacao" {{ old('tipo_documento') === 'qualificacao' ? 'selected' : '' }}>Exame de Qualificação</option>
-                                    @else
-                                        <option value="dissertacao" {{ old('tipo_documento') === 'dissertacao' ? 'selected' : '' }}>Dissertação</option>
-                                        <option value="tese" {{ old('tipo_documento') === 'tese' ? 'selected' : '' }}>Tese</option>
-                                    @endif
-                                </select>
-                                @error('tipo_documento')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                            <div class="mb-3 small">
+                                <span class="text-muted">Documento:</span>
+                                <strong>{{ match ($tipoDocumentoEnvio) { 'qualificacao' => 'Exame de Qualificação', 'tese' => 'Tese', default => 'Dissertação' } }}</strong>
+                                <span class="text-muted">— {{ $bancaPedido->tipo === 'defesa' ? 'banca de defesa' : 'banca de qualificação' }}</span>
                             </div>
 
                             <div class="mb-3">
@@ -224,108 +217,13 @@
                                 @error('zip')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                @error('tipo_documento')
+                                    <div class="text-danger small">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100 fw-semibold">
                                 <i class="bi bi-file-earmark-zip-fill me-2"></i>Enviar projeto LaTeX
-                            </button>
-                        </form>
-
-                        @else
-
-                        <form id="form-envio-documento"
-                              method="POST"
-                              action="{{ route('meu-trabalho.store') }}"
-                              enctype="multipart/form-data">
-                            @csrf
-
-                            <div class="mb-3">
-                                <label for="tipo_documento" class="form-label fw-semibold">Tipo de documento</label>
-                                <select id="tipo_documento"
-                                        name="tipo_documento"
-                                        class="form-select @error('tipo_documento') is-invalid @enderror"
-                                        required>
-                                    <option value="" disabled selected>Selecione…</option>
-                                    <option value="qualificacao" {{ old('tipo_documento') === 'qualificacao' ? 'selected' : '' }}>
-                                        Exame de Qualificação
-                                    </option>
-                                    <option value="dissertacao" {{ old('tipo_documento') === 'dissertacao' ? 'selected' : '' }}>
-                                        Dissertação
-                                    </option>
-                                    <option value="tese" {{ old('tipo_documento') === 'tese' ? 'selected' : '' }}>
-                                        Tese
-                                    </option>
-                                </select>
-                                @error('tipo_documento')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="titulo" class="form-label fw-semibold">Título do trabalho</label>
-                                <input type="text"
-                                       id="titulo"
-                                       name="titulo"
-                                       value="{{ old('titulo') }}"
-                                       class="form-control @error('titulo') is-invalid @enderror"
-                                       placeholder="Título completo da dissertação ou tese"
-                                       maxlength="500"
-                                       required>
-                                @error('titulo')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="resumo" class="form-label fw-semibold">Resumo</label>
-                                <textarea id="resumo"
-                                          name="resumo"
-                                          rows="5"
-                                          class="form-control @error('resumo') is-invalid @enderror"
-                                          placeholder="Resumo do trabalho (Abstract)"
-                                          required>{{ old('resumo') }}</textarea>
-                                @error('resumo')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="palavras_chave" class="form-label fw-semibold">Palavras-chave</label>
-                                <input type="text"
-                                       id="palavras_chave"
-                                       name="palavras_chave"
-                                       value="{{ old('palavras_chave') }}"
-                                       class="form-control @error('palavras_chave') is-invalid @enderror"
-                                       placeholder="Ex.: saúde pública; epidemiologia; gestão"
-                                       maxlength="500"
-                                       required>
-                                <div class="form-text">Separe as palavras-chave por ponto e vírgula (;).</div>
-                                @error('palavras_chave')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="pdf" class="form-label fw-semibold">Arquivo PDF</label>
-                                <input type="file"
-                                       id="pdf"
-                                       name="pdf"
-                                       accept="application/pdf"
-                                       class="form-control @error('pdf') is-invalid @enderror"
-                                       required>
-                                <div class="form-text">Tamanho máximo: 30 MB.</div>
-                                @error('pdf')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="alert alert-info small py-2 mb-3">
-                                <i class="bi bi-info-circle me-1"></i>
-                                A análise pode levar alguns minutos. Aguarde o redirecionamento após o envio.
-                            </div>
-
-                            <button type="submit" id="btn-enviar" class="btn btn-primary w-100 fw-semibold">
-                                <i class="bi bi-cloud-upload-fill me-2"></i>Enviar e Analisar
                             </button>
                         </form>
 
