@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\AreaConcentracao;
+use App\Models\Barema;
+use App\Models\BaremaItem;
+use App\Models\BaremaSecao;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
@@ -64,6 +67,8 @@ class CenarioTesteSeeder extends Seeder
             'processo_sei' => '0601.2026/000123-4',
             'justificativa' => 'Afastamento da orientadora para pós-doutorado (exemplo fictício).',
         ]);
+
+        $this->baremasDeTeste($programa);
 
         // Outro programa — para testar o isolamento entre Secretarias
         $instituicaoOutra = Instituicao::firstOrCreate(
@@ -224,5 +229,51 @@ class CenarioTesteSeeder extends Seeder
                 ...$extra,
             ],
         );
+    }
+
+    /** Baremas curtos (3 perguntas) para testar a avaliação: qualificação, defesa e as versões confidenciais. */
+    private function baremasDeTeste(Programa $programa): void
+    {
+        $baremas = [
+            'qualificacao' => ['Barema de Qualificação (teste)', [
+                'Clareza do problema e dos objetivos',
+                'Adequação da metodologia proposta',
+                'Viabilidade do cronograma',
+            ]],
+            'defesa' => ['Barema de Defesa (teste)', [
+                'Relevância e originalidade dos resultados',
+                'Rigor metodológico e análise',
+                'Qualidade da redação e da apresentação',
+            ]],
+            'qualificacao_confidencial' => ['Barema Confidencial de Qualificação (teste)', [
+                'Maturidade do discente para seguir à defesa',
+                'Autonomia do discente na pesquisa',
+                'Desempenho na arguição',
+            ]],
+            'defesa_confidencial' => ['Barema Confidencial de Defesa (teste)', [
+                'Domínio do tema demonstrado na arguição',
+                'Contribuição do trabalho para a área',
+                'Recomendação de publicação dos resultados',
+            ]],
+        ];
+
+        foreach ($baremas as $tipo => [$nome, $perguntas]) {
+            $barema = Barema::updateOrCreate(
+                ['programa_id' => $programa->id, 'tipo' => $tipo, 'versao' => 'teste'],
+                ['nome' => $nome, 'nivel' => 'ambos', 'ativo' => true, 'descricao' => 'Barema de teste com 3 perguntas.'],
+            );
+
+            $secao = BaremaSecao::updateOrCreate(
+                ['barema_id' => $barema->id, 'ordem' => 1],
+                ['nome' => 'Avaliação', 'peso' => 1, 'ativo' => true],
+            );
+
+            foreach ($perguntas as $i => $pergunta) {
+                BaremaItem::updateOrCreate(
+                    ['barema_secao_id' => $secao->id, 'ordem' => $i + 1],
+                    ['nome' => $pergunta, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
+                );
+            }
+        }
     }
 }
