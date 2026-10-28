@@ -12,6 +12,7 @@
                 'todos' => ['titulo' => 'Todos os Usuários', 'subtitulo' => 'Cadastro e gerenciamento geral de usuários do programa.'],
                 'docentes' => ['titulo' => 'Docentes do Programa', 'subtitulo' => 'Corpo docente permanente e colaborador vinculado ao programa.'],
                 'discentes' => ['titulo' => 'Discentes', 'subtitulo' => 'Estudantes matriculados nos cursos de pós-graduação do programa.'],
+                'sem_orientador' => ['titulo' => 'Discentes sem orientador', 'subtitulo' => 'Discentes cujo trabalho ainda não tem orientador registrado.'],
                 'externos' => ['titulo' => 'Docentes Externos', 'subtitulo' => 'Avaliadores e colaboradores externos cadastrados para bancas.'],
                 'coordenador' => ['titulo' => 'Coordenação do Programa', 'subtitulo' => 'Docentes designados para a coordenação e vice-coordenação.'],
             ];
@@ -71,6 +72,16 @@
                         <i class="bi bi-mortarboard-fill me-1"></i> Discentes
                         <span class="badge {{ $classe === 'discentes' ? 'bg-white text-dark' : 'text-bg-light border' }} ms-1">
                             {{ $contagens['discentes'] }}
+                        </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link py-2 px-3 fw-semibold {{ $classe === 'sem_orientador' ? 'active text-white' : 'text-secondary' }}"
+                       style="{{ $classe === 'sem_orientador' ? 'background-color: #00303A;' : '' }}"
+                       href="{{ route('usuarios.index', array_filter(['classe' => 'sem_orientador', 'busca' => $busca])) }}">
+                        <i class="bi bi-person-exclamation me-1"></i> Sem orientador
+                        <span class="badge {{ $classe === 'sem_orientador' ? 'bg-white text-dark' : 'text-bg-light border' }} ms-1">
+                            {{ $contagens['sem_orientador'] }}
                         </span>
                     </a>
                 </li>
@@ -171,6 +182,10 @@
                                         <div class="fw-bold text-dark">
                                             {{ $usuario->name }}
                                         </div>
+
+                                        @if (isset($idsSemOrientador[$usuario->id]))
+                                            <span class="badge text-bg-warning" title="O trabalho do discente ainda não tem orientador">sem orientador</span>
+                                        @endif
 
                                         @if ($ehCoordenador)
                                             <span class="badge text-bg-primary" title="Coordenador do Programa">

@@ -13,6 +13,7 @@ use App\Models\ProgramaCurso;
 use App\Models\ProgramaUsuario;
 use App\Models\TrabalhoAcademico;
 use App\Models\User;
+use App\Services\OrientacaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -104,6 +105,13 @@ class UsuarioController extends Controller
             'programaUsuarios.programa',
         ])->tap(fn ($q) => $this->doPrograma($q, $programaId));
 
+        // Discentes do programa cujo trabalho não tem orientador vigente.
+        $semOrientador = fn ($q) => $q->where('categoria', 'discente')
+            ->whereHas('discenteProfile.vinculosPrograma', fn ($v) => $v
+                ->where('programa_id', $programaId)
+                ->whereHas('trabalhoAcademico', fn ($t) => $t
+                    ->whereDoesntHave('orientacoes', fn ($o) => $o->where('tipo', 'orientador'))));
+
         // Contagens por classe para as tabs
         $contagens = [
             'todos' => $baseQuery()->count(),
@@ -111,6 +119,7 @@ class UsuarioController extends Controller
                 $q->where('programa_id', $programaId)->where('tipo_vinculo', 'interno');
             })->count(),
             'discentes' => $baseQuery()->where('categoria', 'discente')->count(),
+            'sem_orientador' => $semOrientador($baseQuery())->count(),
             'externos' => $baseQuery()->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
                 $q->where('programa_id', $programaId)->where('tipo_vinculo', 'externo');
             })->count(),
@@ -136,6 +145,8 @@ class UsuarioController extends Controller
             });
         } elseif ($classe === 'discentes') {
             $query->where('categoria', 'discente');
+        } elseif ($classe === 'sem_orientador') {
+            $semOrientador($query);
         } elseif ($classe === 'externos') {
             $query->where('categoria', 'docente')->whereHas('docenteProfile.vinculosPrograma', function ($q) use ($programaId) {
                 $q->where('programa_id', $programaId)->where('tipo_vinculo', 'externo');
@@ -163,8 +174,9 @@ class UsuarioController extends Controller
         }
 
         $usuarios = $query->orderBy('name')->get();
+        $idsSemOrientador = $semOrientador($baseQuery())->pluck('id')->flip();
 
-        return view('usuarios.index', compact('usuarios', 'classe', 'contagens', 'busca', 'programa'));
+        return view('usuarios.index', compact('usuarios', 'classe', 'contagens', 'busca', 'programa', 'idsSemOrientador'));
     }
 
     public function create()
@@ -189,7 +201,18 @@ class UsuarioController extends Controller
         $ehViceCoordenador = false;
         $usuarioAtualId = null;
 
+        $orientadoresDisponiveis = $programaAtual
+            ? DocenteProgramaVinculo::where('programa_id', $programaAtual->id)
+                ->where('ativo', true)
+                ->where('pode_orientar', true)
+                ->with('docenteProfile.user')
+                ->get()
+                ->sortBy(fn ($v) => $v->docenteProfile?->user?->name)
+                ->values()
+            : collect();
+
         return view('usuarios.create', compact(
+            'orientadoresDisponiveis',
             'programaAtual',
             'linhasPesquisa',
             'cursos',
@@ -282,7 +305,18 @@ class UsuarioController extends Controller
             ],
             'linha_pesquisa_id' => ['nullable', 'exists:linhas_pesquisa,id'],
             'data_ingresso' => ['nullable', 'date'],
+            'orientador_vinculo_id' => [
+                'required_if:categoria,discente',
+                'nullable',
+                'integer',
+                Rule::exists('docente_programa_vinculos', 'id')->where(fn ($q) => $q
+                    ->where('programa_id', $programaAtual?->id)
+                    ->where('ativo', true)
+                    ->where('pode_orientar', true)),
+            ],
         ], [
+            'orientador_vinculo_id.required_if' => 'Selecione o orientador do discente.',
+            'orientador_vinculo_id.exists' => 'O orientador deve ser docente ativo do programa com permissão de orientação.',
             'lattes_url.regex' => 'Informe uma URL válida do Lattes. Exemplo: http://lattes.cnpq.br/1234567890123456',
             'orcid_url.required_if' => 'O ORCID é obrigatório para docentes.',
             'lattes_url.required_if' => 'O Lattes é obrigatório para discentes.',
@@ -393,7 +427,7 @@ class UsuarioController extends Controller
                         'ativo' => true,
                     ]);
 
-                    TrabalhoAcademico::create([
+                    $trabalho = TrabalhoAcademico::create([
                         'programa_id' => $programaAtual->id,
                         'discente_programa_vinculo_id' => $vinculo->id,
                         'linha_pesquisa_id' => $vinculo->linha_pesquisa_id,
@@ -401,6 +435,8 @@ class UsuarioController extends Controller
                         'status' => 'em_andamento',
                         'data_inicio' => $vinculo->data_ingresso,
                     ]);
+
+                    app(OrientacaoService::class)->definirOrientadorInicial($trabalho, (int) $dados['orientador_vinculo_id'], auth()->user());
                 }
             }
 

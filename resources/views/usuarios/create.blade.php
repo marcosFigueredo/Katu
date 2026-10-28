@@ -249,6 +249,20 @@
                                 @error('programa_curso_id')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
 
+                            <div class="col-md-6">
+                                <label for="orientador_vinculo_id" class="form-label fw-semibold">Orientador</label>
+                                <select id="orientador_vinculo_id" name="orientador_vinculo_id" class="form-select">
+                                    <option value="">Selecione…</option>
+                                    @foreach ($orientadoresDisponiveis as $vinculoOrientador)
+                                        <option value="{{ $vinculoOrientador->id }}" @selected(old('orientador_vinculo_id') == $vinculoOrientador->id)>{{ $vinculoOrientador->docenteProfile?->user?->name }}</option>
+                                    @endforeach
+                                </select>
+                                @if ($orientadoresDisponiveis->isEmpty())
+                                    <div class="form-text text-danger">Cadastre docentes do programa com permissão de orientação antes de cadastrar discentes.</div>
+                                @endif
+                                @error('orientador_vinculo_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                            </div>
+
                             <div class="col-md-12">
                                 <label for="linha_pesquisa_id" class="form-label fw-semibold">Linha de pesquisa</label>
                                 <select id="linha_pesquisa_id" name="linha_pesquisa_id" class="form-select">

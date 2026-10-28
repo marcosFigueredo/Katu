@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Banca;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
+use App\Models\DocenteProfile;
+use App\Models\DocenteProgramaVinculo;
 use App\Models\Programa;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
@@ -77,6 +79,7 @@ class OrcidDiscenteTest extends TestCase
             'name' => 'Ana', 'email' => 'ana@example.com', 'categoria' => 'discente',
             'matricula' => '2026001', 'programa_curso_id' => $curso->id,
             'lattes_url' => 'http://lattes.cnpq.br/1234567890123456',
+            'orientador_vinculo_id' => $this->orientador($programa)->id,
         ])->assertSessionHasNoErrors();
 
         $usuario = User::where('email', 'ana@example.com')->firstOrFail();
@@ -128,6 +131,7 @@ class OrcidDiscenteTest extends TestCase
             'name' => 'Ana', 'email' => 'ana@example.com', 'categoria' => 'discente',
             'matricula' => '1', 'programa_curso_id' => $curso->id,
             'lattes_url' => 'http://lattes.cnpq.br/1234567890123456',
+            'orientador_vinculo_id' => $this->orientador($programa)->id,
         ];
         $this->actingAs($sec)->post(route('usuarios.store'), $dados)->assertSessionHasNoErrors();
         $usuario = User::where('email', 'ana@example.com')->firstOrFail();
@@ -142,5 +146,15 @@ class OrcidDiscenteTest extends TestCase
         $outro->update(['ativo' => false]);
         $this->actingAs($sec)->put(route('usuarios.update', $usuario), ['programa_curso_id' => $outro->id] + $dados)
             ->assertSessionHasErrors('programa_curso_id');
+    }
+
+    private function orientador(Programa $programa): DocenteProgramaVinculo
+    {
+        $profile = DocenteProfile::create(['user_id' => User::factory()->docente()->create()->id, 'ativo' => true]);
+
+        return DocenteProgramaVinculo::create([
+            'programa_id' => $programa->id, 'docente_profile_id' => $profile->id,
+            'tipo_vinculo' => 'interno', 'pode_orientar' => true, 'pode_avaliar' => true, 'ativo' => true,
+        ]);
     }
 }
