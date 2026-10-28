@@ -98,6 +98,29 @@
                                                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                                         <span class="text-dark small fw-semibold">{{ $tipoLabel }}</span>
                                                         <span class="badge text-bg-{{ $cor }}">{{ $lbl }}</span>
+                                                        @php
+                                                            $homolCor = match($banca->homologacao_status) {
+                                                                'homologada' => 'success',
+                                                                'aguardando' => 'primary',
+                                                                'devolvida'  => 'warning',
+                                                                default      => 'light border text-dark',
+                                                            };
+                                                            $homolLabel = match($banca->homologacao_status) {
+                                                                'homologada' => 'Homologada',
+                                                                'aguardando' => 'Aguardando homologação',
+                                                                'devolvida'  => 'Devolvida',
+                                                                default      => 'Proposta',
+                                                            };
+                                                        @endphp
+                                                        <a href="{{ route('bancas.homologacao.show', $banca) }}"
+                                                           class="badge text-bg-{{ $homolCor }} text-decoration-none">
+                                                            {{ $homolLabel }}
+                                                        </a>
+                                                        @if ($banca->homologacao_status === 'homologada' && ($banca->enviada_banca_em ?? $banca->homologada_em))
+                                                            <span class="text-muted small">
+                                                                <i class="bi bi-send-check me-1"></i>Enviada em {{ ($banca->enviada_banca_em ?? $banca->homologada_em)->format('d/m/Y H:i') }}
+                                                            </span>
+                                                        @endif
                                                         @if ($banca->status === 'finalizada' && $banca->resultado)
                                                             @php
                                                                 $resCor = match($banca->resultado) {

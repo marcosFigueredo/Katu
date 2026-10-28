@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Banca;
 use App\Services\HomologacaoBancaService;
-use App\Services\VerificacaoBancaService;
 use Illuminate\Http\Request;
 
 class HomologacaoBancaController extends Controller
@@ -27,43 +26,102 @@ class HomologacaoBancaController extends Controller
         $programaId = auth()->user()->programaUsuarios()->where('ativo', true)->value('programa_id');
 
         $bancas = Banca::query()
-            ->whereIn('homologacao_status', ['aguardando', 'devolvida'])
+            ->where('homologacao_status', 'aguardando')
             ->whereHas('trabalhoAcademico', fn ($query) => $query->where('programa_id', $programaId))
             ->with([
                 'trabalhoAcademico.discenteVinculo.discenteProfile.user',
                 'trabalhoAcademico.programa',
-                'membros',
+                'membros.docenteProgramaVinculo.docenteProfile.user',
+                'documentoHomologacao.submissaoLatex',
+                'respostasCpa',
             ])
             ->orderByDesc('updated_at')
             ->get();
 
-        $verificacoes = $bancas->mapWithKeys(
-            fn (Banca $banca) => [$banca->id => app(VerificacaoBancaService::class)->verificarBanca($banca)]
+        $analises = $bancas->mapWithKeys(
+            fn (Banca $banca) => [$banca->id => $this->service->podeHomologar($banca)]
         );
 
-        return view('bancas.homologacao', compact('bancas', 'verificacoes'));
+        $verificacoes = $bancas->mapWithKeys(
+            fn (Banca $banca) => [$banca->id => $analises[$banca->id]['composicao']]
+        );
+
+        $homologadas = Banca::query()
+            ->where('homologacao_status', 'homologada')
+            ->whereHas('trabalhoAcademico', fn ($query) => $query->where('programa_id', $programaId))
+            ->with([
+                'trabalhoAcademico.discenteVinculo.discenteProfile.user',
+                'trabalhoAcademico.programa',
+                'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
+                'membros.docenteProgramaVinculo.docenteProfile.user',
+                'documentoHomologacao.submissaoLatex',
+                'homologadaPor',
+            ])
+            ->orderByDesc('homologada_em')
+            ->get();
+
+        return view('bancas.homologacao', compact('bancas', 'verificacoes', 'analises', 'homologadas'));
     }
 
-    public function homologar(Banca $banca)
+    public function show(Banca $banca)
     {
         $this->autorizarSecretaria();
         $this->garantirPrograma($banca);
 
-        // Os e-mails da homologação (avaliadores, orientador e coorientadores) ficam para a Tarefa 11.
+        $banca->load([
+            'trabalhoAcademico.discenteVinculo.discenteProfile.user',
+            'trabalhoAcademico.programa.instituicao',
+            'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
+            'membros.docenteProgramaVinculo.docenteProfile.user',
+            'documentoHomologacao.submissaoLatex',
+            'homologadaPor',
+            'devolvidaPor',
+        ]);
+
+        $respostas = $this->service->respostasAtuais($banca);
+        $analise   = $this->service->podeHomologar($banca);
+
+        return view('bancas.homologacao-show', compact('banca', 'respostas', 'analise'));
+    }
+
+    public function responder(Request $request, Banca $banca)
+    {
+        $this->autorizarSecretaria();
+        $this->garantirPrograma($banca);
+
+        $this->service->responder($banca, (array) $request->input('respostas', []), auth()->user());
+
+        return back()->with('status', 'Respostas da CPA salvas.');
+    }
+
+    public function homologar(Request $request, Banca $banca)
+    {
+        $this->autorizarSecretaria();
+        $this->garantirPrograma($banca);
+
+        if ($request->has('respostas')) {
+            $this->service->responder($banca, (array) $request->input('respostas', []), auth()->user());
+        }
+
         $this->service->homologar($banca, auth()->user());
 
-        return back()->with('status', 'Banca homologada.');
+        return back()->with('status', 'Banca homologada. O PDF foi enviado aos membros da banca e a ata e a folha de assinaturas foram enviadas ao orientador.');
     }
 
     public function devolver(Request $request, Banca $banca)
     {
         $this->autorizarSecretaria();
         $this->garantirPrograma($banca);
+
         $data = $request->validate([
             'observacoes' => ['required', 'string', 'max:3000'],
         ], [
             'observacoes.required' => 'Informe o motivo da devolução.',
         ]);
+
+        if ($request->has('respostas')) {
+            $this->service->responder($banca, (array) $request->input('respostas', []), auth()->user());
+        }
 
         $this->service->devolver($banca, auth()->user(), $data['observacoes']);
 

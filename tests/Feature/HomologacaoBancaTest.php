@@ -12,9 +12,11 @@ use App\Models\Instituicao;
 use App\Models\Orientacao;
 use App\Models\Programa;
 use App\Models\TrabalhoAcademico;
+use App\Models\TrabalhoDocumento;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class HomologacaoBancaTest extends TestCase
@@ -23,6 +25,7 @@ class HomologacaoBancaTest extends TestCase
 
     public function test_secretaria_homologa_banca_que_cumpre_a_verificacao(): void
     {
+        Mail::fake();
         [$secretaria, , $banca] = $this->estrutura();
 
         $response = $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
@@ -38,6 +41,7 @@ class HomologacaoBancaTest extends TestCase
 
     public function test_secretaria_devolve_banca_com_justificativa(): void
     {
+        Mail::fake();
         [$secretaria, , $banca] = $this->estrutura();
 
         $response = $this->actingAs($secretaria)->post(route('bancas.devolver', $banca), [
@@ -212,6 +216,18 @@ class HomologacaoBancaTest extends TestCase
             'nivel' => 'mestrado',
             'status' => 'em_andamento',
         ]);
+        $documento = TrabalhoDocumento::create([
+            'trabalho_academico_id' => $trabalho->id,
+            'enviado_por_id' => $discente->id,
+            'tipo_documento' => 'qualificacao',
+            'versao' => 1,
+            'arquivo_pdf_path' => 'trabalhos/teste.pdf',
+            'arquivo_pdf_nome_original' => 'trabalho.pdf',
+            'arquivo_pdf_mime' => 'application/pdf',
+            'arquivo_pdf_tamanho' => 1024,
+            'arquivo_pdf_hash_sha256' => str_repeat('a', 64),
+            'status_analise' => 'concluida',
+        ]);
         $banca = Banca::create([
             'trabalho_academico_id' => $trabalho->id,
             'tipo' => 'qualificacao',
@@ -220,6 +236,7 @@ class HomologacaoBancaTest extends TestCase
         ]);
         DB::table('bancas')->where('id', $banca->id)->update([
             'homologacao_status' => 'aguardando',
+            'documento_homologacao_id' => $documento->id,
         ]);
 
         foreach ([['interno', 'UNEB', 'UNEB'], ['externo', 'UFBA', 'UFBA']] as $ordem => [$tipo, $sigla, $nome]) {

@@ -218,6 +218,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/bancas/homologacao', [HomologacaoBancaController::class, 'index'])
         ->name('bancas.homologacao');
+    Route::get('/bancas/{banca}/homologacao', [HomologacaoBancaController::class, 'show'])
+        ->name('bancas.homologacao.show');
+    Route::post('/bancas/{banca}/homologacao/responder', [HomologacaoBancaController::class, 'responder'])
+        ->name('bancas.homologacao.responder');
     Route::post('/bancas/{banca}/homologar', [HomologacaoBancaController::class, 'homologar'])
         ->name('bancas.homologar');
     Route::post('/bancas/{banca}/devolver', [HomologacaoBancaController::class, 'devolver'])

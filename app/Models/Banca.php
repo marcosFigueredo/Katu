@@ -23,6 +23,7 @@ class Banca extends Model
         'homologacao_observacoes',
         'homologada_por',
         'homologada_em',
+        'enviada_banca_em',
         'devolvida_por',
         'devolvida_em',
         'libera_envio_trabalho',
@@ -35,6 +36,7 @@ class Banca extends Model
             'libera_envio_trabalho' => 'boolean',
             'nota_media'            => 'float',
             'homologada_em'         => 'datetime',
+            'enviada_banca_em'      => 'datetime',
             'devolvida_em'          => 'datetime',
             'homologacao_tentativa' => 'integer',
         ];
@@ -59,6 +61,21 @@ class Banca extends Model
     public function documentoHomologacao()
     {
         return $this->belongsTo(TrabalhoDocumento::class, 'documento_homologacao_id');
+    }
+
+    public function homologadaPor()
+    {
+        return $this->belongsTo(User::class, 'homologada_por');
+    }
+
+    public function devolvidaPor()
+    {
+        return $this->belongsTo(User::class, 'devolvida_por');
+    }
+
+    public function respostasCpa(): HasMany
+    {
+        return $this->hasMany(HomologacaoRespostaCpa::class);
     }
 
     public function membros()

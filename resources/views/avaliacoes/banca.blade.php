@@ -83,6 +83,40 @@
             </div>
         </div>
 
+        @php
+            $submissao = $banca->documentoHomologacao?->submissaoLatex;
+            $confOk = $submissao
+                ? (array_key_exists('ok', $submissao->conformidade ?? []) ? (bool) $submissao->conformidade['ok'] : ($submissao->status === 'ok'))
+                : false;
+        @endphp
+        @if ($submissao)
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <h2 class="h6 fw-bold mb-0" style="color:#00303A;">
+                            <i class="bi bi-check2-circle me-1"></i>Verificação automática do template
+                        </h2>
+                        <span class="badge text-bg-{{ $confOk ? 'success' : 'warning' }}">
+                            {{ $confOk ? 'Conforme' : 'Com divergências' }}
+                        </span>
+                    </div>
+                    @if ($banca->documentoHomologacao)
+                        <div class="mb-2">
+                            <a href="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('meu-trabalho.download', now()->addHours(2), ['documento' => $banca->documentoHomologacao->id]) }}"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>Baixar PDF do trabalho
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="mb-4">
+                @include('partials.relatorio-referencias', ['submissao' => $submissao])
+            </div>
+        @endif
+
         {{-- ================================================================
              ÁREA DO AVALIADOR — Meus baremas
         ================================================================ --}}
@@ -295,6 +329,21 @@
                             Aguardando todas as avaliações serem enviadas para liberar a finalização.
                         </p>
                     @endif
+                @endif
+
+                @if ($banca->homologacao_status === 'homologada' && $banca->status !== 'finalizada')
+                    <div class="d-flex gap-2 flex-wrap mt-3 mb-3">
+                        <a href="{{ route('avaliacoes.ata', $banca) }}"
+                           target="_blank"
+                           class="btn btn-sm"
+                           style="background:#00303A; color:#fff;">
+                            <i class="bi bi-file-earmark-text me-1"></i>Ata da banca
+                        </a>
+                        <a href="{{ route('avaliacoes.folha-aprovacao', $banca) }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Folha de aprovação / assinaturas
+                        </a>
+                    </div>
                 @endif
 
                 @if ($banca->status === 'finalizada')

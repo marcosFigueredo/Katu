@@ -94,6 +94,7 @@ class AvaliacaoController extends Controller
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
             'trabalhoAcademico.orientacoes.docenteProgramaVinculo.docenteProfile.user',
+            'documentoHomologacao.submissaoLatex.referencias',
             'membros' => fn ($q) => $q->where('ativo', true)
                 ->with(['avaliacoes.barema', 'docenteProgramaVinculo.docenteProfile.user']),
         ]);
@@ -433,8 +434,8 @@ class AvaliacaoController extends Controller
     {
         $this->autorizarAta($banca);
 
-        if ($banca->status !== 'finalizada') {
-            return back()->withErrors(['folha_aprovacao' => 'A folha de aprovação só pode ser gerada após a finalização da banca.']);
+        if ($banca->status !== 'finalizada' && $banca->homologacao_status !== 'homologada') {
+            return back()->withErrors(['folha_aprovacao' => 'A folha de aprovação só pode ser gerada após a homologação ou finalização da banca.']);
         }
 
         $path = $service->gerarPdf($banca);
