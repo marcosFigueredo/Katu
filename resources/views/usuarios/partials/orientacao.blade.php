@@ -46,7 +46,11 @@
         </div>
 
         {{-- Troca de orientador --}}
-        @if ($orientadorVigente)
+        @if ($orientadorVigente && $motivoTrocaBloqueada)
+            <div class="alert alert-secondary py-2 small mb-4">
+                <i class="bi bi-lock me-1"></i>{{ $motivoTrocaBloqueada }}
+            </div>
+        @elseif ($orientadorVigente)
             <details class="mb-4" @if ($errors->hasAny(['processo_sei', 'justificativa'])) open @endif>
                 <summary class="fw-semibold">Trocar orientador</summary>
                 <form method="POST" action="{{ route('usuarios.orientacao.trocar', $usuario) }}" class="row g-2 mt-2">

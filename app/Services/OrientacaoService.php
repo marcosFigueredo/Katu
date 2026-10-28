@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Mail\BancaRevisaoTrocaOrientadorMail;
+use App\Models\Banca;
 use App\Models\DocenteProgramaVinculo;
 use App\Models\Orientacao;
 use App\Models\TrabalhoAcademico;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -57,6 +60,10 @@ class OrientacaoService
                 $this->erro('orientador_vinculo_id', 'O discente ainda não tem orientador. Defina o orientador inicial.');
             }
 
+            if ($motivo = $this->trocaBloqueada($trabalho)) {
+                $this->erro('orientador_vinculo_id', $motivo);
+            }
+
             if ($atual->docente_programa_vinculo_id === $novoVinculoId) {
                 $this->erro('orientador_vinculo_id', 'O novo orientador é o mesmo que o atual.');
             }
@@ -71,11 +78,64 @@ class OrientacaoService
                 $this->encerrar($coorientacao);
             }
 
-            return $this->criar($trabalho, $novoVinculoId, 'orientador', 1, $secretaria, [
+            $nova = $this->criar($trabalho, $novoVinculoId, 'orientador', 1, $secretaria, [
                 'processo_sei'  => trim($processoSei),
                 'justificativa' => trim($justificativa),
             ]);
+
+            $this->devolverQualificacaoAberta($trabalho, trim($processoSei));
+
+            return $nova;
         });
+    }
+
+    /** Motivo que impede a troca de orientador, ou null quando ela é permitida. */
+    public function trocaBloqueada(TrabalhoAcademico $trabalho): ?string
+    {
+        $bloqueia = Banca::where('trabalho_academico_id', $trabalho->id)
+            ->where(fn ($q) => $q
+                ->where(fn ($b) => $b->where('tipo', 'qualificacao')->whereIn('status', ['em_avaliacao', 'finalizada']))
+                ->orWhere(fn ($b) => $b->where('tipo', 'defesa')->where('status', '!=', 'cancelada')))
+            ->exists();
+
+        return $bloqueia ? 'A troca de orientador só é possível antes da qualificação.' : null;
+    }
+
+    /**
+     * A qualificação ainda não iniciada volta para revisão: a composição foi conferida com o orientador anterior.
+     * Avaliadores de banca já homologada recebem aviso depois do commit.
+     */
+    private function devolverQualificacaoAberta(TrabalhoAcademico $trabalho, string $processoSei): void
+    {
+        $bancas = Banca::where('trabalho_academico_id', $trabalho->id)
+            ->where('tipo', 'qualificacao')
+            ->where('status', 'cadastrada')
+            ->whereIn('homologacao_status', ['proposta', 'aguardando', 'devolvida', 'homologada'])
+            ->lockForUpdate()
+            ->get();
+
+        $nota = 'Orientador trocado em '.today()->format('d/m/Y')." (SEI {$processoSei}) — revisar a composição e reenviar.";
+
+        foreach ($bancas as $banca) {
+            $estavaHomologada = $banca->homologacao_status === 'homologada';
+            $observacoes = filled($banca->homologacao_observacoes) ? $nota."\n\n".$banca->homologacao_observacoes : $nota;
+
+            Banca::whereKey($banca->id)->update([
+                'homologacao_status'      => 'devolvida',
+                'homologacao_observacoes' => $observacoes,
+            ]);
+
+            if ($estavaHomologada) {
+                $banca->load('avaliadores.docenteProgramaVinculo.docenteProfile.user', 'trabalhoAcademico.discenteVinculo.discenteProfile.user');
+
+                foreach ($banca->avaliadores as $membro) {
+                    $avaliador = $membro->docenteProgramaVinculo?->docenteProfile?->user;
+                    if ($avaliador?->email) {
+                        DB::afterCommit(fn () => Mail::to($avaliador->email)->send(new BancaRevisaoTrocaOrientadorMail($banca, $avaliador)));
+                    }
+                }
+            }
+        }
     }
 
     public function incluirCoorientador(TrabalhoAcademico $trabalho, int $docenteVinculoId, User $secretaria): Orientacao

@@ -523,8 +523,13 @@ class UsuarioController extends Controller
                 ->values()
             : collect();
 
+        $motivoTrocaBloqueada = $trabalhoOrientacao
+            ? app(OrientacaoService::class)->trocaBloqueada($trabalhoOrientacao)
+            : null;
+
         return view('usuarios.edit', compact(
             'trabalhoOrientacao',
+            'motivoTrocaBloqueada',
             'docentesOrientacao',
             'usuario',
             'programaAtual',

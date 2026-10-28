@@ -402,7 +402,7 @@ class BancaController extends Controller
 
         if (! $orientador) {
             throw ValidationException::withMessages([
-                'trabalho_academico_id' => 'Cadastre o orientador antes de criar a banca.',
+                'trabalho_academico_id' => 'Procure a Secretaria para registrar seu orientador antes de propor a banca.',
             ]);
         }
 
