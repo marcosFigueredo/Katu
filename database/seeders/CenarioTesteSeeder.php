@@ -57,6 +57,14 @@ class CenarioTesteSeeder extends Seeder
 
         $this->discente($programa, $curso, $linha, 'Discente Sem Orientador', 'discente.sem.orientador@ppgmsb.test', 'TESTE-003', 'https://orcid.org/0000-0001-5109-3700');
 
+        // Troca registrada: aparece na linha do tempo da edição do discente.
+        $comTroca = $this->discente($programa, $curso, $linha, 'Discente Com Troca', 'discente.com.troca@ppgmsb.test', 'TESTE-004', 'https://orcid.org/0000-0002-9079-593X');
+        $this->orientacao($comTroca, $permanente1, 'orientador', inicio: now()->subMonths(10), fim: now()->subMonths(2));
+        $this->orientacao($comTroca, $permanente2, 'orientador', inicio: now()->subMonths(2), extra: [
+            'processo_sei' => '0601.2026/000123-4',
+            'justificativa' => 'Afastamento da orientadora para pós-doutorado (exemplo fictício).',
+        ]);
+
         // Outro programa — para testar o isolamento entre Secretarias
         $instituicaoOutra = Instituicao::firstOrCreate(
             ['sigla' => 'UFBA'],
@@ -193,8 +201,14 @@ class CenarioTesteSeeder extends Seeder
         return $vinculo;
     }
 
-    private function orientacao(DiscenteProgramaVinculo $discente, DocenteProgramaVinculo $docente, string $tipo): void
-    {
+    private function orientacao(
+        DiscenteProgramaVinculo $discente,
+        DocenteProgramaVinculo $docente,
+        string $tipo,
+        ?\DateTimeInterface $inicio = null,
+        ?\DateTimeInterface $fim = null,
+        array $extra = [],
+    ): void {
         Orientacao::updateOrCreate(
             [
                 'trabalho_academico_id' => $discente->trabalhoAcademico->id,
@@ -204,7 +218,10 @@ class CenarioTesteSeeder extends Seeder
                 'discente_programa_vinculo_id' => $discente->id,
                 'tipo' => $tipo,
                 'ordem' => 1,
-                'ativo' => true,
+                'ativo' => $fim === null,
+                'inicio_em' => ($inicio ?? $discente->data_ingresso ?? now())->format('Y-m-d'),
+                'fim_em' => $fim?->format('Y-m-d'),
+                ...$extra,
             ],
         );
     }

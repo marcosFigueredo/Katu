@@ -30,8 +30,8 @@ Cada usuário Secretaria administra **um único programa**, ligado a uma institu
 1. No primeiro acesso, cadastre a **instituição** (nome, sigla e logotipo obrigatórios) e depois o **programa** (instituição, conceito CAPES, ano de início, logotipo opcional).
 2. Em **Configurações → Cursos**, cadastre os cursos do programa (nível × modalidade: mestrado/doutorado, acadêmico/profissional) e ajuste prazos e regras de composição de banca (mín./máx. avaliadores, mín. internos, mín. externos à instituição) para qualificação e defesa.
 3. Cadastre áreas de concentração, linhas de pesquisa e docentes; depois defina coordenador(a) e vice na tela do programa.
-4. Cadastre discentes individualmente (curso e Lattes obrigatórios) ou em lote em **Usuários → Importar discentes** (CSV com prévia; e-mails de primeiro acesso enviados pela fila).
-5. Acesse **Orientações** e atribua o orientador/coorientadores ao vínculo acadêmico do discente.
+4. Cadastre discentes individualmente (curso, Lattes e **orientador** obrigatórios) ou em lote em **Usuários → Importar discentes** (CSV com prévia; e-mails de primeiro acesso enviados pela fila). Os importados chegam sem orientador e aparecem na aba **Sem orientador** de Usuários.
+5. Em **Usuários → editar discente**, bloco **Orientação**: registre o orientador de quem ainda não tem; inclua ou retire coorientadores (até o máximo do programa); para **trocar o orientador**, informe o novo orientador, o número do processo SEI e a justificativa — a data é a de hoje, automática. A troca só é aceita antes da qualificação; se houver qualificação ainda não iniciada, ela volta como devolvida para o discente revisar a composição (avaliadores de banca já homologada recebem aviso). Todo período fica na linha do tempo do bloco.
 6. Acesse **Membros externos**, envie o convite e acompanhe o cadastro; abra o diploma, devolva com observação ou aprove.
 7. Acesse **Critérios da CPA** e mantenha uma versão ativa para qualificação e defesa.
 8. Cadastre ou homologue bancas: o sistema confere a regra do curso e o **ORCID do discente**; sem eles a banca não é salva/homologada. O discente informa o ORCID em **Meu perfil**.
@@ -84,7 +84,8 @@ Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
 | --- | --- |
 | `discente.completo@ppgmsb.test` | Com ORCID; orientadora Permanente Um e coorientador Permanente Dois — banca pode ser cadastrada |
 | `discente.sem.orcid@ppgmsb.test` | Com orientador e **sem ORCID** — cadastro de banca deve ser recusado até ele informar o ORCID em Meu perfil |
-| `discente.sem.orientador@ppgmsb.test` | Com ORCID e sem orientador — para testar Orientações |
+| `discente.sem.orientador@ppgmsb.test` | Com ORCID e sem orientador — selo "sem orientador" e registro do orientador na edição |
+| `discente.com.troca@ppgmsb.test` | Orientadora trocada há 2 meses (SEI fictício) — linha do tempo da orientação |
 | `discente.outro@ppgmsb.test` | Aluno do programa PPGTI — não deve aparecer para a Secretaria do PPGMSB |
 
 ### Roteiro sugerido
@@ -93,6 +94,7 @@ Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
 2. Cadastre banca para o discente sem ORCID e confira a recusa; entre como ele, informe o ORCID em **Meu perfil** e tente de novo.
 3. Entre como `secretaria.outro@ppgmsb.test` e confirme que usuários, bancas e relatórios do PPGMSB não aparecem.
 4. Importe discentes por CSV (**Usuários → Importar discentes**) e confira os e-mails de primeiro acesso em `storage/logs/laravel.log` (com `MAIL_MAILER=log` e a fila rodando).
+5. Em **Usuários**, abra a aba **Sem orientador**, edite o discente e registre o orientador; depois troque-o com SEI e justificativa e confira a linha do tempo; inclua e retire um coorientador.
 
 ## Verificação antes de disponibilizar
 

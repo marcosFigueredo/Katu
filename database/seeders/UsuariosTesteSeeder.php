@@ -114,7 +114,7 @@ class UsuariosTesteSeeder extends Seeder
                 'trabalho_academico_id' => $trabalho->id,
                 'docente_programa_vinculo_id' => $orientador->id,
             ],
-            ['tipo' => 'orientador', 'ordem' => 1, 'ativo' => true],
+            ['tipo' => 'orientador', 'ordem' => 1, 'ativo' => true, 'inicio_em' => $trabalho->data_inicio ?? now()->toDateString()],
         );
 
         Orientacao::updateOrCreate(
@@ -122,7 +122,7 @@ class UsuariosTesteSeeder extends Seeder
                 'trabalho_academico_id' => $trabalho->id,
                 'docente_programa_vinculo_id' => $coorientador->id,
             ],
-            ['tipo' => 'coorientador', 'ordem' => 1, 'ativo' => true],
+            ['tipo' => 'coorientador', 'ordem' => 1, 'ativo' => true, 'inicio_em' => $trabalho->data_inicio ?? now()->toDateString()],
         );
     }
 

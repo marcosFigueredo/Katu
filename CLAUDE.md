@@ -44,7 +44,8 @@ O campo `categoria` é a única fonte de verdade para autorização — não há
 - **Avaliações** (`AvaliacaoController`): formulário de notas por barema, finalização pelo orientador, ata imprimível.
 - **Baremas** (`BaremaController` + `BaremaSecaoController` + `BaremaItemController`): instrumentos de avaliação com seções e itens. Nota final = `Σ(nota × peso) / Σ(nota_max × peso) × 10`.
 - **Documentos** (`TrabalhoDocumentoController`): upload de PDF, extração com `smalot/pdfparser`, análise via Ollama, envio para avaliadores.
-- **Usuários** (`UsuarioController`): cadastro com envio automático de e-mail de primeiro acesso.
+- **Usuários** (`UsuarioController`): cadastro com envio automático de e-mail de primeiro acesso. Discente cadastrado à mão exige orientador; o importado por CSV nasce sem orientador (aba/selo "sem orientador").
+- **Orientação** (`OrientacaoDiscenteController` + `OrientacaoService`): bloco na edição do discente em Usuários (não há mais tela "Orientações"). Troca de orientador com processo SEI e justificativa obrigatórios e data automática, só antes da qualificação (bloqueada com qualificação `em_avaliacao`/`finalizada` ou defesa não cancelada); a troca devolve a qualificação ainda `cadastrada`. Coorientadores entram e saem sem SEI, até `programas.max_coorientadores` vigentes.
 
 ## E-mails automáticos
 
@@ -56,6 +57,7 @@ O campo `categoria` é a única fonte de verdade para autorização — não há
 | Todos avaliadores enviaram | Orientador | `BancaProntaParaFinalizarMail` |
 | Banca finalizada | Discente | `BancaFinalizadaDiscenteMail` |
 | Recuperação de senha | Usuário solicitante | `RecuperacaoSenhaTemporariaMail` |
+| Troca de orientador devolve qualificação homologada | Avaliadores da banca | `BancaRevisaoTrocaOrientadorMail` |
 
 ## Convenções do projeto
 
@@ -79,6 +81,7 @@ php artisan tinker           # inspeção interativa
 - Baremas inativados não afetam avaliações existentes.
 - A banca de defesa só pode ser criada após a qualificação ser finalizada com aprovação.
 - O orientador é presidente da banca via `Orientacao` — não entra em `banca_membros` como avaliador.
+- `orientacoes` guarda períodos (`inicio_em`/`fim_em`, `processo_sei`, `justificativa`, `registrado_por`) e nunca apaga linhas; vigente ⇔ `ativo = true`. `TrabalhoAcademico::orientacoes()` e `DocenteProgramaVinculo::orientacoes()` trazem **só as vigentes** (só elas dão acesso); o histórico completo é `orientacoesHistorico()`.
 - Cada Secretaria administra um único programa (`ContextoSecretaria`, helpers `programaDaSecretaria()`/`garantirProgramaDaSecretaria()` no `Controller` base); todas as telas da Secretaria filtram por ele.
 - Regras de composição de banca e prazos vêm do curso do discente (`programa_cursos`, `curso_regras_banca`, via `VerificacaoBancaService`) — não há mais regra fixa por nível nem sigla UNEB no código.
 - ORCID do discente é obrigatório para cadastrar/homologar banca e enviar o trabalho; o discente informa em Meu perfil.
