@@ -15,6 +15,7 @@ use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoSubmissaoLatex;
 use App\Models\User;
 use App\Services\Latex\CompiladorLatex;
+use App\Services\Latex\LeitorBblService;
 use App\Services\Latex\ProjetoLatex;
 use App\Services\Latex\ResultadoCompilacao;
 use App\Services\Latex\VerificacaoReferenciasService;
@@ -406,19 +407,194 @@ class VerificacaoReferenciasTest extends TestCase
         }
     }
 
-    public function test_job_marca_erro_sem_propagar_excecao(): void
+    public function test_job_com_rede_fora_conclui_e_gera_conferencia(): void
     {
-        $this->app->instance(CompiladorLatex::class, new CompiladorApendiceFalso);
+        $compilador = new CompiladorApendiceFalso;
+        $this->app->instance(CompiladorLatex::class, $compilador);
         Http::fake(function () {
-            throw new \RuntimeException('falha inesperada');
+            throw new ConnectionException('sem rede');
+        });
+
+        $s = $this->submissao(
+            $this->bibitem('a', 'A. (2021).', 'Um trabalho', '10.9999/x')
+            .$this->bibitem('b', 'B. (2022).', 'Outro trabalho sem doi')
+        );
+        $this->guardarZip($s);
+
+        VerificarReferenciasSubmissaoJob::dispatchSync($s);
+        $s->refresh();
+
+        $this->assertSame('concluida', $s->refs_status);
+        $this->assertSame(['nao_verificada', 'nao_verificada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+        $this->assertCount(1, $compilador->chamadas);
+        $this->assertStringContainsString('não verificada', $compilador->chamadas[0]['apendice']);
+        $this->assertStringContainsString('conferencia', Storage::disk('local')->get($s->pdf_conferencia_path));
+    }
+
+    public function test_excecao_inesperada_numa_referencia_nao_derruba_as_demais(): void
+    {
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'boom')) {
+                throw new \RuntimeException('segredo-interno');
+            }
+
+            return Http::response([], 404);
+        });
+
+        $s = $this->submissao(
+            $this->bibitem('a', 'A. (2021).', 'Um trabalho', '10.1000/boom')
+            .$this->bibitem('b', 'B. (2022).', 'Outro trabalho', '10.1000/ok')
+        );
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        $this->assertSame(['nao_verificada', 'nao_localizada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+        $this->assertSame('concluida', $s->fresh()->refs_status);
+        $this->assertStringNotContainsString('segredo-interno', $s->referencias()->get()->toJson());
+    }
+
+    public function test_job_com_falha_na_verificacao_ainda_entrega_a_versao_da_banca(): void
+    {
+        $compilador = new CompiladorApendiceFalso;
+        $this->app->instance(CompiladorLatex::class, $compilador);
+        $this->app->instance(VerificacaoReferenciasService::class, new class(new LeitorBblService) extends VerificacaoReferenciasService
+        {
+            public function verificar(TrabalhoSubmissaoLatex $submissao): void
+            {
+                throw new \RuntimeException('segredo-interno');
+            }
         });
 
         $s = $this->submissao($this->bibitem('a', 'A. (2021).', 'Um trabalho', '10.9999/x'));
         $this->guardarZip($s);
 
         VerificarReferenciasSubmissaoJob::dispatchSync($s);
+        $s->refresh();
 
-        $this->assertSame('erro', $s->fresh()->refs_status);
+        $this->assertSame('erro', $s->refs_status);
+        $this->assertCount(0, $compilador->chamadas);
+        $this->assertNotNull($s->pdf_conferencia_path);
+        $this->assertStringContainsString('banca', Storage::disk('local')->get($s->pdf_conferencia_path));
+        $this->assertTrue(collect($s->avisos)->contains(fn ($a) => str_contains($a, 'apêndice')));
+        $this->assertStringNotContainsString('segredo-interno', json_encode($s->avisos));
+    }
+
+    // ─── disjuntor e orçamento de tempo ──────────────────────────────────
+
+    public function test_base_fora_recebe_uma_unica_chamada(): void
+    {
+        $chamadas = ['crossref' => 0, 'openalex' => 0];
+        Http::fake(function ($request) use (&$chamadas) {
+            $chamadas[str_contains($request->url(), 'crossref') ? 'crossref' : 'openalex']++;
+            throw new ConnectionException('timeout');
+        });
+
+        $s = $this->submissao(
+            $this->bibitem('a', 'A.', 'Um trabalho', '10.1000/a')
+            .$this->bibitem('b', 'B.', 'Outro trabalho', '10.1000/b')
+            .$this->bibitem('c', 'C.', 'Mais um trabalho', '10.1000/c')
+            .$this->bibitem('d', 'D.', 'Trabalho sem doi algum')
+        );
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        $this->assertSame(['crossref' => 1, 'openalex' => 1], $chamadas);
+        $this->assertSame(['nao_verificada', 'nao_verificada', 'nao_verificada', 'nao_verificada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+        $this->assertSame('concluida', $s->fresh()->refs_status);
+    }
+
+    public function test_crossref_no_ar_e_openalex_fora(): void
+    {
+        $openalex = 0;
+        Http::fake(function ($request) use (&$openalex) {
+            if (str_contains($request->url(), 'openalex')) {
+                $openalex++;
+                throw new ConnectionException('timeout');
+            }
+            if (str_contains($request->url(), '10.1000/a')) {
+                return Http::response(['message' => ['DOI' => '10.1000/a', 'title' => ['Um'], 'issued' => ['date-parts' => [[2021]]]]]);
+            }
+
+            return Http::response([], 404);
+        });
+
+        $s = $this->submissao(
+            $this->bibitem('a', 'A.', 'Um trabalho', '10.1000/a')
+            .$this->bibitem('b', 'B.', 'Outro trabalho', '10.1000/b')
+            .$this->bibitem('c', 'C.', 'Trabalho sem doi algum')
+        );
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        // a: achada no Crossref; b: Crossref não tem e o OpenAlex caiu; c: só dependia do OpenAlex
+        $this->assertSame(['localizada', 'nao_verificada', 'nao_verificada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+        $this->assertSame(1, $openalex);
+    }
+
+    public function test_orcamento_de_tempo_esgotado_deixa_o_restante_nao_verificada(): void
+    {
+        $agora = 0.0;
+        $chamadas = 0;
+        Http::fake(function () use (&$agora, &$chamadas) {
+            $chamadas++;
+            $agora += 100;
+
+            return Http::response(['results' => []]);
+        });
+        $servico = new VerificacaoReferenciasService(new LeitorBblService, 150, function () use (&$agora) {
+            return $agora;
+        });
+
+        $s = $this->submissao(
+            $this->bibitem('a', 'A.', 'Primeiro trabalho sem doi')
+            .$this->bibitem('b', 'B.', 'Segundo trabalho sem doi')
+            .$this->bibitem('c', 'C.', 'Terceiro trabalho sem doi')
+            .$this->bibitem('d', 'D.', 'Quarto trabalho sem doi')
+        );
+        $servico->verificar($s);
+
+        $this->assertSame(2, $chamadas);
+        $this->assertSame(['nao_localizada', 'nao_localizada', 'nao_verificada', 'nao_verificada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+        $this->assertSame('concluida', $s->fresh()->refs_status);
+    }
+
+    public function test_ollama_fora_vira_nao_verificada_com_uma_chamada(): void
+    {
+        $chamadas = 0;
+        Http::fake(function () use (&$chamadas) {
+            $chamadas++;
+            throw new ConnectionException('recusada');
+        });
+
+        $s = $this->submissao("\\bibitem{x}\nSantos M. Redes. Rev Dados 2024.\n\n\\bibitem{y}\nLima J. Modelos. Rev Dados 2023.\n");
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        $this->assertSame(1, $chamadas);
+        $this->assertSame(['nao_verificada', 'nao_verificada'], $s->referencias()->orderBy('id')->pluck('status')->all());
+    }
+
+    public function test_ano_do_ollama_vale_quando_o_bbl_nao_tem(): void
+    {
+        Http::fake([
+            'localhost:11434/*' => Http::response(['response' => json_encode(['titulo' => 'Redes bayesianas na vigilância em saúde', 'ano' => 2019])]),
+            'api.openalex.org/works*' => Http::response(['results' => []]),
+        ]);
+
+        $s = $this->submissao("\\bibitem{x}\nSantos M. Redes bayesianas na vigilancia em saude. Rev Dados.\n");
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        $this->assertSame(2019, $s->referencias()->firstOrFail()->ano_tex);
+        $this->assertSame(1, $s->fresh()->refs_com_ano);
+    }
+
+    public function test_ano_implausivel_do_ollama_e_ignorado(): void
+    {
+        Http::fake([
+            'localhost:11434/*' => Http::response(['response' => json_encode(['titulo' => 'Redes bayesianas na vigilância em saúde', 'ano' => 3024])]),
+            'api.openalex.org/works*' => Http::response(['results' => []]),
+        ]);
+
+        $s = $this->submissao("\\bibitem{x}\nSantos M. Redes bayesianas na vigilancia em saude. Rev Dados.\n");
+        app(VerificacaoReferenciasService::class)->verificar($s);
+
+        $this->assertNull($s->referencias()->firstOrFail()->ano_tex);
     }
 
     public function test_partial_mostra_totais_e_nao_localizada(): void

@@ -26,10 +26,31 @@ class VerificacaoReferenciasService
 
     private const MIN_TITULO_LEGIVEL = 10;
 
-    public function __construct(private readonly LeitorBblService $leitor) {}
+    /** Bases que já falharam por rede nesta execução: as demais referências nem tentam (disjuntor). */
+    private array $basesFora = [];
+
+    private float $inicio = 0.0;
+
+    /** @var callable(): float */
+    private $relogio;
+
+    /**
+     * @param  int  $orcamentoSegundos  tempo total para consultas externas (bem abaixo do timeout do job);
+     *                                  esgotado, o restante fica "não verificada"
+     * @param  (callable(): float)|null  $relogio  segundos (injetável nos testes)
+     */
+    public function __construct(
+        private readonly LeitorBblService $leitor,
+        private readonly int $orcamentoSegundos = 420,
+        ?callable $relogio = null,
+    ) {
+        $this->relogio = $relogio ?? fn (): float => microtime(true);
+    }
 
     public function verificar(TrabalhoSubmissaoLatex $submissao): void
     {
+        $this->basesFora = [];
+        $this->inicio = ($this->relogio)();
         $bbl = $submissao->bbl_path && Storage::disk('local')->exists($submissao->bbl_path)
             ? Storage::disk('local')->path($submissao->bbl_path)
             : '';
@@ -74,11 +95,22 @@ class VerificacaoReferenciasService
             } else {
                 $titulo = $ref['titulo'];
                 if ($titulo === null || mb_strlen($titulo) < self::MIN_TITULO_LEGIVEL) {
-                    $titulo = $this->tituloPeloOllama($ref['texto']);
+                    $extraido = $this->tituloPeloOllama($ref['texto']);
+                    $titulo = $extraido['titulo'] ?? null;
+                    if ($ref['ano'] === null && ($extraido['ano'] ?? null) !== null) {
+                        $ref['ano'] = $extraido['ano'];
+                        $dados['ano_tex'] = $extraido['ano'];
+                    }
                 }
                 $achado = $titulo !== null ? $this->porTitulo($titulo) : null;
             }
-        } catch (FalhaConsultaReferencia $e) {
+        } catch (FalhaConsultaReferencia) {
+            $dados['status'] = 'nao_verificada';
+
+            return $dados;
+        } catch (Throwable $e) {
+            // falha inesperada numa referência não derruba as demais; a mensagem não vai para o discente
+            report($e);
             $dados['status'] = 'nao_verificada';
 
             return $dados;
@@ -134,7 +166,7 @@ class VerificacaoReferenciasService
     {
         $titulo = mb_substr(trim($titulo), 0, 300);
         $r = Cache::remember('refs-latex:titulo:'.sha1(NomePessoa::simplificar($titulo)), self::CACHE_SEGUNDOS, function () use ($titulo) {
-            $resposta = $this->get('https://api.openalex.org/works', ['search' => $titulo, 'per-page' => 5]);
+            $resposta = $this->get('openalex', 'https://api.openalex.org/works', ['search' => $titulo, 'per-page' => 5]);
             $melhor = null;
             $melhorNota = 0.0;
             foreach ((array) ($resposta['results'] ?? []) as $obra) {
@@ -155,7 +187,7 @@ class VerificacaoReferenciasService
 
     private function crossref(string $doi): ?array
     {
-        $resposta = $this->get('https://api.crossref.org/works/'.str_replace('%2F', '/', rawurlencode($doi)));
+        $resposta = $this->get('crossref', 'https://api.crossref.org/works/'.str_replace('%2F', '/', rawurlencode($doi)));
         $m = $resposta['message'] ?? null;
         if (! is_array($m)) {
             return null;
@@ -181,7 +213,7 @@ class VerificacaoReferenciasService
 
     private function openalexPorDoi(string $doi): ?array
     {
-        $obra = $this->get('https://api.openalex.org/works/https://doi.org/'.str_replace('%2F', '/', rawurlencode($doi)));
+        $obra = $this->get('openalex', 'https://api.openalex.org/works/https://doi.org/'.str_replace('%2F', '/', rawurlencode($doi)));
 
         return is_array($obra) && $obra !== [] ? $this->normalizarOpenAlex($obra) : null;
     }
@@ -205,15 +237,27 @@ class VerificacaoReferenciasService
         ];
     }
 
-    /** GET JSON. null = 404 (a base não tem); FalhaConsultaReferencia = rede, tempo limite ou erro do serviço. */
-    private function get(string $url, array $query = []): ?array
+    /** false = a base já falhou por rede nesta execução ou o orçamento de tempo acabou. */
+    private function podeConsultar(string $base): bool
     {
+        return ! isset($this->basesFora[$base])
+            && (($this->relogio)() - $this->inicio) < $this->orcamentoSegundos;
+    }
+
+    /** GET JSON. null = 404 (a base não tem); FalhaConsultaReferencia = rede, tempo limite, erro do serviço, base fora ou sem orçamento. */
+    private function get(string $base, string $url, array $query = []): ?array
+    {
+        if (! $this->podeConsultar($base)) {
+            throw new FalhaConsultaReferencia('Base indisponível ou orçamento de tempo esgotado.');
+        }
+
         try {
-            $resposta = Http::timeout(15)
+            $resposta = Http::connectTimeout(5)->timeout(15)
                 ->withUserAgent('Katu/1.0 (mailto:'.config('mail.from.address').')')
                 ->acceptJson()
                 ->get($url, $query);
         } catch (ConnectionException $e) {
+            $this->basesFora[$base] = true;
             throw new FalhaConsultaReferencia($e->getMessage(), 0, $e);
         }
 
@@ -231,16 +275,24 @@ class VerificacaoReferenciasService
         return $json;
     }
 
-    /** Reserva para referência sem título legível: o Ollama extrai o título. Qualquer falha devolve null. */
-    private function tituloPeloOllama(string $texto): ?string
+    /**
+     * Reserva para referência sem título legível: o Ollama extrai título e ano. Resposta ruim devolve null;
+     * Ollama fora do ar (rede) ou orçamento esgotado lança FalhaConsultaReferencia (não verificada).
+     *
+     * @return array{titulo: string, ano: ?int}|null
+     */
+    private function tituloPeloOllama(string $texto): ?array
     {
         $texto = mb_substr(trim($texto), 0, 1500);
         if ($texto === '') {
             return null;
         }
+        if (! $this->podeConsultar('ollama')) {
+            throw new FalhaConsultaReferencia('Ollama indisponível ou orçamento de tempo esgotado.');
+        }
 
         try {
-            $resposta = Http::timeout((int) config('ollama.timeout_mapa', 20))
+            $resposta = Http::connectTimeout(5)->timeout((int) config('ollama.timeout_mapa', 20))
                 ->post(rtrim((string) config('ollama.url'), '/').'/api/generate', [
                     'model' => config('ollama.model'),
                     'prompt' => "Extraia o título da obra e o ano desta referência bibliográfica. "
@@ -256,7 +308,17 @@ class VerificacaoReferenciasService
             $dados = json_decode((string) $resposta->json('response'), true);
             $titulo = is_array($dados) && is_string($dados['titulo'] ?? null) ? trim($dados['titulo']) : '';
 
-            return mb_strlen($titulo) >= self::MIN_TITULO_LEGIVEL ? $titulo : null;
+            if (mb_strlen($titulo) < self::MIN_TITULO_LEGIVEL) {
+                return null;
+            }
+            $ano = is_numeric($dados['ano'] ?? null) ? (int) $dados['ano'] : null;
+            $plausivel = $ano !== null && $ano >= 1800 && $ano <= (int) now()->year + 1;
+
+            return ['titulo' => $titulo, 'ano' => $plausivel ? $ano : null];
+        } catch (ConnectionException $e) {
+            $this->basesFora['ollama'] = true;
+            Log::warning('VerificacaoReferencias: Ollama fora do ar: '.$e->getMessage());
+            throw new FalhaConsultaReferencia('Ollama fora do ar.', 0, $e);
         } catch (Throwable $e) {
             Log::warning('VerificacaoReferencias: Ollama indisponível: '.$e->getMessage());
 

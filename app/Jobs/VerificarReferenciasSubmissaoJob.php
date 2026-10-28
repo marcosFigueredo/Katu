@@ -30,7 +30,7 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
 
     public int $tries = 1;
 
-    /** Consultas externas (15 s cada, com cache) e uma compilação de até 180 s. */
+    /** Consultas externas (orçamento de 420 s no serviço, com cache) e uma compilação de até 180 s. */
     public int $timeout = 900;
 
     public function __construct(public TrabalhoSubmissaoLatex $submissao) {}
@@ -47,16 +47,17 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
 
         $submissao->update(['refs_status' => 'processando']);
 
+        $verificou = true;
         try {
             $verificacao->verificar($submissao);
         } catch (Throwable $e) {
             report($e);
             $this->marcarErro();
-
-            return;
+            $verificou = false;
         }
 
-        $this->gerarConferencia($submissao->fresh(), $zipService, $compilador);
+        // mesmo sem a verificação o discente recebe a conferência (versão da banca, com aviso)
+        $this->gerarConferencia($submissao->fresh(), $zipService, $compilador, $verificou);
     }
 
     public function failed(?Throwable $e): void
@@ -77,6 +78,7 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
         TrabalhoSubmissaoLatex $submissao,
         ProjetoLatexZipService $zipService,
         CompiladorLatex $compilador,
+        bool $comApendice = true,
     ): void {
         $destino = "{$submissao->diretorioArquivos()}/conferencia.pdf";
         $disco = Storage::disk('local');
@@ -86,6 +88,9 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
         $gerou = false;
 
         try {
+            if (! $comApendice) {
+                throw new \RuntimeException('Sem verificação: a conferência cai para a versão da banca.');
+            }
             File::ensureDirectoryExists($tmp);
             $projeto = $zipService->extrair($disco->path($submissao->zip_path), $tmp, $submissao->tex_principal);
             $apendice = $this->montarApendice($submissao);
@@ -101,7 +106,9 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
                 $gerou = true;
             }
         } catch (Throwable $e) {
-            report($e);
+            if ($comApendice) {
+                report($e);
+            }
         } finally {
             // o diretório de saída é de quem chama: limpa em sucesso e em falha
             if ($resultado?->diretorioSaida !== null) {
