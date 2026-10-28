@@ -84,7 +84,9 @@
         </div>
 
         @php
-            $submissao = $banca->documentoHomologacao?->submissaoLatex;
+            // PDF e referências chegam à banca só depois da homologação pela Secretaria.
+            $liberadaParaBanca = $banca->homologacao_status === 'homologada' || $banca->status === 'finalizada';
+            $submissao = $liberadaParaBanca ? $banca->documentoHomologacao?->submissaoLatex : null;
             $confOk = $submissao
                 ? (array_key_exists('ok', $submissao->conformidade ?? []) ? (bool) $submissao->conformidade['ok'] : ($submissao->status === 'ok'))
                 : false;

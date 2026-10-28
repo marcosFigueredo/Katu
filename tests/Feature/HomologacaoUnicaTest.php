@@ -500,6 +500,27 @@ class HomologacaoUnicaTest extends TestCase
             ->assertSee('Modelagem Computacional em Saúde Pública');
     }
 
+    public function test_avaliador_nao_ve_pdf_nem_referencias_antes_da_homologacao(): void
+    {
+        [, , $banca, , , , $submissao, $avaliadores] = $this->criarCenarioCompleto();
+
+        SubmissaoReferencia::create([
+            'submissao_id' => $submissao->id,
+            'chave' => 'silva2024',
+            'texto' => 'Silva, J. (2024). Modelagem Computacional em Saúde Pública.',
+            'titulo_tex' => 'Modelagem Computacional em Saúde Pública',
+            'ano_tex' => 2024,
+            'status' => 'nao_localizada',
+        ]);
+
+        $this->actingAs($avaliadores[0])
+            ->get(route('avaliacoes.banca', $banca))
+            ->assertOk()
+            ->assertDontSee('Baixar PDF do trabalho')
+            ->assertDontSee('Verificação das referências')
+            ->assertDontSee('Modelagem Computacional em Saúde Pública');
+    }
+
     public function test_secretaria_nao_ve_relatorio_de_referencias_nas_telas_de_homologacao(): void
     {
         [$secretaria, , $banca, , , , $submissao] = $this->criarCenarioCompleto();
