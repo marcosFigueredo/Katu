@@ -248,6 +248,7 @@ class RelatorioController extends Controller
 
         // IDs de docente que atuaram como ORIENTADOR no período
         $idsOrientadores = Orientacao::where('tipo', 'orientador')
+            ->where('ativo', true)
             ->whereHas('trabalhoAcademico.bancas', fn ($q) =>
                 $this->doPrograma($q)->where('status', 'finalizada')->whereBetween('data_hora', [$inicio, $fim])
             )

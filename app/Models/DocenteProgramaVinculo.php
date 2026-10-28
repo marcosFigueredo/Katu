@@ -38,7 +38,7 @@ class DocenteProgramaVinculo extends Model
 
 public function orientacoes()
 {
-    return $this->hasMany(Orientacao::class, 'docente_programa_vinculo_id');
+    return $this->hasMany(Orientacao::class, 'docente_programa_vinculo_id')->where('ativo', true);
 }
 
 public function bancaMembros()

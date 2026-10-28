@@ -52,9 +52,20 @@ class TrabalhoAcademico extends Model
         return $this->hasMany(TrabalhoDocumento::class);
     }
 
+    /** Só as orientações vigentes; o histórico completo está em orientacoesHistorico(). */
     public function orientacoes()
     {
-        return $this->hasMany(Orientacao::class);
+        return $this->hasMany(Orientacao::class)->where('ativo', true);
+    }
+
+    public function orientacoesHistorico()
+    {
+        return $this->hasMany(Orientacao::class)->orderBy('inicio_em')->orderBy('id');
+    }
+
+    public function orientadorVigente(): ?Orientacao
+    {
+        return $this->orientacoes()->where('tipo', 'orientador')->first();
     }
 
     public function bancas()
