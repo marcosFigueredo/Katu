@@ -75,4 +75,18 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertSame(15, $barema->secoes->flatMap->itens->count());
         $this->assertSame('Planejamento e acompanhamento', $barema->secoes->sortBy('ordem')->first()->nome);
     }
+
+    public function test_trabalho_da_juliana_tem_dados_para_o_lattes(): void
+    {
+        $programa = $this->programaDoUsuario();
+
+        $this->seed(CenarioTesteSeeder::class);
+
+        $trabalho = User::where('email', 'discente.completo@ppgmsb.test')->firstOrFail()
+            ->discenteProfile->vinculosPrograma->first()->trabalhoAcademico;
+        $this->assertGreaterThanOrEqual(1, $trabalho->areasCnpq()->count());
+        $this->assertNotNull($trabalho->titulo_en);
+        $this->assertNotNull($trabalho->setor_cnae_id);
+        $this->assertNotNull($programa->fresh()->homepage_trabalhos);
+    }
 }

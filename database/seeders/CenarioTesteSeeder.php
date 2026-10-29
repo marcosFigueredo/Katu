@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\AreaConcentracao;
+use App\Models\AreaCnpq;
+use App\Models\SetorCnae;
 use App\Models\Banca;
 use App\Models\BancaMembro;
 use App\Models\Barema;
@@ -386,6 +388,18 @@ class CenarioTesteSeeder extends Seeder
             'resumo' => 'A modelagem computacional e a simulação estocástica de biossistemas desempenham papel fundamental na compreensão de fenômenos epidemiológicos complexos e no suporte à tomada de decisão em saúde pública. Neste trabalho fictício de teste para o sistema de gestão de bancas do PPGMSB, propomos uma arquitetura híbrida que integra equações diferenciais estocásticas e algoritmos de aprendizado de máquina para a predição espaço-temporal de surtos epidemiológicos em cenários com dados ruidosos. O método compreende três etapas principais: pré-processamento e filtragem adaptativa de séries temporais, calibração paramétrica via inferência bayesiana e simulação de cenários de intervenção. Os experimentos numéricos sintéticos demonstram estabilidade numérica, redução do erro quadrático médio de predição e elevada aderência aos critérios de reprodutibilidade científica do programa.',
             'palavras_chave' => 'modelagem computacional; simulação estocástica; biossistemas; aprendizado de máquina; vigilância epidemiológica',
         ]);
+
+        // Dados para o Lattes (listas oficiais de áreas CNPq e setores CNAE)
+        $this->call(TabelasLattesSeeder::class);
+        $trabalho->update([
+            'titulo_en' => 'Computational Modeling and Stochastic Simulation of Biosystems Applied to Epidemiological Surveillance',
+            'outras_informacoes' => 'Trabalho fictício de teste; bolsa CAPES (exemplo).',
+            'outras_informacoes_en' => 'Fictitious test work; CAPES grant (example).',
+            'visibilidade' => 'publica',
+            'setor_cnae_id' => SetorCnae::where('codigo', '86')->value('id'),
+        ]);
+        $trabalho->areasCnpq()->sync(AreaCnpq::whereIn('codigo', ['40601005', '10104003'])->pluck('id'));
+        $trabalho->programa?->update(['homepage_trabalhos' => 'https://ppgmsb.uneb.br/trabalhos']);
 
         // Qualificação já aprovada para permitir banca de defesa
         $qualificacao = Banca::updateOrCreate(
