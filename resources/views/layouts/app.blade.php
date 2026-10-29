@@ -267,6 +267,13 @@
                                 Critérios CPA
                             </a>
 
+                            <a href="{{ route('tabelas-lattes.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('tabelas-lattes.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-diagram-2" style="font-size: 15px; flex-shrink:0;"></i>
+                                Áreas CNPq e CNAE
+                            </a>
+
                             @php($programaMenu = app(\App\Services\ContextoSecretaria::class)->programa(auth()->user()))
                             @if ($programaMenu)
                                 <a href="{{ route('programas.areas.index', $programaMenu) }}"

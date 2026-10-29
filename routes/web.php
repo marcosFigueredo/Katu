@@ -22,6 +22,7 @@ use App\Http\Controllers\TrabalhoDocumentoController;
 use App\Http\Controllers\SubmissaoLatexController;
 use App\Http\Controllers\AutoavaliacaoOrientadorController;
 use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\TabelaLattesController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
 use App\Http\Controllers\MabacController;
@@ -201,6 +202,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('/barema-itens/{item}', [BaremaItemController::class, 'destroy'])
         ->name('barema-itens.destroy');
+});
+
+// Áreas do CNPq e setores CNAE (dados para o Lattes) – listas únicas mantidas pela Secretaria
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/tabelas-lattes', [TabelaLattesController::class, 'index'])->name('tabelas-lattes.index');
+    Route::get('/tabelas-lattes/{lista}/novo', [TabelaLattesController::class, 'create'])->name('tabelas-lattes.create');
+    Route::post('/tabelas-lattes/{lista}', [TabelaLattesController::class, 'store'])->name('tabelas-lattes.store');
+    Route::get('/tabelas-lattes/{lista}/{id}/editar', [TabelaLattesController::class, 'edit'])->name('tabelas-lattes.edit');
+    Route::put('/tabelas-lattes/{lista}/{id}', [TabelaLattesController::class, 'update'])->name('tabelas-lattes.update');
+    Route::patch('/tabelas-lattes/{lista}/{id}/alternar', [TabelaLattesController::class, 'alternar'])->name('tabelas-lattes.alternar');
 });
 
 // Orientação do discente – gerida pela Secretaria na edição do usuário
