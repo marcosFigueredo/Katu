@@ -340,14 +340,15 @@
                                                         @endif
 
                                                         @if (! $temTemplateLatex && $bancaPedido && \App\Services\PedidoHomologacaoService::documentoCompativel($bancaPedido, $doc))
-                                                            <form method="POST"
-                                                                  action="{{ route('meu-trabalho.enviar-homologacao', $doc) }}"
-                                                                  onsubmit="return confirm('Enviar a banca proposta e este documento à homologação da Secretaria? Enquanto o pedido estiver na fila, não será possível alterá-lo.')">
-                                                                @csrf
-                                                                <button type="submit" class="btn btn-sm btn-outline-success">
-                                                                    <i class="bi bi-send-fill me-1"></i>Enviar à homologação
-                                                                </button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                                    data-bs-toggle="modal" data-bs-target="#modal-homologacao-doc-{{ $doc->id }}">
+                                                                <i class="bi bi-send-fill me-1"></i>Enviar à homologação
+                                                            </button>
+                                                            @include('meu-trabalho.partials.modal-envio-homologacao', [
+                                                                'idModal' => 'modal-homologacao-doc-'.$doc->id,
+                                                                'action' => route('meu-trabalho.enviar-homologacao', $doc),
+                                                                'oQue' => 'este documento',
+                                                            ])
                                                         @endif
                                                     </div>
                                                 </td>
