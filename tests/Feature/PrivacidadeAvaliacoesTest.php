@@ -86,14 +86,23 @@ class PrivacidadeAvaliacoesTest extends TestCase
         $this->actingAs($secretaria)->get(route('avaliacoes.relatorio-consolidado', $banca))->assertForbidden();
     }
 
-    public function test_nota_media_da_banca_nao_muda(): void
+    public function test_nota_media_visivel_usa_so_as_avaliacoes_padrao_e_a_completa_fica_para_a_cpa(): void
     {
         [, $banca, $orientador] = $this->cenario();
 
         $this->actingAs($orientador)->post(route('avaliacoes.finalizar', $banca), ['resultado' => 'aprovado'])
             ->assertSessionHasNoErrors();
 
-        // Média de todas as avaliações enviadas, confidenciais incluídas: (8 + 3,3) / 2 = 5,65.
-        $this->assertEquals(5.65, Banca::find($banca->id)->nota_media);
+        $banca = Banca::find($banca->id);
+        // Visível (orientador, discente, Secretaria): só as padrão, 8,0 e 8,0 — a confidencial não pode ser deduzida.
+        $this->assertEquals(8.0, $banca->nota_media);
+        // Para a CPA: todas as avaliações, (8 + 3,3) / 2 = 5,65 — não aparece em nenhuma tela.
+        $this->assertEquals(5.65, $banca->nota_media_cpa);
+
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
+            ->assertOk()
+            ->assertSee('8,0')
+            ->assertDontSee('5,65')
+            ->assertDontSee('5,7');
     }
 }

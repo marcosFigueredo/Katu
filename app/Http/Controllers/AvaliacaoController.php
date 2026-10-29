@@ -419,20 +419,23 @@ class AvaliacaoController extends Controller
             return back()->withErrors(['finalizar' => 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.']);
         }
 
-        // Calcula nota média consolidada (média das notas_final de todos avaliadores)
-        $notasFinais = BancaAvaliacao::whereIn('banca_membro_id', $avaliadores->pluck('id'))
+        // Nota média visível (orientador, discente, Secretaria, relatórios): só as avaliações padrão,
+        // para que a confidencial não possa ser deduzida. A média com todas fica para a CPA.
+        $enviadas = BancaAvaliacao::whereIn('banca_membro_id', $avaliadores->pluck('id'))
             ->where('status', 'enviada')
             ->whereNotNull('nota_final')
-            ->pluck('nota_final');
+            ->with('barema:id,tipo')
+            ->get();
+        $media = fn ($avaliacoes) => $avaliacoes->isNotEmpty() ? round($avaliacoes->avg('nota_final'), 2) : null;
 
-        $notaMedia = $notasFinais->isNotEmpty()
-            ? round($notasFinais->avg(), 2)
-            : null;
+        $notaMedia = $media($enviadas->reject(fn ($a) => str_ends_with((string) $a->barema?->tipo, '_confidencial')));
+        $notaMediaCpa = $media($enviadas);
 
         $banca->update([
             'status'         => 'finalizada',
             'resultado'      => $request->resultado,
             'nota_media'     => $notaMedia,
+            'nota_media_cpa' => $notaMediaCpa,
             'ata_enviada_em' => now(),
         ]);
 
