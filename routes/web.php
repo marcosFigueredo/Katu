@@ -20,6 +20,7 @@ use App\Http\Controllers\BaremaSecaoController;
 use App\Http\Controllers\OrientacaoDiscenteController;
 use App\Http\Controllers\TrabalhoDocumentoController;
 use App\Http\Controllers\SubmissaoLatexController;
+use App\Http\Controllers\AutoavaliacaoOrientadorController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
@@ -250,6 +251,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/avaliacoes/{banca}/finalizar', [AvaliacaoController::class, 'finalizar'])
         ->name('avaliacoes.finalizar');
+
+    Route::get('/avaliacoes/{banca}/autoavaliacao', [AutoavaliacaoOrientadorController::class, 'form'])
+        ->name('avaliacoes.autoavaliacao.form');
+
+    Route::post('/avaliacoes/{banca}/autoavaliacao', [AutoavaliacaoOrientadorController::class, 'store'])
+        ->name('avaliacoes.autoavaliacao.store');
 
     Route::get('/avaliacoes/{banca}/barema/{barema}/relatorio', [AvaliacaoController::class, 'relatorioIndividual'])
         ->name('avaliacoes.relatorio-individual');

@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Mail\BancaFinalizadaDiscenteMail;
 use App\Mail\BancaProntaParaFinalizarMail;
+use App\Models\AutoavaliacaoOrientador;
 use App\Models\Banca;
 use App\Models\BancaAvaliacao;
 use App\Models\BancaAvaliacaoNota;
 use App\Models\Barema;
 use App\Models\Orientacao;
+use App\Services\BaremasDaBancaService;
 use App\Services\FolhaAprovacaoLatexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -132,10 +134,19 @@ class AvaliacaoController extends Controller
             && $totalEsperado > 0
             && $totalEnviadas >= $totalEsperado;
 
+        // Autoavaliação do orientador (só defesa): o orientador vê apenas se concluiu.
+        $baremaAutoavaliacao = $ehOrientador && $banca->tipo === 'defesa'
+            ? app(BaremasDaBancaService::class)->baremaAtivo($banca, 'autoavaliacao_orientador')
+            : null;
+        $autoavaliacao = $ehOrientador && $banca->tipo === 'defesa'
+            ? AutoavaliacaoOrientador::where('banca_id', $banca->id)->where('docente_programa_vinculo_id', $vinculo->id)->first()
+            : null;
+
         return view('avaliacoes.banca', compact(
             'banca', 'baremas', 'meuMembro', 'minhasAvaliacoes',
             'ehMembro', 'ehOrientador', 'podeFinalizar',
-            'avaliadores', 'totalEnviadas', 'totalEsperado'
+            'avaliadores', 'totalEnviadas', 'totalEsperado',
+            'baremaAutoavaliacao', 'autoavaliacao'
         ));
     }
 

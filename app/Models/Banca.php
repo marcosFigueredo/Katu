@@ -73,6 +73,11 @@ class Banca extends Model
         return $this->belongsTo(User::class, 'devolvida_por');
     }
 
+    public function autoavaliacaoOrientador(): HasOne
+    {
+        return $this->hasOne(AutoavaliacaoOrientador::class);
+    }
+
     public function respostasCpa(): HasMany
     {
         return $this->hasMany(HomologacaoRespostaCpa::class);

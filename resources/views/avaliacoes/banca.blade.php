@@ -218,6 +218,10 @@
         {{-- ================================================================
              ÁREA DO ORIENTADOR — Status de todos os avaliadores
         ================================================================ --}}
+        @if ($ehOrientador && $banca->tipo === 'defesa')
+            @include('avaliacoes.partials.autoavaliacao-bloco')
+        @endif
+
         @if ($ehOrientador)
             <h2 class="h5 fw-bold text-dark mb-3">
                 <i class="bi bi-people me-2" style="color:#00303A;"></i>
