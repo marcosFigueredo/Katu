@@ -12,6 +12,7 @@ use App\Models\BancaAvaliacaoNota;
 use App\Models\Barema;
 use App\Models\Orientacao;
 use App\Services\BaremasDaBancaService;
+use App\Services\DadosLattesBancaService;
 use App\Services\FolhaAprovacaoLatexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -32,6 +33,8 @@ class AvaliacaoController extends Controller
 
         $bancasAvaliador  = collect();
         $bancasOrientador = collect();
+        $bancasParticipadas = collect();
+        $orientaAlgum = false;
 
         if ($vinculo) {
             $membrosIds = \App\Models\BancaMembro::where('docente_programa_vinculo_id', $vinculo->id)
@@ -55,6 +58,17 @@ class AvaliacaoController extends Controller
             $trabalhoIds = Orientacao::where('docente_programa_vinculo_id', $vinculo->id)
                 ->where('ativo', true)
                 ->pluck('trabalho_academico_id');
+            $orientaAlgum = $trabalhoIds->isNotEmpty();
+
+            // Bancas finalizadas de que participou (avaliador ou orientador/presidente): dados para o Lattes.
+            $trabalhosOrientados = Orientacao::where('docente_programa_vinculo_id', $vinculo->id)
+                ->where('ativo', true)->where('tipo', 'orientador')
+                ->pluck('trabalho_academico_id');
+            $bancasParticipadas = Banca::where('status', 'finalizada')
+                ->where(fn ($q) => $q->whereIn('id', $membrosIds)->orWhereIn('trabalho_academico_id', $trabalhosOrientados))
+                ->with('trabalhoAcademico.discenteVinculo.discenteProfile.user', 'trabalhoAcademico.programa')
+                ->orderByDesc('data_hora')
+                ->get();
 
             $bancasOrientador = Banca::whereIn('trabalho_academico_id', $trabalhoIds)
                 ->whereNotIn('status', ['cancelada'])
@@ -80,7 +94,28 @@ class AvaliacaoController extends Controller
                 });
         }
 
-        return view('dashboards.docente', compact('user', 'vinculo', 'bancasAvaliador', 'bancasOrientador'));
+        return view('dashboards.docente', compact('user', 'vinculo', 'bancasAvaliador', 'bancasOrientador', 'bancasParticipadas', 'orientaAlgum'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Dados para o Lattes — só banca finalizada, só para quem participou
+    // -------------------------------------------------------------------------
+    public function lattes(Banca $banca, DadosLattesBancaService $dados)
+    {
+        $user = auth()->user();
+        $this->autorizarDocente($user);
+        abort_unless($banca->status === 'finalizada', 403, 'Os dados para o Lattes ficam disponíveis quando a banca é finalizada.');
+
+        $vinculo = $user->docenteProfile?->vinculosPrograma()->first();
+        $participou = $vinculo && (
+            $banca->avaliadores()->where('docente_programa_vinculo_id', $vinculo->id)->exists()
+            || $banca->trabalhoAcademico?->orientacoes()->where('tipo', 'orientador')->where('docente_programa_vinculo_id', $vinculo->id)->exists()
+        );
+        abort_unless($participou, 403);
+
+        $campos = $dados->campos($banca);
+
+        return view('avaliacoes.lattes', compact('banca', 'campos'));
     }
 
     // -------------------------------------------------------------------------

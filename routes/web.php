@@ -264,6 +264,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/avaliacoes/{banca}/finalizar', [AvaliacaoController::class, 'finalizar'])
         ->name('avaliacoes.finalizar');
 
+    Route::get('/avaliacoes/{banca}/lattes', [AvaliacaoController::class, 'lattes'])
+        ->name('avaliacoes.lattes');
+
     Route::get('/avaliacoes/{banca}/autoavaliacao', [AutoavaliacaoOrientadorController::class, 'form'])
         ->name('avaliacoes.autoavaliacao.form');
 

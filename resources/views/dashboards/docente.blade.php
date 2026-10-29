@@ -130,8 +130,9 @@
         </div>
 
         {{-- ================================================================
-             BANCAS ONDE É ORIENTADOR
+             BANCAS ONDE É ORIENTADOR (só para quem orienta)
         ================================================================ --}}
+        @if ($orientaAlgum || $bancasOrientador->isNotEmpty())
         <div class="mb-4">
             <h2 class="h5 fw-bold text-dark mb-3">
                 <i class="bi bi-mortarboard me-2" style="color:#00303A;"></i>
@@ -226,6 +227,46 @@
                             </div>
                         </div>
                     @endforeach
+                </div>
+            @endif
+        </div>
+
+        @endif
+
+        {{-- ================================================================
+             BANCAS FINALIZADAS DE QUE PARTICIPOU — dados para o Lattes
+        ================================================================ --}}
+        <div class="mb-4">
+            <h2 class="h5 fw-bold text-dark mb-3">
+                <i class="bi bi-person-vcard me-2" style="color:#00303A;"></i>
+                Bancas do {{ $vinculo->programa?->sigla ?? 'programa' }} de que participou
+            </h2>
+
+            @if ($bancasParticipadas->isEmpty())
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center text-muted py-4">
+                        Nenhuma banca finalizada ainda. Os dados para o Lattes aparecem aqui quando a banca é finalizada.
+                    </div>
+                </div>
+            @else
+                <div class="card border-0 shadow-sm">
+                    <ul class="list-group list-group-flush">
+                        @foreach ($bancasParticipadas as $banca)
+                            <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div>
+                                    <div class="fw-semibold">{{ $banca->trabalhoAcademico?->discenteVinculo?->discenteProfile?->user?->name ?? '—' }}</div>
+                                    <small class="text-muted">
+                                        {{ $banca->tipo === 'defesa' ? 'Defesa' : 'Qualificação' }}
+                                        · {{ $banca->data_hora?->format('d/m/Y') }}
+                                        · {{ \Illuminate\Support\Str::limit($banca->trabalhoAcademico?->titulo ?? '', 90) }}
+                                    </small>
+                                </div>
+                                <a href="{{ route('avaliacoes.lattes', $banca) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-clipboard-data me-1"></i>Dados para o Lattes
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
         </div>
