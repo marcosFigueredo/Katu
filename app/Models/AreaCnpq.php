@@ -28,12 +28,21 @@ class AreaCnpq extends Model
         return $this->belongsTo(self::class, 'pai_id');
     }
 
-    /** "Grande área › Área › Subárea". */
+    /** Nível exigido do pai de cada nível. */
+    public const NIVEL_DO_PAI = [
+        'grande_area' => null,
+        'area' => 'grande_area',
+        'subarea' => 'area',
+    ];
+
+    /** "Grande área › Área › Subárea". Para ao reencontrar um item (proteção contra ciclo). */
     public function caminho(): string
     {
         $partes = [$this->nome];
+        $vistos = [$this->id => true];
         $atual = $this->pai;
-        while ($atual) {
+        while ($atual && ! isset($vistos[$atual->id])) {
+            $vistos[$atual->id] = true;
             array_unshift($partes, $atual->nome);
             $atual = $atual->pai;
         }

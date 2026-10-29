@@ -90,12 +90,20 @@ class TabelaLattesController extends Controller
 
         if ($lista === 'cnpq') {
             $regras['nivel'] = ['required', Rule::in(array_keys(AreaCnpq::NIVEIS))];
-            $regras['pai_id'] = ['nullable', 'required_unless:nivel,grande_area', 'integer', Rule::exists('areas_cnpq', 'id')];
+            // O pai é sempre do nível de cima (área → grande área, subárea → área): impede ciclos.
+            $nivelDoPai = AreaCnpq::NIVEL_DO_PAI[$request->input('nivel')] ?? null;
+            $regras['pai_id'] = $nivelDoPai === null
+                ? ['prohibited']
+                : ['required', 'integer', Rule::exists('areas_cnpq', 'id')->where('nivel', $nivelDoPai)];
         } else {
             $regras['secao'] = ['nullable', 'string', 'size:1'];
         }
 
-        return $request->validate($regras, ['codigo.unique' => 'Já existe um item com este código.']);
+        return $request->validate($regras, [
+            'codigo.unique' => 'Já existe um item com este código.',
+            'pai_id.prohibited' => 'A grande área não pertence a outro item.',
+            'pai_id.exists' => 'Escolha um item do nível de cima (área → grande área; subárea → área).',
+        ]);
     }
 
     private function pais(string $lista)

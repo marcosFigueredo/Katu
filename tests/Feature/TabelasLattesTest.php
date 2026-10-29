@@ -109,4 +109,35 @@ class TabelasLattesTest extends TestCase
         $this->actingAs($this->secretaria('B'))->get(route('tabelas-lattes.index', ['lista' => 'cnae', 'busca' => 'Educação']))
             ->assertOk()->assertSee('Educação (todas as etapas)');
     }
+
+    public function test_pai_precisa_ser_do_nivel_acima_e_nao_forma_ciclo(): void
+    {
+        $this->seed(TabelasLattesSeeder::class);
+        $sec = $this->secretaria();
+        $grande = AreaCnpq::where('codigo', '40000001')->firstOrFail();
+        $area = AreaCnpq::where('codigo', '40600009')->firstOrFail();
+        $sub = AreaCnpq::where('codigo', '40601005')->firstOrFail();
+        $editar = fn (AreaCnpq $item, array $dados) => $this->actingAs($sec)
+            ->put(route('tabelas-lattes.update', ['lista' => 'cnpq', 'id' => $item->id]), ['codigo' => $item->codigo, 'nome' => $item->nome] + $dados);
+
+        // Ciclo: a área passa a pertencer à própria subárea
+        $editar($area, ['nivel' => 'area', 'pai_id' => $sub->id])->assertSessionHasErrors('pai_id');
+        // Pai de nível errado e item apontando para si mesmo
+        $editar($sub, ['nivel' => 'subarea', 'pai_id' => $grande->id])->assertSessionHasErrors('pai_id');
+        $editar($area, ['nivel' => 'area', 'pai_id' => $area->id])->assertSessionHasErrors('pai_id');
+        // Grande área não tem pai
+        $editar($grande, ['nivel' => 'grande_area', 'pai_id' => $area->id])->assertSessionHasErrors('pai_id');
+
+        $this->assertSame($grande->id, $area->fresh()->pai_id);
+        $this->actingAs($sec)->get(route('tabelas-lattes.index', ['lista' => 'cnpq', 'busca' => 'Epidemio']))->assertOk();
+    }
+
+    public function test_caminho_nao_trava_com_ciclo_ja_gravado(): void
+    {
+        $a = AreaCnpq::create(['codigo' => '1', 'nome' => 'A', 'nivel' => 'area']);
+        $b = AreaCnpq::create(['codigo' => '2', 'nome' => 'B', 'nivel' => 'area', 'pai_id' => $a->id]);
+        $a->update(['pai_id' => $b->id]);
+
+        $this->assertSame('A › B', $b->fresh()->caminho());
+    }
 }
