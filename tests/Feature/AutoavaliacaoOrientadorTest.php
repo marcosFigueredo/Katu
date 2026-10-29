@@ -55,7 +55,11 @@ class AutoavaliacaoOrientadorTest extends TestCase
 
         $this->actingAs($orientador)->get(route('avaliacoes.autoavaliacao.form', $banca))
             ->assertOk()
-            ->assertSee('Item 1 de Autoavaliação do orientador');
+            ->assertSee('Item 1 de Autoavaliação do orientador')
+            // Confirmação em modal da página, não na caixa do navegador
+            ->assertSee('id="modal-enviar-autoavaliacao"', false)
+            ->assertSee('Depois de enviada, ela não pode ser alterada.')
+            ->assertDontSee('confirm(', false);
 
         $this->actingAs($orientador)
             ->post(route('avaliacoes.autoavaliacao.store', $banca), ['notas' => $this->notas($barema, [8, 6]), 'observacoes' => 'Reflexão'])

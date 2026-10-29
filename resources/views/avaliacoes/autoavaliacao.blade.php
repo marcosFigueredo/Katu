@@ -32,8 +32,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('avaliacoes.autoavaliacao.store', $banca) }}"
-              onsubmit="return confirm('Enviar a autoavaliação? Depois de enviada, ela não pode ser alterada.')">
+        <form method="POST" action="{{ route('avaliacoes.autoavaliacao.store', $banca) }}" id="form-autoavaliacao">
             @csrf
 
             @foreach ($barema->secoes as $secao)
@@ -70,9 +69,30 @@
                 <textarea id="observacoes" name="observacoes" rows="3" maxlength="5000" class="form-control">{{ old('observacoes') }}</textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary fw-semibold mb-5">
+            {{-- Valida as notas antes de abrir a confirmação. --}}
+            <button type="button" class="btn btn-primary fw-semibold mb-5"
+                    onclick="if (document.getElementById('form-autoavaliacao').reportValidity()) bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-enviar-autoavaliacao')).show()">
                 <i class="bi bi-send-check me-1"></i>Concluir e enviar autoavaliação
             </button>
         </form>
+    </div>
+
+    <div class="modal fade" id="modal-enviar-autoavaliacao" tabindex="-1" aria-labelledby="modal-enviar-autoavaliacao-titulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-body p-4">
+                    <h2 class="h5 fw-bold mb-2" id="modal-enviar-autoavaliacao-titulo">
+                        <i class="bi bi-send-check me-1" style="color:#00303A;"></i>Enviar a autoavaliação?
+                    </h2>
+                    <p class="mb-0">Depois de enviada, ela não pode ser alterada.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" form="form-autoavaliacao" class="btn btn-primary fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i>Confirmar envio
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </x-app-layout>
