@@ -25,6 +25,7 @@ class InstituicaoController extends Controller
             'departamento' => ['nullable', 'string', 'max:255'],
             'cnpj' => ['nullable', 'string', 'max:20'],
             'endereco' => ['nullable', 'string', 'max:255'],
+            'pais' => ['nullable', 'string', 'max:100'],
             'cidade' => ['nullable', 'string', 'max:255'],
             'estado' => ['nullable', 'string', 'size:2'],
             'cep' => ['nullable', 'string', 'max:20'],
@@ -60,6 +61,7 @@ class InstituicaoController extends Controller
         abort_if($this->contexto->programa($request->user())?->instituicao_id, 403);
 
         $dados = $request->validate($this->regras(true), self::MENSAGENS);
+        $dados['pais'] = filled($dados['pais'] ?? null) ? $dados['pais'] : 'Brasil';
         $dados['logo_path'] = LogoController::armazenar($request->file('logo'), null);
         $dados['ativo'] = true;
         unset($dados['logo']);
@@ -96,6 +98,7 @@ class InstituicaoController extends Controller
         abort_unless($instituicao, 404);
 
         $dados = $request->validate($this->regras(false), self::MENSAGENS);
+        $dados['pais'] = filled($dados['pais'] ?? null) ? $dados['pais'] : 'Brasil';
         if ($request->hasFile('logo')) {
             $dados['logo_path'] = LogoController::armazenar($request->file('logo'), $instituicao->logo_path);
         }

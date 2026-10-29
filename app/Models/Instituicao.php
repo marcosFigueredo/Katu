@@ -15,6 +15,7 @@ class Instituicao extends Model
         'departamento',
         'cnpj',
         'endereco',
+        'pais',
         'cidade',
         'estado',
         'cep',

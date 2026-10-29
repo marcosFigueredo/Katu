@@ -25,6 +25,7 @@ class Programa extends Model
         'oferta_doutorado',
         'email',
         'site',
+        'homepage_trabalhos',
         'telefone',
         'descricao',
         'ativo',

@@ -157,6 +157,14 @@
                         </div>
 
                         <div class="md:col-span-2">
+                            <x-input-label for="homepage_trabalhos" value="Homepage dos trabalhos" />
+                            <x-text-input id="homepage_trabalhos" name="homepage_trabalhos" type="url" class="mt-1 block w-full"
+                                placeholder="https://…" value="{{ old('homepage_trabalhos', $programa?->homepage_trabalhos) }}" />
+                            <p class="text-sm text-gray-500 mt-1">Endereço onde os trabalhos do programa são publicados; aparece nos dados para o Lattes das bancas.</p>
+                            <x-input-error :messages="$errors->get('homepage_trabalhos')" class="mt-2" />
+                        </div>
+
+                        <div class="md:col-span-2">
                             <x-input-label for="descricao" value="Descrição" />
                             <textarea id="descricao" name="descricao" rows="4" class="{{ $campoClasse }}">{{ old('descricao', $programa?->descricao) }}</textarea>
                             <x-input-error :messages="$errors->get('descricao')" class="mt-2" />

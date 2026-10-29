@@ -132,18 +132,25 @@
                                     @error('endereco') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
-                                <div class="col-md-5">
-                                    <label for="cidade" class="form-label fw-semibold">Cidade</label>
-                                    <input id="cidade" name="cidade" type="text" class="form-control @error('cidade') is-invalid @enderror"
-                                           value="{{ old('cidade', $instituicao->cidade ?? '') }}">
-                                    @error('cidade') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="col-md-4">
+                                    <label for="pais" class="form-label fw-semibold">País</label>
+                                    <input id="pais" name="pais" type="text" class="form-control @error('pais') is-invalid @enderror"
+                                           value="{{ old('pais', $instituicao->pais ?? 'Brasil') }}">
+                                    @error('pais') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="estado" class="form-label fw-semibold">UF</label>
+                                    <label for="estado" class="form-label fw-semibold">Estado (UF)</label>
                                     <input id="estado" name="estado" type="text" maxlength="2" class="form-control @error('estado') is-invalid @enderror"
                                            value="{{ old('estado', $instituicao->estado ?? '') }}">
                                     @error('estado') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="cidade" class="form-label fw-semibold">Município</label>
+                                    <input id="cidade" name="cidade" type="text" class="form-control @error('cidade') is-invalid @enderror"
+                                           value="{{ old('cidade', $instituicao->cidade ?? '') }}">
+                                    @error('cidade') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-5">

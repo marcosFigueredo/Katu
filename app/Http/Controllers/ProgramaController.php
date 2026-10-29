@@ -48,6 +48,7 @@ class ProgramaController extends Controller
             'max_coorientadores' => ['nullable', 'integer', 'min:0', 'max:5'],
             'email' => ['nullable', 'email', 'max:255'],
             'site' => ['nullable', 'string', 'max:255'],
+            'homepage_trabalhos' => ['nullable', 'url', 'max:255'],
             'telefone' => ['nullable', 'string', 'max:30'],
             'descricao' => ['nullable', 'string'],
             'logo' => ['nullable', ...LogoController::REGRAS],
