@@ -23,6 +23,7 @@ use App\Http\Controllers\SubmissaoLatexController;
 use App\Http\Controllers\AutoavaliacaoOrientadorController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\TabelaLattesController;
+use App\Http\Controllers\TrabalhoLattesController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
 use App\Http\Controllers\MabacController;
@@ -312,6 +313,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/meu-trabalho/submissoes-latex/{submissao}/enviar-homologacao', [SubmissaoLatexController::class, 'enviarHomologacao'])
         ->name('meu-trabalho.submissao-latex.enviar-homologacao');
+
+    Route::get('/meu-trabalho/lattes', [TrabalhoLattesController::class, 'edit'])
+        ->name('meu-trabalho.lattes.edit');
+
+    Route::put('/meu-trabalho/lattes', [TrabalhoLattesController::class, 'update'])
+        ->name('meu-trabalho.lattes.update');
 
     Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
         ->name('trabalho-impacto.edit');

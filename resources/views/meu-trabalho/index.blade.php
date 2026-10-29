@@ -365,6 +365,24 @@
 
         </div>
 
+        @if ($trabalho)
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                            <i class="bi bi-person-vcard me-2"></i>Dados para o Lattes
+                        </h2>
+                        <p class="text-muted small mb-0">
+                            Áreas do CNPq, setor de aplicação, título em inglês e outras informações que os membros da banca usam para registrar a participação no Lattes.
+                        </p>
+                    </div>
+                    <a href="{{ route('meu-trabalho.lattes.edit') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-fill me-1"></i>Preencher
+                    </a>
+                </div>
+            </div>
+        @endif
+
         {{-- ── Ações pós-banca ─────────────────────────────────────────────── --}}
         @php $bancaAtiva = $bancas->first(fn($b) => in_array($b->status, ['cadastrada', 'em_avaliacao'])); @endphp
         @if ($bancaAtiva)

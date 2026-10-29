@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -21,6 +23,11 @@ class TrabalhoAcademico extends Model
         'data_inicio',
         'data_prevista_qualificacao',
         'data_prevista_defesa',
+        'titulo_en',
+        'outras_informacoes',
+        'outras_informacoes_en',
+        'visibilidade',
+        'setor_cnae_id',
     ];
 
     protected function casts(): array
@@ -45,6 +52,17 @@ class TrabalhoAcademico extends Model
     public function linhaPesquisa()
     {
         return $this->belongsTo(LinhaPesquisa::class, 'linha_pesquisa_id');
+    }
+
+    /** Áreas do CNPq escolhidas pelo estudante (dados para o Lattes). */
+    public function areasCnpq(): BelongsToMany
+    {
+        return $this->belongsToMany(AreaCnpq::class, 'trabalho_area_cnpq')->withTimestamps();
+    }
+
+    public function setorCnae(): BelongsTo
+    {
+        return $this->belongsTo(SetorCnae::class);
     }
 
     public function documentos()
