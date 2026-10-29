@@ -56,10 +56,9 @@
                             <label for="tipo" class="form-label fw-semibold">Tipo</label>
                             <select id="tipo" name="tipo"
                                     class="form-select @error('tipo') is-invalid @enderror" required>
-                                <option value="qualificacao"              {{ old('tipo', $barema->tipo) === 'qualificacao'              ? 'selected' : '' }}>Qualificação</option>
-                                <option value="defesa"                    {{ old('tipo', $barema->tipo) === 'defesa'                    ? 'selected' : '' }}>Defesa</option>
-                                <option value="qualificacao_confidencial" {{ old('tipo', $barema->tipo) === 'qualificacao_confidencial' ? 'selected' : '' }}>Qualificação Confidencial</option>
-                                <option value="defesa_confidencial"       {{ old('tipo', $barema->tipo) === 'defesa_confidencial'       ? 'selected' : '' }}>Defesa Confidencial</option>
+                                @foreach (\App\Models\Barema::TIPOS as $valorTipo => $rotuloTipo)
+                                    <option value="{{ $valorTipo }}" @selected(old('tipo', $barema->tipo) === $valorTipo)>{{ $rotuloTipo }}</option>
+                                @endforeach
                             </select>
                             @error('tipo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>

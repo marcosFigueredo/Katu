@@ -68,6 +68,22 @@ class BaremaTest extends TestCase
         $this->assertDatabaseHas('baremas', ['nome' => 'Barema Defesa 2025']);
     }
 
+    public function test_secretaria_cria_barema_de_autoavaliacao_do_orientador(): void
+    {
+        [$sec] = $this->secComPrograma();
+
+        $this->actingAs($sec)->post('/baremas', [
+            'nome'   => 'Autoavaliação 2026',
+            'tipo'   => 'autoavaliacao_orientador',
+            'nivel'  => 'ambos',
+            'versao' => '1.0',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('baremas', ['nome' => 'Autoavaliação 2026', 'tipo' => 'autoavaliacao_orientador']);
+        $this->actingAs($sec)->get('/baremas')->assertOk()->assertSee('Autoavaliação do orientador');
+        $this->actingAs($sec)->get('/baremas/create')->assertOk()->assertSee('value="autoavaliacao_orientador"', false);
+    }
+
     public function test_criacao_barema_falha_sem_nome(): void
     {
         [$sec] = $this->secComPrograma();

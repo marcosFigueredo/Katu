@@ -73,6 +73,7 @@ class CenarioTesteSeeder extends Seeder
         ]);
 
         $this->baremasDeTeste($programa);
+        $this->baremaAutoavaliacaoDeTeste($programa);
 
         // Outro programa — para testar o isolamento entre Secretarias
         $instituicaoOutra = Instituicao::firstOrCreate(
@@ -276,6 +277,58 @@ class CenarioTesteSeeder extends Seeder
                 BaremaItem::updateOrCreate(
                     ['barema_secao_id' => $secao->id, 'ordem' => $i + 1],
                     ['nome' => $pergunta, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
+                );
+            }
+        }
+    }
+
+    /** Autoavaliação do orientador (preenchida só na defesa): 5 dimensões, 3 afirmações cada, nota 0–10. */
+    private function baremaAutoavaliacaoDeTeste(Programa $programa): void
+    {
+        $dimensoes = [
+            'Planejamento e acompanhamento' => [
+                'Estabeleci, em conjunto com o orientando, objetivos, expectativas e um cronograma de trabalho claros e factíveis.',
+                'Acompanhei regularmente o desenvolvimento da pesquisa, oferecendo orientações e devolutivas adequadas.',
+                'Identifiquei dificuldades durante o processo de orientação e contribuí para a definição de soluções.',
+            ],
+            'Disponibilidade e comunicação' => [
+                'Mantive disponibilidade adequada para reuniões, esclarecimento de dúvidas e acompanhamento do orientando.',
+                'Estabeleci uma comunicação clara, respeitosa e tempestiva durante o processo de orientação.',
+                'Proporcionei um ambiente favorável ao diálogo, à apresentação de ideias e à manifestação de dúvidas e divergências.',
+            ],
+            'Formação científica e acadêmica' => [
+                'Contribuí para o aprofundamento teórico e o aprimoramento metodológico da pesquisa desenvolvida pelo orientando.',
+                'Estimulei a autonomia intelectual, o pensamento crítico e a capacidade de investigação científica do orientando.',
+                'Incentivei a produção científica, a divulgação dos resultados e o desenvolvimento de uma postura ética e profissional.',
+            ],
+            'Relação orientador-orientando' => [
+                'Considerei as necessidades e particularidades do orientando, respeitando seu ritmo de desenvolvimento acadêmico.',
+                'Mantive uma relação de orientação fundamentada no respeito mútuo, na confiança e na colaboração.',
+                'Conduzi cobranças, dificuldades e eventuais divergências de maneira equilibrada e construtiva.',
+            ],
+            'Resultados e aperfeiçoamento da orientação' => [
+                'Minha atuação contribuiu efetivamente para a evolução acadêmica e científica do orientando.',
+                'Contribuí para que o desenvolvimento da pesquisa permanecesse coerente com os objetivos e prazos estabelecidos.',
+                'Avalio criticamente minha prática de orientação e busco aperfeiçoar meus procedimentos de acompanhamento e formação científica.',
+            ],
+        ];
+
+        $barema = Barema::updateOrCreate(
+            ['programa_id' => $programa->id, 'tipo' => 'autoavaliacao_orientador', 'versao' => 'teste'],
+            ['nome' => 'Autoavaliação do orientador (teste)', 'nivel' => 'ambos', 'ativo' => true, 'descricao' => 'Autoavaliação do orientador na banca de defesa.'],
+        );
+
+        $ordemSecao = 0;
+        foreach ($dimensoes as $dimensao => $afirmacoes) {
+            $secao = BaremaSecao::updateOrCreate(
+                ['barema_id' => $barema->id, 'ordem' => ++$ordemSecao],
+                ['nome' => $dimensao, 'peso' => 1, 'ativo' => true],
+            );
+
+            foreach ($afirmacoes as $i => $afirmacao) {
+                BaremaItem::updateOrCreate(
+                    ['barema_secao_id' => $secao->id, 'ordem' => $i + 1],
+                    ['nome' => $afirmacao, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
                 );
             }
         }

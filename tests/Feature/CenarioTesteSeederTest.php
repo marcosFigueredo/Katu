@@ -59,4 +59,20 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertNotSame($programa->id, app(ContextoSecretaria::class)->programa($secOutro)->id);
         $this->assertSame($programa->id, app(ContextoSecretaria::class)->programa(User::where('email', 'secretaria2@ppgmsb.test')->first())->id);
     }
+
+    public function test_cria_barema_de_autoavaliacao_do_orientador_com_15_afirmacoes(): void
+    {
+        $programa = $this->programaDoUsuario();
+
+        $this->seed(CenarioTesteSeeder::class);
+        $this->seed(CenarioTesteSeeder::class); // idempotente
+
+        $barema = \App\Models\Barema::where('programa_id', $programa->id)
+            ->where('tipo', 'autoavaliacao_orientador')->with('secoes.itens')->firstOrFail();
+
+        $this->assertTrue($barema->ativo);
+        $this->assertSame(5, $barema->secoes->count());
+        $this->assertSame(15, $barema->secoes->flatMap->itens->count());
+        $this->assertSame('Planejamento e acompanhamento', $barema->secoes->sortBy('ordem')->first()->nome);
+    }
 }

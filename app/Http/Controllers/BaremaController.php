@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barema;
 use App\Models\Programa;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BaremaController extends Controller
 {
@@ -59,7 +60,7 @@ class BaremaController extends Controller
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
-            'tipo'      => ['required', 'in:qualificacao,defesa,qualificacao_confidencial,defesa_confidencial'],
+            'tipo'      => ['required', Rule::in(array_keys(Barema::TIPOS))],
             'nivel'     => ['required', 'in:mestrado,doutorado,ambos'],
             'versao'    => ['required', 'string', 'max:20'],
             'descricao' => ['nullable', 'string'],
@@ -92,7 +93,7 @@ class BaremaController extends Controller
 
         $data = $request->validate([
             'nome'      => ['required', 'string', 'max:200'],
-            'tipo'      => ['required', 'in:qualificacao,defesa,qualificacao_confidencial,defesa_confidencial'],
+            'tipo'      => ['required', Rule::in(array_keys(Barema::TIPOS))],
             'nivel'     => ['required', 'in:mestrado,doutorado,ambos'],
             'versao'    => ['required', 'string', 'max:20'],
             'descricao' => ['nullable', 'string'],

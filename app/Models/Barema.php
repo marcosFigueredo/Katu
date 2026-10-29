@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Barema extends Model
 {
+    /** Tipos de barema e seus rótulos; a autoavaliação é preenchida pelo orientador na defesa. */
+    public const TIPOS = [
+        'qualificacao'              => 'Qualificação',
+        'defesa'                    => 'Defesa',
+        'qualificacao_confidencial' => 'Qualificação Confidencial',
+        'defesa_confidencial'       => 'Defesa Confidencial',
+        'autoavaliacao_orientador'  => 'Autoavaliação do orientador',
+    ];
+
     protected $fillable = [
         'programa_id',
         'nome',

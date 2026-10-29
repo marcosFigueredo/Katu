@@ -64,6 +64,7 @@
                                                     'defesa'                    => ['label' => 'Defesa',                    'color' => 'primary'],
                                                     'qualificacao_confidencial' => ['label' => 'Qualif. Confidencial',      'color' => 'warning'],
                                                     'defesa_confidencial'       => ['label' => 'Defesa Confidencial',       'color' => 'danger'],
+                                                    'autoavaliacao_orientador'  => ['label' => 'Autoavaliação do orientador', 'color' => 'secondary'],
                                                 };
                                             @endphp
                                             <span class="badge text-bg-{{ $tipoLabel['color'] }} bg-opacity-75">
