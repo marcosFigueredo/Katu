@@ -144,4 +144,25 @@ class FinalizarBancaAtaFolhaTest extends TestCase
             ->assertOk()
             ->assertDontSee('Finalizar e enviar ata e folha aos membros');
     }
+
+    public function test_falha_ao_gerar_a_folha_nao_impede_a_finalizacao_nem_o_aviso_ao_discente(): void
+    {
+        [, , $banca, $orientador] = $this->bancaProntaParaFinalizar('qualificacao');
+        // E-mails de verdade (transporte em memória), para o anexo ser gerado no envio.
+        config(['mail.default' => 'array']);
+        app()->forgetInstance('mail.manager');
+        app()->forgetInstance('mailer');
+        Mail::clearResolvedInstances();
+        Mail::swap(app('mail.manager'));
+        $this->mock(\App\Services\FolhaAprovacaoLatexService::class)
+            ->shouldReceive('gerarPdf')->andThrow(new \RuntimeException('pdflatex falhou'));
+
+        $resposta = $this->finalizar($orientador, $banca);
+        $resposta->assertSessionHasNoErrors()->assertRedirect(route('avaliacoes.banca', $banca));
+
+        $this->assertSame('finalizada', $banca->fresh()->status);
+        $enviados = collect(app('mail.manager')->mailer('array')->getSymfonyTransport()->messages())
+            ->map(fn ($m) => (string) $m->getOriginalMessage()->getSubject());
+        $this->assertTrue($enviados->contains(fn ($assunto) => str_starts_with($assunto, 'Resultado da sua Banca')), 'Assuntos: '.$enviados->implode(' | '));
+    }
 }

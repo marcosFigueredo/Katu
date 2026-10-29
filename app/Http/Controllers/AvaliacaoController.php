@@ -401,14 +401,6 @@ class AvaliacaoController extends Controller
             'ata_enviada_em' => now(),
         ]);
 
-        // O presidente envia a ata e a folha de aprovação aos membros da banca.
-        foreach ($avaliadores->load('docenteProgramaVinculo.docenteProfile.user') as $membro) {
-            $usuarioMembro = $membro->docenteProgramaVinculo?->docenteProfile?->user;
-            if ($usuarioMembro?->email) {
-                Mail::to($usuarioMembro->email)->send(new AtaFolhaBancaMail($banca, $usuarioMembro));
-            }
-        }
-
         // Atualiza status do trabalho acadêmico
         if (in_array($request->resultado, ['aprovado', 'aprovado_modificacoes'])) {
             $novoStatus = str_starts_with($banca->tipo, 'defesa') ? 'defendido' : 'qualificado';
@@ -422,9 +414,29 @@ class AvaliacaoController extends Controller
                 ->send(new BancaFinalizadaDiscenteMail($banca, $discente));
         }
 
+        // O presidente envia a ata e a folha de aprovação aos membros. A folha é compilada em LaTeX no envio:
+        // uma falha ali não desfaz a finalização, fica no log e é avisada ao orientador.
+        $falhasEnvio = 0;
+        foreach ($avaliadores->load('docenteProgramaVinculo.docenteProfile.user') as $membro) {
+            $usuarioMembro = $membro->docenteProgramaVinculo?->docenteProfile?->user;
+            if (! $usuarioMembro?->email) {
+                continue;
+            }
+            try {
+                Mail::to($usuarioMembro->email)->send(new AtaFolhaBancaMail($banca, $usuarioMembro));
+            } catch (\Throwable $e) {
+                report($e);
+                $falhasEnvio++;
+            }
+        }
+
+        $mensagem = $falhasEnvio === 0
+            ? 'Banca finalizada. A ata e a folha de aprovação foram enviadas aos membros e o discente foi notificado por e-mail.'
+            : "Banca finalizada e discente notificado, mas o envio da ata e da folha falhou para {$falhasEnvio} membro(s). Procure a Secretaria.";
+
         return redirect()
             ->route('avaliacoes.banca', $banca)
-            ->with('success', 'Banca finalizada. A ata e a folha de aprovação foram enviadas aos membros e o discente foi notificado por e-mail.');
+            ->with('success', $mensagem);
     }
 
     // -------------------------------------------------------------------------
