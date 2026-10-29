@@ -577,6 +577,59 @@ class HomologacaoUnicaTest extends TestCase
             ->assertDontSee('Modelagem Computacional em Saúde Pública');
     }
 
+    private function referenciasDoOrientadorEOutra(TrabalhoSubmissaoLatex $submissao, bool $comDoOrientador = true): void
+    {
+        SubmissaoReferencia::create([
+            'submissao_id' => $submissao->id, 'chave' => 'outro2024',
+            'texto' => 'Outro, A. (2024). Referencia De Terceiros Sobre Epidemias.',
+            'titulo_tex' => 'Referencia De Terceiros Sobre Epidemias', 'ano_tex' => 2024, 'status' => 'localizada',
+        ]);
+        if ($comDoOrientador) {
+            SubmissaoReferencia::create([
+                'submissao_id' => $submissao->id, 'chave' => 'orientador2025',
+                'texto' => 'Orientador, P. (2025). Artigo Escrito Pelo Orientador.',
+                'titulo_tex' => 'Artigo Escrito Pelo Orientador', 'ano_tex' => 2025, 'status' => 'localizada', 'do_orientador' => true,
+            ]);
+        }
+    }
+
+    public function test_orientador_ve_so_as_referencias_dele(): void
+    {
+        [$secretaria, , $banca, , $orientador, , $submissao] = $this->criarCenarioCompleto();
+        $this->referenciasDoOrientadorEOutra($submissao);
+        $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
+
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
+            ->assertOk()
+            ->assertSee('Artigo Escrito Pelo Orientador')
+            ->assertDontSee('Referencia De Terceiros Sobre Epidemias');
+    }
+
+    public function test_orientador_sem_referencias_dele_ve_mensagem(): void
+    {
+        [$secretaria, , $banca, , $orientador, , $submissao] = $this->criarCenarioCompleto();
+        $this->referenciasDoOrientadorEOutra($submissao, comDoOrientador: false);
+        $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
+
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
+            ->assertOk()
+            ->assertSee('Nenhuma referência de sua autoria foi identificada')
+            ->assertDontSee('Referencia De Terceiros Sobre Epidemias')
+            ->assertDontSee('não localizadas — verificar');
+    }
+
+    public function test_avaliador_continua_vendo_todas(): void
+    {
+        [$secretaria, , $banca, , , , $submissao, $avaliadores] = $this->criarCenarioCompleto();
+        $this->referenciasDoOrientadorEOutra($submissao);
+        $this->actingAs($secretaria)->post(route('bancas.homologar', $banca));
+
+        $this->actingAs($avaliadores[0])->get(route('avaliacoes.banca', $banca))
+            ->assertOk()
+            ->assertSee('Artigo Escrito Pelo Orientador')
+            ->assertSee('Referencia De Terceiros Sobre Epidemias');
+    }
+
     public function test_secretaria_nao_ve_relatorio_de_referencias_nas_telas_de_homologacao(): void
     {
         [$secretaria, , $banca, , , , $submissao] = $this->criarCenarioCompleto();

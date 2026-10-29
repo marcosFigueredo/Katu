@@ -1,7 +1,12 @@
-{{-- Relatório de verificação das referências ($submissao). Só discente e avaliadores (regra 8): nunca na tela da Secretaria. --}}
+{{-- Relatório de verificação das referências ($submissao). Só discente e avaliadores (regra 8): nunca na tela da Secretaria.
+     Com $somenteDoOrientador (tela do orientador), lista e contadores consideram só as referências em que ele é autor. --}}
 @php
+    $somenteDoOrientador = $somenteDoOrientador ?? false;
     $statusRefs = $submissao->refs_status;
     $refs = $statusRefs === 'concluida' ? $submissao->referencias()->orderBy('id')->get() : collect();
+    if ($somenteDoOrientador) {
+        $refs = $refs->where('do_orientador', true)->values();
+    }
     $contagem = $refs->countBy('status');
     $pct = $submissao->refs_recentes_pct;
 @endphp
@@ -21,11 +26,16 @@
                 A verificação das referências não pôde ser concluída.
             @endif
         </div>
+    @elseif ($somenteDoOrientador && $refs->isEmpty())
+        <div class="card-body small text-muted">Nenhuma referência de sua autoria foi identificada.</div>
     @else
         <div class="card-body">
+            @if ($somenteDoOrientador)
+                <p class="small text-muted mb-2">Referências do trabalho em que você é autor(a).</p>
+            @endif
             <div class="row g-3 text-center mb-3">
                 <div class="col-6 col-md-3">
-                    <div class="fs-4 fw-bold">{{ (int) $submissao->refs_total }}</div>
+                    <div class="fs-4 fw-bold">{{ $somenteDoOrientador ? $refs->count() : (int) $submissao->refs_total }}</div>
                     <div class="small text-muted">referências</div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -42,6 +52,7 @@
                 </div>
             </div>
 
+            @unless ($somenteDoOrientador)
             <ul class="small mb-3">
                 <li>
                     <strong>Atualidade:</strong>
@@ -54,6 +65,7 @@
                 </li>
                 <li><strong>Produção do orientador:</strong> {{ (int) $submissao->refs_orientador }} {{ (int) $submissao->refs_orientador === 1 ? 'referência' : 'referências' }}.</li>
             </ul>
+            @endunless
         </div>
 
         @if ($refs->isNotEmpty())

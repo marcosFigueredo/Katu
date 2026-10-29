@@ -42,7 +42,8 @@ O campo `categoria` é a única fonte de verdade para autorização — não há
 
 - **Bancas** (`BancaController`): CRUD + reabrir. Status: `cadastrada → em_avaliacao → finalizada`.
 - **Avaliações** (`AvaliacaoController`): formulário de notas por barema, finalização pelo orientador, ata imprimível.
-- **Baremas** (`BaremaController` + `BaremaSecaoController` + `BaremaItemController`): instrumentos de avaliação com seções e itens. Nota final = `Σ(nota × peso) / Σ(nota_max × peso) × 10`.
+- **Baremas** (`BaremaController` + `BaremaSecaoController` + `BaremaItemController`): instrumentos de avaliação com seções e itens. Nota final = `Σ(nota × peso) / Σ(nota_max × peso) × 10`. Tipos em `Barema::TIPOS`: qualificação, defesa, as duas confidenciais e **Autoavaliação do orientador**. A homologação exige barema ativo de cada tipo da etapa (`BaremasDaBancaService`).
+- **Autoavaliação do orientador** (`AutoavaliacaoOrientadorController`): só na banca de defesa, preenchida uma única vez pelo orientador (presidente); condição para finalizar e liberar ata e folha. Respostas privadas à CPA — ninguém as vê no sistema hoje.
 - **Documentos** (`TrabalhoDocumentoController`): upload de PDF, extração com `smalot/pdfparser`, análise via Ollama, envio para avaliadores.
 - **Usuários** (`UsuarioController`): cadastro com envio automático de e-mail de primeiro acesso. Discente cadastrado à mão exige orientador; o importado por CSV nasce sem orientador (aba/selo "sem orientador").
 - **Orientação** (`OrientacaoDiscenteController` + `OrientacaoService`): bloco na edição do discente em Usuários (não há mais tela "Orientações"). Troca de orientador com processo SEI e justificativa obrigatórios e data automática, só antes da qualificação (bloqueada com qualificação `em_avaliacao`/`finalizada` ou defesa não cancelada); a troca devolve a qualificação ainda `cadastrada`. Coorientadores entram e saem sem SEI, até `programas.max_coorientadores` vigentes.
@@ -58,6 +59,7 @@ O campo `categoria` é a única fonte de verdade para autorização — não há
 | Banca finalizada | Discente | `BancaFinalizadaDiscenteMail` |
 | Recuperação de senha | Usuário solicitante | `RecuperacaoSenhaTemporariaMail` |
 | Troca de orientador devolve qualificação homologada | Avaliadores da banca | `BancaRevisaoTrocaOrientadorMail` |
+| Presidente finaliza a banca | Avaliadores da banca (ata + folha em PDF) | `AtaFolhaBancaMail` |
 
 ## Convenções do projeto
 
@@ -79,6 +81,8 @@ php artisan tinker           # inspeção interativa
 
 - O papel `admin` existe na tabela mas **não tem nenhuma lógica implementada** nos controllers.
 - Baremas inativados não afetam avaliações existentes.
+- Privacidade das respostas: avaliação **confidencial** só o próprio avaliador vê (CPA no futuro); a **autoavaliação** do orientador ninguém vê; a **Secretaria** não abre relatórios individuais nem consolidados. O orientador vê as avaliações padrão e, nas referências, só as de sua autoria.
+- Ata e folha: na defesa, o orientador só abre/libera depois da autoavaliação; os avaliadores abrem depois do envio (`bancas.ata_enviada_em`); a Secretaria só visualiza.
 - A banca de defesa só pode ser criada após a qualificação ser finalizada com aprovação.
 - O orientador é presidente da banca via `Orientacao` — não entra em `banca_membros` como avaliador.
 - `orientacoes` guarda períodos (`inicio_em`/`fim_em`, `processo_sei`, `justificativa`, `registrado_por`) e nunca apaga linhas; vigente ⇔ `ativo = true`. `TrabalhoAcademico::orientacoes()` e `DocenteProgramaVinculo::orientacoes()` trazem **só as vigentes** (só elas dão acesso); o histórico completo é `orientacoesHistorico()`.

@@ -115,7 +115,7 @@
             </div>
 
             <div class="mb-4">
-                @include('partials.relatorio-referencias', ['submissao' => $submissao])
+                @include('partials.relatorio-referencias', ['submissao' => $submissao, 'somenteDoOrientador' => $ehOrientador && ! $ehMembro])
             </div>
         @endif
 
