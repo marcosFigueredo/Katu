@@ -48,6 +48,7 @@ Por quê: o programa quer registrar, a cada defesa, como o orientador avalia o p
 ### Quem vê as respostas
 - **Autoavaliação:** ninguém no sistema atual (fica para a CPA). Não aparece para avaliadores, Secretaria nem discente; o orientador vê só que concluiu.
 - **Avaliação padrão (barema `qualificacao`/`defesa`):** o orientador continua vendo respostas, notas, relatório individual e consolidado, como hoje.
+- **Secretaria:** não vê respostas de nenhuma avaliação. Perde o acesso aos relatórios individual e consolidado (403); continua vendo status, resultado e nota média da banca nas suas telas.
 - **Avaliação confidencial (`*_confidencial`):** o orientador e a Secretaria **deixam de ver** as respostas e notas — sai dos relatórios consolidado e individual, e a rota do relatório individual de um barema confidencial recusa (403) quem não é o próprio avaliador. Na página da banca, o orientador continua vendo **se** cada avaliador já enviou a confidencial (status), mas não o conteúdo. A nota média da banca continua sendo calculada como hoje. O avaliador continua vendo a própria avaliação confidencial.
 
 ### Barema obrigatório
