@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AtaFolhaBancaMail;
 use App\Mail\BancaFinalizadaDiscenteMail;
 use App\Mail\BancaProntaParaFinalizarMail;
 use App\Models\AutoavaliacaoOrientador;
@@ -142,11 +143,13 @@ class AvaliacaoController extends Controller
             ? AutoavaliacaoOrientador::where('banca_id', $banca->id)->where('docente_programa_vinculo_id', $vinculo->id)->first()
             : null;
 
+        $autoavaliacaoPendente = $ehOrientador && $this->autoavaliacaoPendente($banca, $vinculo->id);
+
         return view('avaliacoes.banca', compact(
             'banca', 'baremas', 'meuMembro', 'minhasAvaliacoes',
             'ehMembro', 'ehOrientador', 'podeFinalizar',
             'avaliadores', 'totalEnviadas', 'totalEsperado',
-            'baremaAutoavaliacao', 'autoavaliacao'
+            'baremaAutoavaliacao', 'autoavaliacao', 'autoavaliacaoPendente'
         ));
     }
 
@@ -372,6 +375,15 @@ class AvaliacaoController extends Controller
             ]);
         }
 
+        $faltantes = app(BaremasDaBancaService::class)->faltantes($banca);
+        if ($faltantes !== []) {
+            return back()->withErrors(['finalizar' => implode(' ', $faltantes)]);
+        }
+
+        if ($this->autoavaliacaoPendente($banca, $vinculo->id)) {
+            return back()->withErrors(['finalizar' => 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.']);
+        }
+
         // Calcula nota média consolidada (média das notas_final de todos avaliadores)
         $notasFinais = BancaAvaliacao::whereIn('banca_membro_id', $avaliadores->pluck('id'))
             ->where('status', 'enviada')
@@ -383,10 +395,19 @@ class AvaliacaoController extends Controller
             : null;
 
         $banca->update([
-            'status'     => 'finalizada',
-            'resultado'  => $request->resultado,
-            'nota_media' => $notaMedia,
+            'status'         => 'finalizada',
+            'resultado'      => $request->resultado,
+            'nota_media'     => $notaMedia,
+            'ata_enviada_em' => now(),
         ]);
+
+        // O presidente envia a ata e a folha de aprovação aos membros da banca.
+        foreach ($avaliadores->load('docenteProgramaVinculo.docenteProfile.user') as $membro) {
+            $usuarioMembro = $membro->docenteProgramaVinculo?->docenteProfile?->user;
+            if ($usuarioMembro?->email) {
+                Mail::to($usuarioMembro->email)->send(new AtaFolhaBancaMail($banca, $usuarioMembro));
+            }
+        }
 
         // Atualiza status do trabalho acadêmico
         if (in_array($request->resultado, ['aprovado', 'aprovado_modificacoes'])) {
@@ -403,7 +424,7 @@ class AvaliacaoController extends Controller
 
         return redirect()
             ->route('avaliacoes.banca', $banca)
-            ->with('success', 'Banca finalizada com sucesso. O discente foi notificado por e-mail.');
+            ->with('success', 'Banca finalizada. A ata e a folha de aprovação foram enviadas aos membros e o discente foi notificado por e-mail.');
     }
 
     // -------------------------------------------------------------------------
@@ -411,24 +432,7 @@ class AvaliacaoController extends Controller
     // -------------------------------------------------------------------------
     public function ata(Banca $banca)
     {
-        $user = auth()->user();
-
-        // Acesso restrito: secretaria ou orientador (presidente da banca)
-        if ($user->categoria === 'sec') {
-            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
-        } elseif ($user->categoria === 'docente') {
-            $user->load('docenteProfile.vinculosPrograma');
-            $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
-            $ehOrientador = $vinculo && $banca->trabalhoAcademico->orientacoes()
-                ->where('docente_programa_vinculo_id', $vinculo->id)
-                ->where('ativo', true)
-                ->exists();
-            if (! $ehOrientador) {
-                abort(403, 'Apenas o orientador (presidente da banca) e a secretaria podem acessar a Ata.');
-            }
-        } else {
-            abort(403);
-        }
+        $this->autorizarAta($banca);
 
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
@@ -602,8 +606,25 @@ class AvaliacaoController extends Controller
             ->where('ativo', true)
             ->exists();
 
-        if (! $ehOrientador) {
-            abort(403, 'Apenas o orientador (presidente da banca) e a secretaria podem acessar este documento.');
+        if ($ehOrientador) {
+            abort_if($this->autoavaliacaoPendente($banca, $vinculo->id), 403, 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.');
+
+            return;
         }
+
+        // Membros da banca recebem a ata e a folha quando o presidente finaliza.
+        $ehAvaliador = $vinculo && $banca->ata_enviada_em !== null && $banca->avaliadores()
+            ->where('docente_programa_vinculo_id', $vinculo->id)
+            ->exists();
+
+        abort_unless($ehAvaliador, 403, 'Apenas o presidente da banca, a Secretaria e, depois do envio, os membros da banca acessam este documento.');
+    }
+
+    /** Na defesa, a ata e a folha só são liberadas depois da autoavaliação do orientador. */
+    private function autoavaliacaoPendente(Banca $banca, int $vinculoId): bool
+    {
+        return $banca->tipo === 'defesa'
+            && $banca->status !== 'finalizada'
+            && ! AutoavaliacaoOrientador::where('banca_id', $banca->id)->where('docente_programa_vinculo_id', $vinculoId)->exists();
     }
 }

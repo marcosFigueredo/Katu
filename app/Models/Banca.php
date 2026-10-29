@@ -24,6 +24,7 @@ class Banca extends Model
         'homologada_por',
         'homologada_em',
         'enviada_banca_em',
+        'ata_enviada_em',
         'devolvida_por',
         'devolvida_em',
         'libera_envio_trabalho',
@@ -37,6 +38,7 @@ class Banca extends Model
             'nota_media'            => 'float',
             'homologada_em'         => 'datetime',
             'enviada_banca_em'      => 'datetime',
+            'ata_enviada_em'        => 'datetime',
             'devolvida_em'          => 'datetime',
             'homologacao_tentativa' => 'integer',
         ];

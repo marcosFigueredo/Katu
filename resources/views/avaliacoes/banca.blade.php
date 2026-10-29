@@ -300,7 +300,12 @@
                 @endif
 
                 {{-- Finalizar banca --}}
-                @if ($banca->status !== 'finalizada' && $banca->status !== 'cancelada')
+                @if ($banca->status !== 'finalizada' && $banca->status !== 'cancelada' && $autoavaliacaoPendente)
+                    <div class="alert alert-warning d-flex align-items-center gap-2 mt-3">
+                        <i class="bi bi-lock-fill"></i>
+                        <span>Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.</span>
+                    </div>
+                @elseif ($banca->status !== 'finalizada' && $banca->status !== 'cancelada')
                     @if ($podeFinalizar)
                         <div class="card border-success border-0 shadow-sm mt-3" style="border-left:4px solid #16a34a;">
                             <div class="card-body">
@@ -323,8 +328,8 @@
                                         @enderror
                                     </div>
                                     <button type="submit" class="btn btn-success"
-                                            onclick="return confirm('Confirma a finalização desta banca? Esta ação enviará o resultado ao discente e encerrará a possibilidade de edição.')">
-                                        <i class="bi bi-check-circle me-1"></i>Finalizar e notificar discente
+                                            onclick="return confirm('Confirma a finalização desta banca? A ata e a folha de aprovação serão enviadas aos membros, o resultado ao discente, e a banca não poderá mais ser editada.')">
+                                        <i class="bi bi-check-circle me-1"></i>Finalizar e enviar ata e folha aos membros
                                     </button>
                                 </form>
                             </div>
@@ -337,7 +342,7 @@
                     @endif
                 @endif
 
-                @if ($banca->homologacao_status === 'homologada' && $banca->status !== 'finalizada')
+                @if ($banca->homologacao_status === 'homologada' && $banca->status !== 'finalizada' && ! $autoavaliacaoPendente)
                     <div class="d-flex gap-2 flex-wrap mt-3 mb-3">
                         <a href="{{ route('avaliacoes.ata', $banca) }}"
                            target="_blank"
