@@ -271,7 +271,8 @@
                                             @endphp
                                             <td class="text-center">
                                                 <span class="badge bg-{{ $badge }}">{{ $label }}</span>
-                                                @if ($av?->nota_final !== null)
+                                                {{-- Nota da confidencial é da CPA: aqui só o status. --}}
+                                                @if ($av?->nota_final !== null && ! str_ends_with($barema->tipo, '_confidencial'))
                                                     <br>
                                                     <small class="text-muted">{{ number_format($av->nota_final, 1) }}</small>
                                                 @endif

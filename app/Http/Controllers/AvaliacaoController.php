@@ -486,15 +486,8 @@ class AvaliacaoController extends Controller
                 ->where('barema_id', $barema->id)
                 ->firstOrFail();
 
-        } elseif ($user->categoria === 'sec') {
-            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
-            // Secretaria pode passar o membro via query string
-            $membroId  = request('membro');
-            $avaliacao = BancaAvaliacao::where('banca_id', $banca->id)
-                ->where('barema_id', $barema->id)
-                ->when($membroId, fn ($q) => $q->where('banca_membro_id', $membroId))
-                ->firstOrFail();
         } else {
+            // Secretaria não vê respostas de avaliação: isso é da CPA.
             abort(403);
         }
 
@@ -519,25 +512,19 @@ class AvaliacaoController extends Controller
     // -------------------------------------------------------------------------
     public function relatorioConsolidado(Banca $banca)
     {
-        if (! in_array(auth()->user()->categoria, ['sec', 'docente'])) {
+        // Só o orientador (presidente): a Secretaria não vê respostas, e as confidenciais ficam com a CPA.
+        if (auth()->user()->categoria !== 'docente') {
             abort(403);
         }
 
-        if (auth()->user()->categoria === 'sec') {
-            $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);
-        }
-
-        // Orientador também pode ver
-        if (auth()->user()->categoria === 'docente') {
-            $user = auth()->user()->load('docenteProfile.vinculosPrograma');
-            $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
-            $ehOrientador = $vinculo && $banca->trabalhoAcademico->orientacoes()
-                ->where('docente_programa_vinculo_id', $vinculo->id)
-                ->where('ativo', true)
-                ->exists();
-            if (! $ehOrientador) {
-                abort(403);
-            }
+        $user = auth()->user()->load('docenteProfile.vinculosPrograma');
+        $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
+        $ehOrientador = $vinculo && $banca->trabalhoAcademico->orientacoes()
+            ->where('docente_programa_vinculo_id', $vinculo->id)
+            ->where('ativo', true)
+            ->exists();
+        if (! $ehOrientador) {
+            abort(403);
         }
 
         $banca->load([
@@ -546,12 +533,13 @@ class AvaliacaoController extends Controller
             'membros' => fn ($q) => $q->where('ativo', true)
                 ->with([
                     'docenteProgramaVinculo.docenteProfile.user',
+                    'avaliacoes' => fn ($q) => $q->whereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')),
                     'avaliacoes.barema',
                     'avaliacoes.notas.baremaItem',
                 ]),
         ]);
 
-        $baremas = $this->baremasParaBanca($banca);
+        $baremas = $this->baremasParaBanca($banca)->reject(fn (Barema $b) => str_ends_with($b->tipo, '_confidencial'))->values();
         $baremas->load(['secoes' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')
             ->with(['itens' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')])]);
 
