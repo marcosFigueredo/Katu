@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\AreaConcentracao;
+use App\Models\Banca;
+use App\Models\BancaMembro;
 use App\Models\Barema;
 use App\Models\BaremaItem;
 use App\Models\BaremaSecao;
@@ -12,6 +14,7 @@ use App\Models\DocenteProfile;
 use App\Models\DocenteProgramaVinculo;
 use App\Models\Instituicao;
 use App\Models\LinhaPesquisa;
+use App\Models\OrcidWork;
 use App\Models\Orientacao;
 use App\Models\Programa;
 use App\Models\ProgramaCurso;
@@ -44,16 +47,17 @@ class CenarioTesteSeeder extends Seeder
         $contexto->vincular($this->usuario('Secretaria Dois', 'secretaria2@ppgmsb.test', 'sec'), $programa);
 
         // Docentes
-        $permanente1 = $this->docente($programa, 'Profa. Permanente Um', 'permanente1@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'permanente', true);
-        $permanente2 = $this->docente($programa, 'Prof. Permanente Dois', 'permanente2@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'permanente', true);
-        $this->docente($programa, 'Profa. Colaboradora', 'colaborador@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'colaborador', true);
-        $this->docente($programa, 'Prof. Externo UFBA', 'externo.ufba@ppgmsb.test', 'UFBA', 'Universidade Federal da Bahia', 'externo', null, false);
+        $permanente1 = $this->docente($programa, 'Beatriz Carvalho Mendes', 'permanente1@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'permanente', true);
+        $permanente2 = $this->docente($programa, 'Rafael Teixeira Nunes', 'permanente2@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'permanente', true);
+        $colaborador = $this->docente($programa, 'Luciana Prado Freitas', 'colaborador@ppgmsb.test', 'UNEB', 'Universidade do Estado da Bahia', 'interno', 'colaborador', true);
+        $externoUfba = $this->docente($programa, 'Eduardo Moura Bastos', 'externo.ufba@ppgmsb.test', 'UFBA', 'Universidade Federal da Bahia', 'externo', null, false);
         $this->docente($programa, 'Profa. Externa USP', 'externo.usp@ppgmsb.test', 'USP', 'Universidade de São Paulo', 'externo', null, false);
 
         // Discentes
-        $completo = $this->discente($programa, $curso, $linha, 'Discente Completo', 'discente.completo@ppgmsb.test', 'TESTE-001', 'https://orcid.org/0000-0002-1825-0097');
+        $completo = $this->discente($programa, $curso, $linha, 'Juliana Ribeiro Santos', 'discente.completo@ppgmsb.test', 'TESTE-001', 'https://orcid.org/0000-0002-1825-0097');
         $this->orientacao($completo, $permanente1, 'orientador');
         $this->orientacao($completo, $permanente2, 'coorientador');
+        $this->configurarDissertacaoTeste($completo, $permanente1, $colaborador, $externoUfba);
 
         $semOrcid = $this->discente($programa, $curso, $linha, 'Discente Sem ORCID', 'discente.sem.orcid@ppgmsb.test', 'TESTE-002', null);
         $this->orientacao($semOrcid, $permanente2, 'orientador');
@@ -100,12 +104,12 @@ class CenarioTesteSeeder extends Seeder
         }
 
         $area = AreaConcentracao::firstOrCreate(
-            ['programa_id' => $programa->id, 'nome' => 'Área de Teste'],
+            ['programa_id' => $programa->id, 'nome' => 'Modelagem Aplicada a Biossistemas'],
             ['ativo' => true],
         );
 
         return LinhaPesquisa::firstOrCreate(
-            ['area_concentracao_id' => $area->id, 'nome' => 'Linha de Teste'],
+            ['area_concentracao_id' => $area->id, 'nome' => 'Modelagem e Otimização de Biossistemas'],
             ['ativo' => true],
         );
     }
@@ -274,6 +278,98 @@ class CenarioTesteSeeder extends Seeder
                     ['nome' => $pergunta, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
                 );
             }
+        }
+    }
+
+    /**
+     * Sincroniza os metadados do trabalho e a banca de defesa da discente Juliana Ribeiro Santos
+     * com os dados fictícios de dissertacao/dissertacao.tex.
+     */
+    private function configurarDissertacaoTeste(
+        DiscenteProgramaVinculo $discente,
+        DocenteProgramaVinculo $orientador,
+        DocenteProgramaVinculo $membroInterno,
+        DocenteProgramaVinculo $membroExterno,
+    ): void {
+        $trabalho = $discente->trabalhoAcademico;
+        if (! $trabalho) {
+            return;
+        }
+
+        // Produção registrada no ORCID da orientadora para conferência de referências da dissertação de teste
+        $perfilOrientador = $orientador->docenteProfile;
+        if ($perfilOrientador) {
+            foreach ([
+                [
+                    'doi' => '10.1016/j.annepidem.2025.06.012',
+                    'titulo' => 'Integrated statistical modeling and machine learning techniques with SHAP for epidemiological data analysis',
+                    'ano' => 2025,
+                    'journal' => 'Annals of Epidemiology',
+                ],
+                [
+                    'doi' => '10.3934/math.20251006',
+                    'titulo' => 'Intelligent forecasting of monkeypox spread using fractional epidemiological models and machine learning',
+                    'ano' => 2025,
+                    'journal' => 'AIMS Mathematics',
+                ],
+            ] as $obra) {
+                OrcidWork::updateOrCreate(
+                    ['docente_profile_id' => $perfilOrientador->id, 'doi' => $obra['doi']],
+                    [
+                        'orcid_id' => '0000-0002-9000-'.str_pad((string) $perfilOrientador->user_id, 4, '0', STR_PAD_LEFT),
+                        'titulo' => $obra['titulo'],
+                        'ano' => $obra['ano'],
+                        'tipo' => 'journal-article',
+                        'journal' => $obra['journal'],
+                        'fonte' => 'orcid',
+                        'consultado_em' => now(),
+                    ],
+                );
+            }
+        }
+
+        $trabalho->update([
+            'titulo' => 'Modelagem Computacional e Simulação Estocástica de Biossistemas Aplicadas à Vigilância Epidemiológica',
+            'resumo' => 'A modelagem computacional e a simulação estocástica de biossistemas desempenham papel fundamental na compreensão de fenômenos epidemiológicos complexos e no suporte à tomada de decisão em saúde pública. Neste trabalho fictício de teste para o sistema de gestão de bancas do PPGMSB, propomos uma arquitetura híbrida que integra equações diferenciais estocásticas e algoritmos de aprendizado de máquina para a predição espaço-temporal de surtos epidemiológicos em cenários com dados ruidosos. O método compreende três etapas principais: pré-processamento e filtragem adaptativa de séries temporais, calibração paramétrica via inferência bayesiana e simulação de cenários de intervenção. Os experimentos numéricos sintéticos demonstram estabilidade numérica, redução do erro quadrático médio de predição e elevada aderência aos critérios de reprodutibilidade científica do programa.',
+            'palavras_chave' => 'modelagem computacional; simulação estocástica; biossistemas; aprendizado de máquina; vigilância epidemiológica',
+        ]);
+
+        // Qualificação já aprovada para permitir banca de defesa
+        $qualificacao = Banca::updateOrCreate(
+            ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'qualificacao'],
+            [
+                'status' => 'finalizada',
+                'homologacao_status' => 'homologada',
+                'resultado' => 'aprovado',
+                'nota_media' => 9.5,
+                'data_hora' => '2026-05-15 14:00:00',
+                'local' => 'Alagoinhas/BA',
+            ],
+        );
+
+        foreach ([[1, $membroInterno], [2, $membroExterno]] as [$ordem, $docente]) {
+            BancaMembro::updateOrCreate(
+                ['banca_id' => $qualificacao->id, 'docente_programa_vinculo_id' => $docente->id],
+                ['papel' => 'avaliador', 'ordem' => $ordem, 'ativo' => true],
+            );
+        }
+
+        // Banca de defesa proposta, sincronizada com dissertacao/dissertacao.tex
+        $defesa = Banca::updateOrCreate(
+            ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'defesa'],
+            [
+                'status' => 'cadastrada',
+                'homologacao_status' => 'proposta',
+                'data_hora' => '2026-11-30 14:00:00',
+                'local' => 'Alagoinhas/BA',
+            ],
+        );
+
+        foreach ([[1, $membroInterno], [2, $membroExterno]] as [$ordem, $docente]) {
+            BancaMembro::updateOrCreate(
+                ['banca_id' => $defesa->id, 'docente_programa_vinculo_id' => $docente->id],
+                ['papel' => 'avaliador', 'ordem' => $ordem, 'ativo' => true],
+            );
         }
     }
 }
