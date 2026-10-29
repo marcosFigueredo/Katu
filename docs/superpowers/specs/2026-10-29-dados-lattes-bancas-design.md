@@ -56,7 +56,7 @@ Quem participa de uma banca do programa precisa lançar essa participação no C
 | Tipo | Modalidade do curso do discente: acadêmico → "Acadêmico", profissional → "Profissional". |
 | Título | Título do trabalho. |
 | Ano | Ano da data da banca. |
-| País | País da instituição do programa (padrão "Brasil"). |
+| País | País da instituição do programa — campo novo **País** no cadastro da instituição, junto de Estado e Município (padrão "Brasil"). |
 | Idioma | Idioma da submissão LaTeX vigente: `pt` → "Português", `en` → "Inglês" (padrão "Português"). |
 | Homepage do trabalho | Homepage dos trabalhos do programa. |
 | Nome do candidato | Nome do discente. |

@@ -53,18 +53,18 @@
 
 ---
 
-### Task 2: Homepage dos trabalhos no cadastro do programa
+### Task 2: Homepage dos trabalhos no programa; país, estado e município da instituição
 
 **Files:**
-- Create: `database/migrations/2026_10_29_131000_add_homepage_trabalhos_to_programas_table.php`
-- Modify: `app/Models/Programa.php` (fillable), `app/Http/Controllers/ProgramaController.php:50` (regra `homepage_trabalhos` `nullable|url|max:255`), `resources/views/programas/form.blade.php` (campo "Homepage dos trabalhos", após "Site")
-- Test: `tests/Feature/ProgramaCadastroTest.php` (ou o teste existente do formulário do programa)
+- Create: `database/migrations/2026_10_29_131000_add_homepage_trabalhos_e_pais_instituicao.php`
+- Modify: `app/Models/Programa.php` (fillable), `app/Http/Controllers/ProgramaController.php:50` (regra `homepage_trabalhos` `nullable|url|max:255`), `resources/views/programas/form.blade.php` (campo "Homepage dos trabalhos", após "Site"); `app/Models/Instituicao.php` (fillable `pais`), `app/Http/Controllers/InstituicaoController.php:28` (regra `pais` `required|string|max:100`), `resources/views/instituicoes/edit.blade.php` e o formulário de criação da instituição (campos **País**, **Estado**, **Município** — o rótulo "Cidade" vira "Município"; coluna continua `cidade`)
+- Test: testes existentes dos formulários de programa e de instituição
 
-**Interfaces:** Produces `programas.homepage_trabalhos` (string null).
+**Interfaces:** Produces `programas.homepage_trabalhos` (string null); `instituicoes.pais` (string(100), default `'Brasil'`, preenchido nas linhas existentes).
 
-- [ ] **Step 1: Testes que falham:** salva e mostra o campo; URL inválida → erro em `homepage_trabalhos`.
+- [ ] **Step 1: Testes que falham:** programa salva e mostra a homepage; URL inválida → erro em `homepage_trabalhos`; instituição salva país, estado e município, e o formulário mostra o rótulo "Município"; instituição nova sem país informado fica "Brasil" na tela (valor inicial do campo).
 - [ ] **Step 2: Rodar** → FAIL. **Step 3: Implementar.** **Step 4: Rodar** → PASS; suíte; MySQL migrate/rollback/migrate.
-- [ ] **Step 5: Commit** — `feat: homepage dos trabalhos no cadastro do programa`.
+- [ ] **Step 5: Commit** — `feat: homepage dos trabalhos no programa; país, estado e município da instituição`.
 
 ---
 
@@ -94,7 +94,7 @@
 
 **Interfaces:**
 - Consumes: Tarefas 1–3.
-- Produces: `DadosLattesBancaService::campos(Banca $banca): list<array{rotulo: string, valor: string}>` na ordem do spec (Natureza, Tipo, Título, Ano, País, Idioma, Homepage do trabalho, Nome do candidato, Instituição, Curso, Participantes da banca, Palavras-chave, Áreas, Setor de aplicação, Outras informações, Título em inglês, Other information, Visibilidade). Regras de origem: tabela do spec. País = "Brasil" (instituição não tem país). Idioma pela submissão LaTeX vigente (`pt` → "Português", `en` → "Inglês"; sem submissão → "Português"). Curso = "{ProgramaCurso::nome} — {Programa::nome}". Participantes = orientador, coorientadores vigentes, avaliadores ativos e discente, um por linha com o papel. Vazio → "—".
+- Produces: `DadosLattesBancaService::campos(Banca $banca): list<array{rotulo: string, valor: string}>` na ordem do spec (Natureza, Tipo, Título, Ano, País, Idioma, Homepage do trabalho, Nome do candidato, Instituição, Curso, Participantes da banca, Palavras-chave, Áreas, Setor de aplicação, Outras informações, Título em inglês, Other information, Visibilidade). Regras de origem: tabela do spec. País = `instituicoes.pais` (Tarefa 2). Idioma pela submissão LaTeX vigente (`pt` → "Português", `en` → "Inglês"; sem submissão → "Português"). Curso = "{ProgramaCurso::nome} — {Programa::nome}". Participantes = orientador, coorientadores vigentes, avaliadores ativos e discente, um por linha com o papel. Vazio → "—".
 
 - [ ] **Step 1: Testes que falham:** `test_campos_da_defesa_de_mestrado` (natureza "Mestrado", tipo "Acadêmico", ano, participantes com orientador e discente, áreas no caminho, homepage do programa); `test_natureza_da_qualificacao_de_doutorado`; `test_campos_vazios_aparecem_com_travessao` (Review Focus 5); `test_lista_mostra_bancas_finalizadas_de_que_participou_uma_vez_cada` (avaliador numa, orientador noutra; Review Focus 1); `test_banca_nao_finalizada_ou_cancelada_fica_fora_e_quadro_da_403` (Review Focus 2); `test_quem_nao_participou_recebe_403`; `test_externo_nao_ve_bancas_que_voce_orienta`.
 - [ ] **Step 2: Rodar** → FAIL. **Step 3: Implementar** (botão copiar com `navigator.clipboard.writeText`). **Step 4: Rodar** → PASS; suíte.
