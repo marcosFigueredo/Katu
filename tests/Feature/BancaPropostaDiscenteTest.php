@@ -16,10 +16,12 @@ use App\Models\TrabalhoDocumento;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Tests\Concerns\CriaBaremasAtivos;
 use Tests\TestCase;
 
 class BancaPropostaDiscenteTest extends TestCase
 {
+    use CriaBaremasAtivos;
     use RefreshDatabase;
 
     public function test_discente_propoe_banca_e_fica_proposta_sem_liberar_envio(): void
@@ -152,6 +154,7 @@ class BancaPropostaDiscenteTest extends TestCase
         $secretaria = User::factory()->secretaria()->create();
         $instituicao = Instituicao::create(['nome' => 'UNEB', 'sigla' => 'UNEB', 'ativo' => true]);
         $programa = Programa::create(['nome' => 'PPGMSB', 'sigla' => 'PPGMSB', 'instituicao_id' => $instituicao->id]);
+        $this->criarBaremasAtivos($programa);
         \Illuminate\Support\Facades\DB::table('programa_usuarios')->insert([
             'programa_id' => $programa->id,
             'user_id' => $secretaria->id,

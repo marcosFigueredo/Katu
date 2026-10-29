@@ -60,7 +60,7 @@
                         @forelse ($aguardando as $banca)
                             @php
                                 $analise = $analises[$banca->id];
-                                $itens = $analise['composicao']->map(fn ($i) => $i)->push($analise['template'])->push([
+                                $itens = $analise['composicao']->map(fn ($i) => $i)->push($analise['template'])->push($analise['baremas'])->push([
                                     'descricao' => 'Critérios da CPA', 'exigido' => '100% Sim',
                                     'encontrado' => $analise['cpa_ok'] ? 'Conformes' : 'Pendente / Não conforme', 'ok' => $analise['cpa_ok'],
                                 ]);

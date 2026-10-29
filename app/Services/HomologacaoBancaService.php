@@ -20,6 +20,7 @@ class HomologacaoBancaService
     public function __construct(
         private readonly VerificacaoBancaService $verificacao,
         private readonly CriterioCpaService $criteriosCpa,
+        private readonly BaremasDaBancaService $baremas,
     ) {
     }
 
@@ -184,6 +185,15 @@ class HomologacaoBancaService
             fn (array $item) => $item['resposta'] !== null && $item['resposta']->resposta === true
         );
 
+        $baremasFaltantes = $this->baremas->faltantes($banca);
+        $baremasOk = $baremasFaltantes === [];
+        $baremas = [
+            'descricao' => 'Baremas cadastrados',
+            'exigido' => 'Barema ativo para cada formulário da etapa',
+            'encontrado' => $baremasOk ? 'Todos cadastrados' : implode(' ', $baremasFaltantes),
+            'ok' => $baremasOk,
+        ];
+
         $pendencias = [];
 
         foreach ($composicao as $item) {
@@ -195,6 +205,8 @@ class HomologacaoBancaService
         if (! $templateOk) {
             $pendencias[] = "{$template['descricao']}: {$template['encontrado']}.";
         }
+
+        array_push($pendencias, ...$baremasFaltantes);
 
         if (! $cpaOk) {
             $faltantes = $cpaRespostas->filter(fn (array $i) => $i['resposta'] === null)->count();
@@ -209,7 +221,9 @@ class HomologacaoBancaService
         }
 
         return [
-            'pode' => $composicaoOk && $templateOk && $cpaOk,
+            'pode' => $composicaoOk && $templateOk && $cpaOk && $baremasOk,
+            'baremas' => $baremas,
+            'baremas_ok' => $baremasOk,
             'composicao' => $composicao,
             'composicao_ok' => $composicaoOk,
             'template' => $template,

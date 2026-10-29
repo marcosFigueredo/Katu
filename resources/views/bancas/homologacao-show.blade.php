@@ -189,6 +189,18 @@
                                 </tr>
                             @endforeach
                             <tr>
+                                <td>{{ $analise['baremas']['descricao'] }}</td>
+                                <td>{{ $analise['baremas']['exigido'] }}</td>
+                                <td>{{ $analise['baremas']['encontrado'] }}</td>
+                                <td class="text-end">
+                                    @if ($analise['baremas_ok'])
+                                        <span class="badge text-bg-success"><i class="bi bi-check-lg me-1"></i>Conforme</span>
+                                    @else
+                                        <span class="badge text-bg-danger"><i class="bi bi-x-lg me-1"></i>Pendente</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>{{ $tpl['descricao'] }}</td>
                                 <td>{{ $tpl['exigido'] }}</td>
                                 <td>{{ $tpl['encontrado'] }}</td>
@@ -340,6 +352,9 @@
                                             @endif
                                             @if (! $analise['template_ok'])
                                                 <li>O trabalho submetido esteja em conformidade com o template do programa;</li>
+                                            @endif
+                                            @if (! $analise['baremas_ok'])
+                                                <li>A Secretaria cadastre e ative os baremas da etapa: {{ $analise['baremas']['encontrado'] }}</li>
                                             @endif
                                             @if (! $analise['cpa_ok'])
                                                 <li>Todos os critérios da CPA estejam respondidos com <strong>Sim</strong>.</li>

@@ -17,10 +17,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Tests\Concerns\CriaBaremasAtivos;
 use Tests\TestCase;
 
 class HomologacaoBancaTest extends TestCase
 {
+    use CriaBaremasAtivos;
     use RefreshDatabase;
 
     public function test_secretaria_homologa_banca_que_cumpre_a_verificacao(): void
@@ -192,6 +194,7 @@ class HomologacaoBancaTest extends TestCase
         $secretaria = User::factory()->secretaria()->create();
         $instituicao = Instituicao::create(['nome' => 'UNEB', 'sigla' => 'UNEB', 'ativo' => true]);
         $programa = Programa::create(['nome' => 'PPGMSB', 'sigla' => 'PPGMSB', 'instituicao_id' => $instituicao->id]);
+        $this->criarBaremasAtivos($programa);
         DB::table('programa_usuarios')->insert([
             'programa_id' => $programa->id,
             'user_id' => $secretaria->id,
