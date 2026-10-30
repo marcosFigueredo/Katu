@@ -186,7 +186,7 @@ Avalia o **estudante como pesquisador** (domínio, decisão própria, amadurecim
 
 Qualificação: elementos 1–4 e 7 (linha de base). Defesa: todos.
 
-### Recomendações da qualificação (proposto — a confirmar)
+### Recomendações da qualificação (confirmado)
 1. Na qualificação, a banca registra as recomendações (uma por linha).
 2. Na submissão da defesa, o estudante responde cada uma: atendida · atendida em parte · não atendida (com justificativa), indicando onde está no texto.
 3. Na defesa, a banca vê a lista ao avaliar o elemento 5.
@@ -203,6 +203,46 @@ Evolução (nota da dimensão na defesa − na qualificação, elementos 1–4) 
 
 ### Estatística
 Mesmo modelo, mais: aberto (1–3) × sigiloso (4, 6, 7); evolução qualificação → defesa; recomendações atendidas × nota da defesa; **estudante × banca × orientador**.
+
+## Dimensão 6 — Aderência ao programa (registrada)
+
+### O que já existe
+Área de concentração e linha de pesquisa com **objetivo** descrito (linha também com ODS); linha declarada no cadastro do estudante; verificação de aderência por IA (Ollama) do trabalho à linha (alimenta o indicador A17). **Não existe:** cadastro de projetos de pesquisa.
+
+### Elementos medidos de 0 a 10 no formulário da banca (e indicados pelo discente na submissão da defesa)
+| # | Elemento | O que a banca avalia | Formulário |
+|---|---|---|---|
+| 1 | Aderência à área de concentração | enquadra-se no objetivo da área | aberto |
+| 2 | Aderência à linha de pesquisa | tema e método correspondem ao objetivo da linha | aberto |
+| 3 | Identidade do programa | usa de fato modelagem e simulação aplicadas a biossistemas | aberto |
+| 4 | Vínculo com projeto de pesquisa | ligado a um projeto do orientador | aberto |
+| 5 | Coerência com o curso | acadêmico: contribuição científica; profissional: produto ou solução aplicada | aberto |
+| 6 | Grau geral de aderência | juízo franco da banca | sigiloso |
+
+Qualificação e defesa: todos os elementos (a diferença mostra se o trabalho se afastou da linha).
+
+### Declaração do discente (espelho, na submissão da defesa)
+Confirma linha e área; descreve em 1–2 frases **como o trabalho usa modelagem e simulação**; responde às perguntas 1–5.
+
+### Projetos de pesquisa (decidido)
+- A **Secretaria cadastra os projetos dos docentes permanentes**, como no Lattes: **início, título, descrição** (proposta: também **fim**/"em andamento" e **situação** ativo/concluído, para não oferecer projeto encerrado).
+- O **estudante é vinculado ao projeto no mesmo momento em que a Secretaria registra o orientador** (edição do discente em Usuários); na **troca de orientador**, o projeto também é trocado.
+
+### Aderência ao projeto calculada pelo sistema (decidido: viável; na qualificação e na defesa)
+- Entrada: título, resumo e palavras-chave extraídos do LaTeX × título e descrição do projeto vinculado.
+- **Similaridade semântica** (embeddings `nomic-embed-text`, já usados no sistema): número estável.
+- **Nota 0–10 com justificativa** pelo Ollama, com **régua fixa** (0 sem relação · 4 tangencial · 7 aderente com desvios · 10 plenamente dentro do projeto), citando trechos dos dois textos.
+- Confiabilidade: temperatura zero, **3 execuções e mediana**; guarda modelo, versão da régua e data.
+- **Apoia a banca** no elemento 4 (mostra nota e justificativa); **não decide**.
+- Calibração: a CPA compara nota automática × nota da banca e ajusta a régua se divergirem muito.
+
+### Outras medidas automáticas
+- Aderência por IA à linha (já existe) → 0–10 (aderente 10, parcial 5, não aderente 0).
+- Coerência do cadastro: linha do estudante = linha de atuação do orientador.
+- ODS do trabalho (template) × ODS da linha.
+
+### Estatística
+Mesmo modelo, mais: banca × IA (concordância); % de aderentes por linha e equilíbrio entre linhas; aderência × outras dimensões.
 
 ## Bolsa do estudante (planejado — implementar depois)
 
@@ -278,8 +318,8 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Recomendações da qualificação registradas pela banca e respondidas pelo estudante na defesa: confirmar.
-- [ ] Dimensões 6 a 8: a discutir, uma por vez.
+- [ ] Projetos: orientador com mais de um projeto ativo — a Secretaria escolhe ao registrar o orientador, ou o sistema vincula sozinho quando há um só e pede escolha quando há vários?
+- [ ] Dimensões 7 e 8: a discutir.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
