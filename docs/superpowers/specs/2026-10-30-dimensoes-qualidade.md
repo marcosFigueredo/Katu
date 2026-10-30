@@ -314,7 +314,12 @@ Verificações que **não se aplicam** não entram na conta.
   3. **Analisar, conferir e dar publicidade** aos resultados.
 - A CPA **não age sobre nenhum elemento de avaliação**: não altera avaliações respondidas, não classifica dissertações, não emite parecer. O resultado de cada dissertação é o que o sistema calcula a partir das avaliações.
 
+### Saídas da CPA nesta versão (decidido em 2026-10-30)
+- **Dashboard da CPA** — só para membros com mandato vigente — para analisar as 8 dimensões (por dissertação, por orientador e do programa).
+- **Relatórios exportáveis** (PDF e planilha) para a CPA analisar.
+
 ### Fora desta versão
+- **Publicidade** dos resultados (painel para outros docentes ou página pública): fica para depois.
 - **Membros externos à CPA** (indicados pela CPA): ficam para uma próxima atualização.
 
 ## Bolsa do estudante (planejado — implementar depois)
@@ -382,7 +387,7 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Perfil CPA: telas e relatórios; como o sistema apresenta o resultado (faixas da nota geral ou índice ponderado — sem parecer da CPA); o que é "dar publicidade" no sistema.
+- [ ] Perfil CPA: telas e relatórios; como o sistema apresenta o resultado (faixas da nota geral ou índice ponderado — sem parecer da CPA); conteúdo da dashboard e dos relatórios.
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
