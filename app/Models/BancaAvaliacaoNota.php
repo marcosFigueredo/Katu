@@ -12,6 +12,7 @@ class BancaAvaliacaoNota extends Model
     protected $fillable = [
         'banca_avaliacao_id',
         'barema_item_id',
+        'dimensao_qualidade_id',
         'nota',
         'observacao',
     ];

@@ -296,6 +296,8 @@ class AvaliacaoController extends Controller
                 [
                     'nota'       => $validated['notas'][$item->id] ?? null,
                     'observacao' => $validated['observacoes'][$item->id] ?? null,
+                    // Dimensão do momento da nota: reclassificar a pergunta depois não altera o histórico.
+                    'dimensao_qualidade_id' => $item->dimensao_qualidade_id,
                 ]
             );
         }

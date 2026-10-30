@@ -11,6 +11,7 @@ class AutoavaliacaoOrientadorNota extends Model
     protected $fillable = [
         'autoavaliacao_orientador_id',
         'barema_item_id',
+        'dimensao_qualidade_id',
         'nota',
     ];
 

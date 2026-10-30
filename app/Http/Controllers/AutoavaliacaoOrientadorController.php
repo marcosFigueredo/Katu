@@ -72,7 +72,11 @@ class AutoavaliacaoOrientadorController extends Controller
             ]);
 
             foreach ($itens as [$item]) {
-                $autoavaliacao->notas()->create(['barema_item_id' => $item->id, 'nota' => $dados['notas'][$item->id]]);
+                $autoavaliacao->notas()->create([
+                    'barema_item_id' => $item->id,
+                    'nota' => $dados['notas'][$item->id],
+                    'dimensao_qualidade_id' => $item->dimensao_qualidade_id,
+                ]);
             }
         });
 
