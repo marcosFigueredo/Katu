@@ -41,6 +41,7 @@
 
         <div id="submissao-resultado"
              data-status="{{ $submissao->status }}"
+             data-em-andamento="{{ ($emAndamento ?? ($submissao->status === 'processando')) ? '1' : '0' }}"
              data-url="{{ route('meu-trabalho.submissao-latex.show', $submissao) }}">
             @include('meu-trabalho.partials.submissao-latex-resultado')
         </div>
@@ -49,7 +50,7 @@
     <script>
         (function () {
             const alvo = document.getElementById('submissao-resultado');
-            if (!alvo || alvo.dataset.status !== 'processando') return;
+            if (!alvo || alvo.dataset.emAndamento !== '1') return;
 
             const consultar = function () {
                 fetch(alvo.dataset.url, {
@@ -61,8 +62,9 @@
                         if (dados && dados.html) {
                             alvo.innerHTML = dados.html;
                             alvo.dataset.status = dados.status;
+                            alvo.dataset.emAndamento = dados.em_andamento ? '1' : '0';
                         }
-                        if (dados && dados.status === 'processando') {
+                        if (dados && dados.em_andamento) {
                             setTimeout(consultar, 5000);
                         }
                     })

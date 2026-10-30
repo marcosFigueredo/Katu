@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Exceptions\ProjetoLatexInvalidoException;
+use App\Models\ProgramaTemplateLatex;
 use App\Models\TrabalhoSubmissaoLatex;
 use App\Services\Latex\CompiladorLatex;
 use App\Services\Latex\ConformidadeCadastroService;
@@ -21,6 +22,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Throwable;
 
 /**
@@ -102,6 +105,9 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
             return;
         }
 
+        // 1.1. completa arquivos de apoio ausentes a partir do template do programa (sem sobrescrever nada enviado)
+        self::completarComArquivosDoTemplate($projeto, $template, $zipService);
+
         // 2. elementos vitais com o mapa do template
         $fonte = $projeto->fonteExpandido();
         $elementos = $extrator->extrair($fonte, $template?->mapa_elementos);
@@ -156,6 +162,62 @@ class ProcessarSubmissaoLatexJob implements ShouldQueue
         // 8. verificação das referências (Tarefa 10), só quando compilou
         if ($compilou) {
             VerificarReferenciasSubmissaoJob::dispatch($submissao->fresh());
+        }
+    }
+
+    /**
+     * Caso o discente omita arquivos de apoio do template (ex.: preTextual/simbolos.tex,
+     * classPPGMSB.cls, brazilian.apc, figuras/logo_uneb.png), copia apenas os ausentes.
+     */
+    public static function completarComArquivosDoTemplate(
+        ProjetoLatex $projeto,
+        ?ProgramaTemplateLatex $template,
+        ProjetoLatexZipService $zipService,
+    ): void {
+        $classeProjeto = (string) $projeto->classeDocumento();
+        $zipTemplate = null;
+
+        if ($template?->arquivo_path
+            && Storage::disk('local')->exists($template->arquivo_path)
+            && ($template->classe_documento === null || strcasecmp($classeProjeto, $template->classe_documento) === 0)) {
+            $zipTemplate = Storage::disk('local')->path($template->arquivo_path);
+        } elseif (strcasecmp($classeProjeto, 'classPPGMSB') === 0 && is_file(base_path('docs/classppgmsb.zip'))) {
+            $zipTemplate = base_path('docs/classppgmsb.zip');
+        }
+
+        if ($zipTemplate === null) {
+            return;
+        }
+
+        $tmpTemplate = storage_path('app/private/tmp/template-base-'.Str::uuid());
+        File::ensureDirectoryExists($tmpTemplate);
+
+        try {
+            $base = $zipService->extrair($zipTemplate, $tmpTemplate, $template?->tex_principal);
+            $it = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($base->raiz, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::LEAVES_ONLY,
+            );
+
+            foreach ($it as $arq) {
+                if (! $arq->isFile() || $arq->isLink()) {
+                    continue;
+                }
+                $rel = ltrim(str_replace('\\', '/', substr($arq->getPathname(), strlen($base->raiz))), '/');
+                if ($rel === '' || strcasecmp($rel, str_replace('\\', '/', $base->texPrincipal)) === 0) {
+                    continue;
+                }
+
+                $destino = $projeto->raiz.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $rel);
+                if (! is_file($destino)) {
+                    File::ensureDirectoryExists(dirname($destino));
+                    @copy($arq->getPathname(), $destino);
+                }
+            }
+        } catch (Throwable) {
+            // Falha ao ler template de apoio não interrompe a compilação do projeto do discente.
+        } finally {
+            File::deleteDirectory($tmpTemplate);
         }
     }
 

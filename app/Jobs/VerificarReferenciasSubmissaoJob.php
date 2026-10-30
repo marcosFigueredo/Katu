@@ -93,6 +93,8 @@ class VerificarReferenciasSubmissaoJob implements ShouldQueue
             }
             File::ensureDirectoryExists($tmp);
             $projeto = $zipService->extrair($disco->path($submissao->zip_path), $tmp, $submissao->tex_principal);
+            $template = $submissao->trabalhoAcademico()->with('programa.templateLatex')->first()?->programa?->templateLatex;
+            ProcessarSubmissaoLatexJob::completarComArquivosDoTemplate($projeto, $template, $zipService);
             $apendice = $this->montarApendice($submissao);
 
             $resultado = $compilador->compilar(

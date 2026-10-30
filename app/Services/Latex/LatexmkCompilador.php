@@ -92,8 +92,22 @@ class LatexmkCompilador implements CompiladorLatex
         $base = pathinfo($projeto->texPrincipal, PATHINFO_FILENAME);
         $pdf = $outdir.DIRECTORY_SEPARATOR.$base.'.pdf';
         $bbl = $outdir.DIRECTORY_SEPARATOR.$base.'.bbl';
-
         $arquivoLog = $outdir.DIRECTORY_SEPARATOR.$base.'.log';
+
+        // Com -no-shell-escape, o automake do glossaries não pode rodar makeindex dentro do TeX.
+        // Se o documento gerou arquivo .ist (\makeglossaries), rodamos makeglossaries no outdir
+        // e mais uma passada do latexmk para incorporar as listas de símbolos/abreviações e o sumário.
+        $logInicial = is_file($arquivoLog) ? (string) file_get_contents($arquivoLog) : '';
+        if (is_file($outdir.DIRECTORY_SEPARATOR.$base.'.ist') && ! preg_match('/^! /m', $logInicial)) {
+            if ($this->gerarGlossarios($outdir, $base)) {
+                try {
+                    $processo->run();
+                } catch (\Throwable) {
+                    // mantém o resultado da passada anterior se a recompilação falhar
+                }
+            }
+        }
+
         $log = is_file($arquivoLog) ? (string) file_get_contents($arquivoLog) : '';
         if ($log === '') {
             $log = $processo->getOutput()."\n".$processo->getErrorOutput();
@@ -105,6 +119,24 @@ class LatexmkCompilador implements CompiladorLatex
             $log,
             $outdir,
         );
+    }
+
+    private function gerarGlossarios(string $outdir, string $base): bool
+    {
+        try {
+            $proc = new Process(
+                ['makeglossaries', '-q', $base],
+                $outdir,
+                ['openout_any' => 'p', 'openin_any' => 'p', 'TEXMFOUTPUT' => $outdir],
+            );
+            $proc->setTimeout(30);
+            $proc->setInput(null);
+            $proc->run();
+
+            return $proc->isSuccessful();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /** @return list<string> */
@@ -128,10 +160,12 @@ class LatexmkCompilador implements CompiladorLatex
         }
 
         // -norc: latexmkrc/.latexmkrc é Perl executado pelo latexmk, inclusive o do diretório do projeto.
+        // -f: garante que o latexmk conclua todas as passadas do pdflatex (sumário, referências cruzadas,
+        //     citações e LastPage) mesmo quando o bibtex retorna código != 0 por avisos no .bib.
         // -jobname fixo: com -usepretex o TeX recebe código na linha de comando e,
         // sem isso, nomearia a saída "texput".
         $cmd = [
-            $this->binario, '-norc', $flagMotor, '-no-shell-escape', '-interaction=nonstopmode', '-halt-on-error',
+            $this->binario, '-norc', '-f', $flagMotor, '-no-shell-escape', '-interaction=nonstopmode', '-halt-on-error',
             '-jobname='.pathinfo($projeto->texPrincipal, PATHINFO_FILENAME),
             '-outdir='.$outdir,
         ];
@@ -154,11 +188,20 @@ class LatexmkCompilador implements CompiladorLatex
     public function montarResultado(?string $pdf, ?string $bbl, string $log, ?string $diretorioSaida = null): ResultadoCompilacao
     {
         $linhas = preg_split('/\R/', $log) ?: [];
+        $temErroFatal = (bool) preg_match('/^! /m', $log);
         $resumo = [];
         $avisos = [];
         $contexto = 0;
 
+        if ($temErroFatal && preg_match("/^! LaTeX Error: File `([^']+)' not found\\./m", $log, $m)) {
+            $resumo[] = 'Arquivo não encontrado no .zip enviado: "'.$m[1].'". Verifique se o arquivo/pasta foi incluído no .zip.';
+        }
+
         foreach ($linhas as $linha) {
+            if ($this->ehAvisoInternoIgnorado($linha)) {
+                continue;
+            }
+
             $incluir = false;
             if (str_starts_with($linha, '!')) {
                 $incluir = true;
@@ -166,7 +209,7 @@ class LatexmkCompilador implements CompiladorLatex
             } elseif ($contexto > 0 && preg_match('/^l\.\d+/', $linha)) {
                 $incluir = true;
                 $contexto = 0;
-            } elseif (preg_match('/^(LaTeX Warning|Class .* Warning|Package .* Warning|Warning--)/', $linha)) {
+            } elseif (! $temErroFatal && preg_match('/^(LaTeX Warning|Class .* Warning|Package .* Warning|Warning--)/', $linha)) {
                 $incluir = true;
                 $contexto = 0;
             } elseif ($contexto > 0) {
@@ -183,9 +226,18 @@ class LatexmkCompilador implements CompiladorLatex
 
         // Um PDF antigo de uma passada anterior sobrevive a um erro fatal numa passada posterior;
         // erros só de bibliografia (sem "! ") continuam permitidos.
-        $sucesso = $pdf !== null && is_file($pdf) && ! preg_match('/^! /m', $log);
+        $sucesso = $pdf !== null && is_file($pdf) && ! $temErroFatal;
 
         return new ResultadoCompilacao($sucesso, $pdf, $bbl, implode("\n", $resumo), $avisos, $diretorioSaida);
+    }
+
+    /** Avisos gerados pelo modo seguro (-no-shell-escape) ou pacotes internos do TeX sem relação com o texto do autor. */
+    private function ehAvisoInternoIgnorado(string $linha): bool
+    {
+        return (bool) preg_match(
+            '/^(?:Package glossaries(?:-extra)? Warning: (?:Can\'t implement automake|can\'t automake|Ignoring attempt to run command|Glossary .* is missing)|Package tracklang Warning:|Package epstopdf Warning: Shell escape feature is not enabled|Package lipsum Warning: Unknown language|Class memoir Warning: \\\\addtodef is marked deprecated)/',
+            $linha,
+        );
     }
 
     private function resultadoTimeout(): ResultadoCompilacao

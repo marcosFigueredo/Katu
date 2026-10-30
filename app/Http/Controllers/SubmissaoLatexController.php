@@ -92,15 +92,18 @@ class SubmissaoLatexController extends Controller
         $submissao->load('banca', 'documento');
         $vigente = $submissao->ehVigente();
         $podeEnviar = $this->podeEnviar($submissao, $vigente);
+        $emAndamento = $this->verificacaoEmAndamento($submissao);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'status' => $submissao->status,
+                'refs_status' => $submissao->refs_status,
+                'em_andamento' => $emAndamento,
                 'html' => view('meu-trabalho.partials.submissao-latex-resultado', compact('submissao', 'vigente', 'podeEnviar'))->render(),
             ]);
         }
 
-        return view('meu-trabalho.submissao-latex', compact('submissao', 'vigente', 'podeEnviar'));
+        return view('meu-trabalho.submissao-latex', compact('submissao', 'vigente', 'podeEnviar', 'emAndamento'));
     }
 
     public function pdf(TrabalhoSubmissaoLatex $submissao, string $versao)
@@ -137,8 +140,12 @@ class SubmissaoLatexController extends Controller
         $this->autorizarDono($submissao);
 
         if (! $this->podeEnviar($submissao, $submissao->ehVigente())) {
+            $mensagem = $this->referenciasEmAndamento($submissao)
+                ? 'Aguarde a conclusão da conferência das referências antes de enviar à homologação.'
+                : 'Só a submissão mais recente, com verificação "ok", pode ser enviada à homologação.';
+
             return back()->withErrors([
-                'homologacao' => 'Só a submissão mais recente, com verificação "ok", pode ser enviada à homologação.',
+                'homologacao' => $mensagem,
             ]);
         }
 
@@ -206,7 +213,25 @@ class SubmissaoLatexController extends Controller
 
     private function podeEnviar(TrabalhoSubmissaoLatex $submissao, bool $vigente): bool
     {
-        return $vigente && $submissao->status === 'ok' && $submissao->pdf_banca_path !== null;
+        if (! $vigente || $submissao->status !== 'ok' || $submissao->pdf_banca_path === null) {
+            return false;
+        }
+
+        // O botão de envio à homologação só abre após a conclusão da conferência das referências
+        // (que orienta o estudante, sem impedir o envio após concluída).
+        return ! $this->referenciasEmAndamento($submissao);
+    }
+
+    private function referenciasEmAndamento(TrabalhoSubmissaoLatex $submissao): bool
+    {
+        return $submissao->bbl_path !== null
+            && in_array($submissao->refs_status, ['pendente', 'processando'], true);
+    }
+
+    private function verificacaoEmAndamento(TrabalhoSubmissaoLatex $submissao): bool
+    {
+        return $submissao->status === 'processando'
+            || ($submissao->status === 'ok' && $this->referenciasEmAndamento($submissao));
     }
 
     private function trabalhoDoDiscente(): ?TrabalhoAcademico

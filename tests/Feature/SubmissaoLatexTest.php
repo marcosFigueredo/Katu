@@ -437,16 +437,75 @@ class SubmissaoLatexTest extends TestCase
             ->assertOk()->assertDontSee('segredo');
     }
 
+    public function test_botao_enviar_homologacao_aguarda_conclusao_das_referencias_e_orienta_estudante(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+
+        $submissao = $this->enviarZip($discente, null, false);
+        $this->assertSame('ok', $submissao->status);
+        $this->assertSame('pendente', $submissao->refs_status);
+
+        // Enquanto a conferência das referências estiver pendente/processando, o botão não aparece e o envio é bloqueado
+        $this->actingAs($discente)->get(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()
+            ->assertSee('Aguardando conclusão da conferência das referências')
+            ->assertDontSee('Enviar à homologação');
+
+        $this->actingAs($discente)->getJson(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()
+            ->assertJson(['status' => 'ok', 'refs_status' => 'pendente', 'em_andamento' => true]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.enviar-homologacao', $submissao))
+            ->assertSessionHasErrors([
+                'homologacao' => 'Aguarde a conclusão da conferência das referências antes de enviar à homologação.',
+            ]);
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+
+        // Concluída a conferência (mesmo com referências não localizadas ou abaixo de 70%), o informe orienta o estudante e libera o envio
+        $submissao->update([
+            'refs_status' => 'concluida',
+            'refs_total' => 5,
+            'refs_com_ano' => 5,
+            'refs_recentes_pct' => 40.0,
+            'refs_atualizadas' => false,
+            'refs_orientador' => 0,
+        ]);
+
+        $this->actingAs($discente)->get(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()
+            ->assertSee('Informe orientativo sobre as referências concluído')
+            ->assertSee('Enviar à homologação')
+            // Confirmação em modal da página, não na caixa do navegador
+            ->assertSee('data-bs-target="#modal-homologacao-latex-'.$submissao->id.'"', false)
+            ->assertSee('id="modal-homologacao-latex-'.$submissao->id.'"', false)
+            ->assertSee('Confirmar envio')
+            ->assertDontSee('confirm(', false);
+
+        $this->actingAs($discente)->getJson(route('meu-trabalho.submissao-latex.show', $submissao))
+            ->assertOk()
+            ->assertJson(['status' => 'ok', 'refs_status' => 'concluida', 'em_andamento' => false]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.enviar-homologacao', $submissao))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
     // ─── apoio ───────────────────────────────────────────────────────────
 
-    private function enviarZip(User $discente, ?callable $alterarTex = null): TrabalhoSubmissaoLatex
+    private function enviarZip(User $discente, ?callable $alterarTex = null, bool $concluirReferencias = true): TrabalhoSubmissaoLatex
     {
         $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
             'tipo_documento' => 'qualificacao',
             'zip' => $this->zipUpload($alterarTex),
         ])->assertSessionHasNoErrors();
 
-        return TrabalhoSubmissaoLatex::latest('id')->firstOrFail();
+        $submissao = TrabalhoSubmissaoLatex::latest('id')->firstOrFail();
+        if ($concluirReferencias && $submissao->status === 'ok' && $submissao->refs_status === 'pendente') {
+            $submissao->update(['refs_status' => 'concluida', 'refs_total' => 1]);
+        }
+
+        return $submissao->fresh();
     }
 
     /** Zip do template PPGMSB com orientador e banca iguais aos do cadastro de teste. */

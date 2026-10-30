@@ -146,14 +146,43 @@
         </div>
     @endif
 
+    @php
+        $refsEmAndamento = $submissao->bbl_path !== null && in_array($submissao->refs_status, ['pendente', 'processando'], true);
+    @endphp
+
     @if ($podeEnviar)
-        <form method="POST" action="{{ route('meu-trabalho.submissao-latex.enviar-homologacao', $submissao) }}"
-              onsubmit="return confirm('Enviar a banca proposta e este trabalho à homologação da Secretaria? Enquanto o pedido estiver na fila, não será possível alterá-lo.')">
-            @csrf
-            <button type="submit" class="btn btn-success fw-semibold">
-                <i class="bi bi-send-fill me-1"></i>Enviar à homologação
-            </button>
-        </form>
+        @if ($submissao->bbl_path)
+            <div class="alert alert-info d-flex align-items-start gap-2 mb-3" role="alert">
+                <i class="bi bi-info-circle-fill mt-1"></i>
+                <div class="small">
+                    <div class="fw-semibold">Informe orientativo sobre as referências concluído</div>
+                    @if ($submissao->refs_status === 'concluida')
+                        Conferência finalizada ({{ (int) $submissao->refs_total }} {{ (int) $submissao->refs_total === 1 ? 'referência analisada' : 'referências analisadas' }}).
+                        Esta verificação é <strong>orientativa e não impede o envio</strong>: revise o relatório acima (e a versão de conferência em PDF, se desejar ajustar alguma citação antes) ou prossiga com o envio à homologação.
+                    @else
+                        A conferência automática das referências foi encerrada. Como ela tem caráter orientativo e não impede o envio, você já pode encaminhar o pedido à homologação.
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        <button type="button" class="btn btn-success fw-semibold"
+                data-bs-toggle="modal" data-bs-target="#modal-homologacao-latex-{{ $submissao->id }}">
+            <i class="bi bi-send-fill me-1"></i>Enviar à homologação
+        </button>
+        @include('meu-trabalho.partials.modal-envio-homologacao', [
+            'idModal' => 'modal-homologacao-latex-'.$submissao->id,
+            'action' => route('meu-trabalho.submissao-latex.enviar-homologacao', $submissao),
+            'oQue' => 'este trabalho',
+        ])
+    @elseif ($vigente && $submissao->status === 'ok' && $refsEmAndamento)
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-0" role="alert">
+            <span class="spinner-border spinner-border-sm flex-shrink-0" role="status"></span>
+            <div class="small">
+                <strong>Aguardando conclusão da conferência das referências…</strong>
+                O envio à homologação será liberado automaticamente assim que a conferência completa das referências e o informe orientativo ao estudante forem concluídos.
+            </div>
+        </div>
     @elseif ($vigente && in_array($submissao->status, ['nao_ok', 'erro'], true))
         <a href="{{ route('meu-trabalho.index') }}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-repeat me-1"></i>Corrigir e enviar novamente

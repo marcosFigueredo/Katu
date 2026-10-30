@@ -19,8 +19,10 @@ class LeitorBblService
         if ($conteudo === '') {
             return [];
         }
-        // comentários do .bbl (linhas iniciadas por %)
+        // comentários do .bbl (linhas iniciadas por % e % de continuação de linha do bibtex/apacite)
         $conteudo = preg_replace('/^\s*%.*$/m', '', $conteudo) ?? $conteudo;
+        $conteudo = preg_replace('/(?<!\\\\)%[ \t]*\R[ \t]*/', '', $conteudo) ?? $conteudo;
+        $conteudo = preg_replace('/(?<!\\\\)%[^\r\n]*/', '', $conteudo) ?? $conteudo;
 
         if (preg_match('/\\\\entry\{/', $conteudo)) {
             return $this->lerBiblatex($conteudo);
@@ -38,19 +40,23 @@ class LeitorBblService
 
         $refs = [];
         foreach ($partes as $parte) {
-            // [rótulo opcional]{chave}
-            if (! preg_match('/^\s*(?:\[((?:[^\[\]{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\])?\s*\{([^}]*)\}(.*)$/s', $parte, $m)) {
+            // [rótulo opcional com chaves aninhadas (ex.: apacite usa 3 níveis em \citeauthoryear)]{chave}
+            if (! preg_match('/^\s*(?:\[((?:[^\[\]{}]|(\{(?:[^{}]|(?2))*\}))*)\])?\s*\{([^}]*)\}(.*)$/s', $parte, $m)) {
                 continue;
             }
             $rotulo = $m[1];
-            $chave = trim($m[2]);
-            $corpo = $m[3];
+            $chave = trim($m[3]);
+            $corpo = $m[4];
 
             $doi = $this->extrairDoi($corpo);
             $titulo = null;
-            $blocos = preg_split('/\\\\newblock\b/', $corpo) ?: [];
-            if (count($blocos) > 1) {
-                $titulo = $this->limparTitulo($blocos[1]);
+            if (preg_match('/\\\\APACref[ab]title\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/s', $corpo, $mt)) {
+                $titulo = $this->limparTitulo($mt[1]);
+            } else {
+                $blocos = preg_split('/\\\\newblock\b/', $corpo) ?: [];
+                if (count($blocos) > 1) {
+                    $titulo = $this->limparTitulo($blocos[1]);
+                }
             }
             $texto = $this->limparTexto($corpo);
             $ano = $this->extrairAno($this->semDoi($corpo));
@@ -154,6 +160,29 @@ class LeitorBblService
 
     private function limparTexto(string $bruto): string
     {
+        $bruto = preg_replace('/\\\\(?:APACinsertmetastar|PrintBackRefs)\s*\{[^}]*\}/s', ' ', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\(?:begin|end)\s*\{APAC[^}]*\}/', ' ', $bruto) ?? $bruto;
+        $bruto = preg_replace(
+            '/\\\\APACref[ab]title\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}/s',
+            ' $1 ',
+            $bruto,
+        ) ?? $bruto;
+        $bruto = preg_replace('/\\\\APACrefYearMonthDay\s*\{([^}]*)\}\s*\{[^}]*\}\s*\{[^}]*\}/s', ' ($1) ', $bruto) ?? $bruto;
+        $bruto = preg_replace_callback(
+            '/\\\\APACjournalVolNumPages\s*\{([^}]*)\}\s*\{([^}]*)\}\s*\{([^}]*)\}\s*\{([^}]*)\}/s',
+            function (array $m): string {
+                $partes = array_filter([trim($m[1]), trim($m[2]), trim($m[4])], fn (string $v) => $v !== '');
+
+                return ' '.implode(', ', $partes);
+            },
+            $bruto,
+        ) ?? $bruto;
+        $bruto = preg_replace('/\\\\BPBI\b\s*/', '. ', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\BHBI\b\s*/', '-', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\(?:BCBL|BCBT)\b\s*\{?\}?/', ',', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\BDBL\b\s*\{?\}?/', '... ', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\BOthers\b\s*(?:\{\.\}|\.)?/', 'et al.', $bruto) ?? $bruto;
+        $bruto = preg_replace('/\\\\unskip\b\\\\?/', ' ', $bruto) ?? $bruto;
         $bruto = preg_replace('/\\\\(?:BBA|BBAA|BBAB|BBC|BBOP|BBCP|BBCQ|BBOQ|BBCQP)\b\{?\}?/', ' ', $bruto) ?? $bruto;
         $bruto = preg_replace('/\\\\newblock\b/', ' ', $bruto) ?? $bruto;
         $bruto = preg_replace('/\\\\(?:doi|url)\s*\{([^}]*)\}/', ' $1 ', $bruto) ?? $bruto;
