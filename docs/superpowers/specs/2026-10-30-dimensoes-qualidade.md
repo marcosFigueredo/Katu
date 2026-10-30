@@ -20,7 +20,7 @@ Apoiar a CPA na análise do item da ficha da CAPES **"Qualidade das teses, disse
 1. Rigor científico
 2. Originalidade
 3. Relevância e impacto
-4. Comunicação científica
+4. Produção associada *(era "Comunicação científica" — renomeada e redefinida em 2026-10-30)*
 5. Autonomia do estudante
 6. Aderência ao programa
 7. Processo formativo
@@ -127,6 +127,64 @@ Qualificação: elementos 1 a 3 (relevância do problema). Defesa: todos.
 ### Estatística
 Mesmo modelo, mais: mestrado acadêmico × profissional separados (no profissional a aplicabilidade tende a pesar mais); relevância (1–3) × impacto (4–7); produção derivada × nota da banca; declarado × reconhecido.
 
+## Dimensão 4 — Produção associada (registrada)
+
+Avalia os **produtos derivados da dissertação**. **Não é julgada pela banca**: o **estudante informa**, a **banca vê** as informações e a **nota é calculada pelo sistema** (0–10) pelas regras abaixo. Valores das tabelas são proposta inicial.
+
+### A. Tipo e canal de publicação
+| Tipo | Canal | Pontos |
+|---|---|---|
+| Artigo em periódico | revista sem fator de impacto | 5 |
+| | 0 < FI ≤ 3 | 8 |
+| | FI > 3 | 10 |
+| Livro | editora universitária ou regional | 6 |
+| | editora comercial nacional com conselho editorial | 7 |
+| | editora internacional | 9 |
+| Capítulo de livro | editora universitária ou regional | 4 |
+| | editora comercial nacional com conselho editorial | 5 |
+| | editora internacional | 7 |
+| Trabalho em anais | evento local ou regional | 2 |
+| | evento nacional | 3 |
+| | evento internacional | 4 |
+
+**Fator de impacto (decidido: opção b):** o sistema usa o indicador gratuito do OpenAlex — média de citações da revista nos últimos 2 anos (mesmo cálculo do fator de impacto), buscado automaticamente pelo ISSN/DOI.
+
+### B. Repercussão na comunidade
+- Citações de cada produto com DOI, pelo OpenAlex.
+- Downloads/visualizações: do repositório (Zenodo, Figshare, institucional) ou informados pelo estudante com comprovante.
+- Pontos: 0 citações → 0; 1–2 → 4; 3–9 → 7; 10 ou mais → 10; downloads como bônus limitado.
+- Atualizado também no acompanhamento posterior (2 e 5 anos).
+
+### C. Impacto da atividade de extensão — cadastro
+Tipo de ação (curso, oficina, evento, prestação de serviço, projeto) · público atingido (nº de pessoas) · comunidade ou parceiro · carga horária · período · nº de registro na pró-reitoria de extensão · produto gerado/entregue ao parceiro · evidência (certificado, link, declaração do parceiro).
+Pontos: faixas de público + faixas de carga horária + registro institucional (sim/não) + produto entregue (sim/não), limitado a 10.
+
+### D. Impacto da popularização das ciências — cadastro
+Tipo (palestra aberta, feira de ciências, imprensa, vídeo, podcast, rede social, material didático) · veículo ou local · alcance (público presente, visualizações, tiragem) · data · link ou evidência.
+Pontos: faixas de alcance (até 50, até 500, até 5.000, acima de 5.000) + tipo de veículo (imprensa e mídia de massa valem mais), limitado a 10.
+
+### Nota da dimensão
+Média ponderada dos 4 blocos. **Ponderação padrão:** publicações **50%** · repercussão **20%** · extensão **15%** · popularização **15%**. **A CPA pode alterar esses percentuais** (configuração da CPA, com registro de quem alterou e quando; a soma deve ser 100%).
+
+### Estatística
+Distribuição dos tipos de produção por ano e linha; % de dissertações com pelo menos um artigo; produção × notas das outras dimensões; mestrado e doutorado separados; bolsista × não bolsista (quando a bolsa for registrada).
+
+## Bolsa do estudante (planejado — implementar depois)
+
+Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
+
+Tabela nova que **vincula o estudante à bolsa** (um estudante pode ter mais de uma bolsa ao longo do curso):
+
+| Campo | Descrição |
+|---|---|
+| vínculo do discente no programa | a quem a bolsa pertence |
+| agência | CAPES, CNPq, FAPESB, institucional, outra |
+| modalidade | ex.: mestrado, doutorado, doutorado-sanduíche |
+| nº do processo/termo | opcional |
+| início e fim | período da bolsa |
+| comprovante | arquivo (termo de concessão), opcional |
+| registrado por / em | quem cadastrou e quando |
+
 ## Declarações do estudante
 
 ### A. Ao enviar o projeto (.zip) — declarações de submissão
@@ -184,7 +242,8 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
-- [ ] Dimensões 4 a 8: a discutir, uma por vez.
+- [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
+- [ ] Dimensões 5 a 8: a discutir, uma por vez.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
