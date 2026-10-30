@@ -86,6 +86,47 @@ Mesmo modelo da dimensão 1, mais:
 - **declarado × reconhecido**: o que o discente marcou e respondeu comparado às notas da banca nos mesmos elementos;
 - **mestrado e doutorado separados** (a exigência de originalidade é diferente).
 
+## Dimensão 3 — Relevância e impacto (registrada)
+
+### Diferença em relação à Originalidade
+| Dimensão | Pergunta central |
+|---|---|
+| Originalidade | É novo? |
+| Relevância | Importa? Para quem? |
+| Impacto | O que muda, ou já mudou? |
+
+Variam de forma independente (uma replicação pode ser pouco original e muito relevante). Nenhuma pergunta desta dimensão trata de novidade.
+
+### Elementos medidos de 0 a 10 no formulário da banca (e indicados pelo discente na submissão da defesa)
+1. **Importância do problema** — tamanho e gravidade (população afetada, carga de doença, custo). *Relevância.*
+2. **Pertinência regional e social** — necessidade da Bahia, do Nordeste ou de grupos vulneráveis. *Relevância.*
+3. **Alinhamento a prioridades** — SUS, políticas públicas, ODS, agências de fomento. *Relevância.*
+4. **Contribuição para a área** — quanto o resultado faz a área avançar. *Impacto.*
+5. **Aplicabilidade** — pode ser usado por serviços, gestores ou profissionais. *Impacto.*
+6. **Potencial de influenciar decisões** — políticas públicas, protocolos, gestão. *Impacto.*
+7. **Disseminação** — comunidade científica e sociedade (artigos, eventos, popularização). *Impacto.*
+8. **Grau geral de relevância e impacto** — no formulário **sigiloso**.
+
+### Tipo de impacto declarado pelo discente (já existe: "Impacto da Dissertação")
+- 7 tipos — científico, metodológico, tecnológico, social, ambiental, formativo, institucional — cada um com "se aplica" (sim/não) e descrição.
+- Passa a fazer parte da **submissão da defesa** (hoje pode ser preenchido a qualquer momento).
+- A banca vê os tipos declarados ao avaliar os elementos 4 a 6 → comparação **tipo declarado × reconhecido**.
+- É tipologia + descrição, **sem nota**; a nota da dimensão vem da banca (0–10).
+
+### Evidências e medidas automáticas
+- **Produção derivada** (OpenAlex + indicação do discente na defesa) → 0–10; apoia o elemento 7.
+- **ODS do trabalho** (template LaTeX, `\odsSelecionadas`) → apoia o elemento 3.
+- **Produtos técnicos em uso** — declaração do discente com comprovante (ex.: carta do serviço) → apoia o elemento 5.
+
+### Tempo
+Na defesa mede-se **relevância** e **impacto potencial**. O **impacto realizado** (citações, adoção, mudança de política) aparece anos depois — proposta de **acompanhamento posterior pela CPA** (2 e 5 anos após a defesa, citações no OpenAlex), em campo separado, sem alterar a nota da defesa.
+
+### Qualificação × defesa
+Qualificação: elementos 1 a 3 (relevância do problema). Defesa: todos.
+
+### Estatística
+Mesmo modelo, mais: mestrado acadêmico × profissional separados (no profissional a aplicabilidade tende a pesar mais); relevância (1–3) × impacto (4–7); produção derivada × nota da banca; declarado × reconhecido.
+
 ## Declarações do estudante
 
 ### A. Ao enviar o projeto (.zip) — declarações de submissão
@@ -142,7 +183,8 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Peso das medidas automáticas na nota de cada dimensão.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
-- [ ] Dimensões 3 a 8: a discutir, uma por vez.
+- [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
+- [ ] Dimensões 4 a 8: a discutir, uma por vez.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
