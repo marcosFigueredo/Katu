@@ -265,6 +265,37 @@ Ponderação padrão: atividades **30%** · prazos **30%** · orientação na vi
 ### Estatística
 Por orientador (média entre os orientandos — dado para credenciamento); estudante × orientador (avaliação da orientação × autoavaliação); bolsista × não bolsista; processo × produto (correlação com as dimensões 1–6).
 
+## Dimensão 8 — Integridade e conformidade (registrada)
+
+Verifica se o trabalho **cumpriu as exigências** (declarado, aprovado, conforme). Diferente do Rigor, que a banca julga de 0 a 10: aqui são verificações **atende / não atende**, quase todas automáticas ou declaratórias.
+
+### Verificações
+| # | Verificação | Fonte |
+|---|---|---|
+| 1 | Declarações de submissão (originalidade e exclusividade, template e normas, uso de IA) | estudante, ao enviar o .zip (seção A) |
+| 2 | Uso de IA declarado nos agradecimentos, quando houve | texto extraído do LaTeX + verificação de IA (já existe em parte) |
+| 3 | Conformidade com o template | submissão LaTeX (já existe) |
+| 4 | Norma das referências | verificação de normas (já existe) |
+| 5 | Referências localizáveis | verificação das referências: % localizadas acima de um mínimo (já existe) |
+| 6 | Ética com seres humanos | CAAE e nº do parecer, quando houve seres humanos (seção B) |
+| 7 | Ética com animais | nº do protocolo, quando houve animais (seção B) |
+| 8 | Dados e código declarados | declaração completa, com link quando o repositório é público (seção B) |
+| 9 | **Plágio** | ver regra abaixo |
+
+Verificações que **não se aplicam** não entram na conta.
+
+### Regra do plágio (decidida)
+- **O sistema não faz verificação de plágio.**
+- **Estudante:** no envio da **qualificação e da defesa**, marca a declaração de que **não houve plágio**.
+- **Banca:** no formulário **sigiloso**, tem um check **"Identifiquei plágio"**, com a **indicação de onde** (trechos, páginas, fontes). A banca pode, assim, refutar a declaração do estudante.
+- **Se a banca marcar plágio, a nota da dissertação é zerada automaticamente**, e a CPA recebe o alerta.
+
+### Nota da dimensão
+% das verificações aplicáveis atendidas × 10. Verificação essencial não atendida (declaração de originalidade, ética quando se aplica) gera **alerta** para a banca e a CPA, mesmo com nota alta. Plágio marcado pela banca zera a nota da dissertação (regra acima).
+
+### Estatística
+% de dissertações com todas as verificações atendidas, por ano e linha; verificações que mais falham; integridade × rigor.
+
 ## Bolsa do estudante (planejado — implementar depois)
 
 Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
@@ -334,7 +365,7 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Dimensão 8 (Integridade e conformidade): a discutir.
+- [ ] Plágio: basta **um** membro da banca marcar para zerar, ou precisa da **maioria**? E "nota zerada" vale para todas as dimensões ou para o índice geral da dissertação?
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
