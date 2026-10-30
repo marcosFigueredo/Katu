@@ -119,7 +119,7 @@ Variam de forma independente (uma replicação pode ser pouco original e muito r
 - **Produtos técnicos em uso** — declaração do discente com comprovante (ex.: carta do serviço) → apoia o elemento 5.
 
 ### Tempo
-Na defesa mede-se **relevância** e **impacto potencial**. O **impacto realizado** (citações, adoção, mudança de política) aparece anos depois — proposta de **acompanhamento posterior pela CPA** (2 e 5 anos após a defesa, citações no OpenAlex), em campo separado, sem alterar a nota da defesa.
+Na defesa mede-se **relevância** e **impacto potencial**. O **impacto realizado** aparece anos depois. **Acompanhamento posterior (decidido em 2026-10-30):** o sistema busca **essencialmente as citações** dos produtos no OpenAlex **2 e 5 anos após a defesa**, guardadas em **campos separados** (a nota da defesa não muda; a CPA vê o impacto realizado ao lado). O acompanhamento de egressos (adoção de produto, uso em política, carreira) **não será feito no Katu** — fica para outro sistema.
 
 ### Qualificação × defesa
 Qualificação: elementos 1 a 3 (relevância do problema). Defesa: todos.
@@ -364,7 +364,6 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
