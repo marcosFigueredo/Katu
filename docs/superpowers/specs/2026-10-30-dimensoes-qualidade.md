@@ -400,10 +400,21 @@ Mais as **publicações** do estudante, buscadas no OpenAlex, com opção de ind
 ### D. No ato da defesa (mestrado ou doutorado) — Publicação dos resultados
 O estudante indica quais publicações saíram da dissertação.
 
+## Etapas de implementação (decidido em 2026-10-30)
+
+Não construir tudo de uma vez: cada etapa tem plano próprio e entrega algo utilizável.
+
+1. **Dimensões e vínculo (base)** — cadastro das 8 dimensões; toda pergunta de barema ligada a uma dimensão (obrigatório; barema só ativa com vínculo completo); cada nota gravada com a dimensão congelada no momento da avaliação.
+2. **Submissão enriquecida (estudante)** — declarações de submissão (originalidade, template, IA, plágio); código, dados e ética (CAAE, comissão de ética animal); espelho do discente (notas 0–10 nas perguntas da banca); atividades formativas (4, check da Secretaria); produção associada (publicações, extensão, popularização); tipo de impacto na defesa. *A redação oficial da IEEE entra aqui.*
+3. **Banca** — check de plágio no sigiloso (unanimidade reprova; marcação parcial bloqueia finalização e documentos); recomendações da qualificação (registro e resposta); avaliação do orientando pelo orientador (só na defesa).
+4. **Cadastros da Secretaria** — projetos dos docentes permanentes (um por orientador, vínculo automático do estudante); bolsa.
+5. **Cálculo das dimensões** — regras de cada dimensão, ponderações configuráveis pela CPA, medidas automáticas (aderência ao projeto pelo Ollama, fator de impacto e citações pelo OpenAlex), acompanhamento das citações em 2 e 5 anos.
+6. **Perfil CPA** — membros com mandato e número do ato, acesso na dashboard, conflito de interesse sinalizado e auditado, dashboard e relatórios (**elementos da dashboard definidos pelo usuário quando chegar a etapa**).
+
 ## Perguntas em aberto
 
-- [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Resultado individual de cada dissertação no detalhamento: só o perfil das 8 dimensões, ou também uma nota geral (média ponderada)?
+- [ ] Redação oficial da declaração de dados da IEEE: incluir na Etapa 2.
+- [ ] Elementos da dashboard da CPA (inclusive se há nota geral por dissertação): o usuário indica na Etapa 6.
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
