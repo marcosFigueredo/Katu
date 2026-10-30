@@ -299,6 +299,20 @@ Verificações que **não se aplicam** não entram na conta.
 ### Estatística
 % de dissertações com todas as verificações atendidas, por ano e linha; verificações que mais falham; integridade × rigor.
 
+## Perfil CPA (em planejamento)
+
+### Decidido em 2026-10-30
+- A CPA é formada por **docentes do programa** (pode incluir ou não o coordenador e o vice).
+- A **Secretaria indica e homologa** cada membro e registra o **número do ato** de participação na comissão.
+- Cada membro tem **mandato** (início e fim). Ser da CPA é um **papel a mais**: o docente continua orientando e avaliando.
+- Com mandato vigente, **a dashboard do docente mostra o acesso à área da CPA**; ao fim do mandato o acesso acaba, e o histórico de quem foi membro fica guardado.
+- **Só a CPA** acessa: avaliações das dissertações (inclusive sigilosas), autoavaliação do orientador, avaliação do orientando pelo orientador, média completa e os relatórios das 8 dimensões. **Os nomes aparecem** (orientadores e orientandos) — a análise serve também para credenciamento, recredenciamento e descredenciamento.
+- **Conflito de interesse (opção c):** o membro **vê tudo**, mas os itens em que ele tem conflito (próprios orientandos, a avaliação dele como orientador, bancas de que participou) aparecem **sinalizados**, e **todo acesso fica registrado** (quem viu o quê e quando).
+- A CPA pode **alterar as ponderações** das dimensões (registro de quem alterou e quando).
+
+### Fora desta versão
+- **Membros externos à CPA** (indicados pela CPA): ficam para uma próxima atualização.
+
 ## Bolsa do estudante (planejado — implementar depois)
 
 Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
@@ -364,7 +378,7 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
+- [ ] Perfil CPA: telas e relatórios; indicador de qualidade (faixas, índice ponderado ou parecer da CPA).
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
