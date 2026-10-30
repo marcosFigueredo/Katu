@@ -77,7 +77,7 @@ class SubmissaoLatexTest extends TestCase
         $resposta = $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
             'tipo_documento' => 'qualificacao',
             'zip' => $this->zipUpload(),
-        ]);
+        ] + $this->declaracoes());
 
         $submissao = TrabalhoSubmissaoLatex::firstOrFail();
         $resposta->assertRedirect(route('meu-trabalho.submissao-latex.show', $submissao));
@@ -99,7 +99,7 @@ class SubmissaoLatexTest extends TestCase
         $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
             'tipo_documento' => 'qualificacao',
             'zip' => $this->zipUpload(),
-        ])->assertSessionHasErrors(['zip' => 'Proponha a banca antes de enviar o trabalho.']);
+        ] + $this->declaracoes())->assertSessionHasErrors(['zip' => 'Proponha a banca antes de enviar o trabalho.']);
 
         $this->assertDatabaseCount('trabalho_submissoes_latex', 0);
         Queue::assertNothingPushed();
@@ -327,7 +327,7 @@ class SubmissaoLatexTest extends TestCase
 
         $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
             'zip' => $this->zipUpload(),
-        ])->assertSessionHasNoErrors();
+        ] + $this->declaracoes())->assertSessionHasNoErrors();
 
         $this->assertSame('qualificacao', TrabalhoSubmissaoLatex::firstOrFail()->tipo_documento);
         Queue::assertPushed(ProcessarSubmissaoLatexJob::class);
@@ -353,12 +353,12 @@ class SubmissaoLatexTest extends TestCase
         $banca = $this->proporBanca($discente, $trabalho);
         $banca->update(['tipo' => 'defesa']);
 
-        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()])
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()] + $this->declaracoes())
             ->assertSessionHasNoErrors();
         $this->assertSame('dissertacao', TrabalhoSubmissaoLatex::latest('id')->firstOrFail()->tipo_documento);
 
         $trabalho->update(['nivel' => 'doutorado']);
-        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()])
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()] + $this->declaracoes())
             ->assertSessionHasNoErrors();
         $this->assertSame('tese', TrabalhoSubmissaoLatex::latest('id')->firstOrFail()->tipo_documento);
     }
@@ -498,7 +498,7 @@ class SubmissaoLatexTest extends TestCase
         $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), [
             'tipo_documento' => 'qualificacao',
             'zip' => $this->zipUpload($alterarTex),
-        ])->assertSessionHasNoErrors();
+        ] + $this->declaracoes())->assertSessionHasNoErrors();
 
         $submissao = TrabalhoSubmissaoLatex::latest('id')->firstOrFail();
         if ($concluirReferencias && $submissao->status === 'ok' && $submissao->refs_status === 'pendente') {
@@ -509,6 +509,55 @@ class SubmissaoLatexTest extends TestCase
     }
 
     /** Zip do template PPGMSB com orientador e banca iguais aos do cadastro de teste. */
+    /** Os 4 checks de declaração do envio do projeto. */
+    private function declaracoes(): array
+    {
+        return ['declaracoes' => array_fill_keys(array_keys(TrabalhoSubmissaoLatex::DECLARACOES), '1')];
+    }
+
+    public function test_tela_de_envio_mostra_as_quatro_declaracoes(): void
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $this->proporBanca($discente, $trabalho);
+
+        $pagina = $this->actingAs($discente)->get(route('meu-trabalho.index'))->assertOk();
+        foreach (TrabalhoSubmissaoLatex::DECLARACOES as $chave => $texto) {
+            $pagina->assertSee($texto)->assertSee('name="declaracoes['.$chave.']"', false);
+        }
+    }
+
+    public function test_envio_sem_alguma_declaracao_e_recusado(): void
+    {
+        Queue::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $this->proporBanca($discente, $trabalho);
+
+        foreach (array_keys(TrabalhoSubmissaoLatex::DECLARACOES) as $faltando) {
+            $dados = $this->declaracoes();
+            unset($dados['declaracoes'][$faltando]);
+
+            $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()] + $dados)
+                ->assertSessionHasErrors("declaracoes.{$faltando}");
+        }
+
+        $this->assertDatabaseCount('trabalho_submissoes_latex', 0);
+        Queue::assertNotPushed(ProcessarSubmissaoLatexJob::class);
+    }
+
+    public function test_envio_com_as_declaracoes_grava_quais_e_quando(): void
+    {
+        Queue::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $this->proporBanca($discente, $trabalho);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.submissao-latex.store'), ['zip' => $this->zipUpload()] + $this->declaracoes())
+            ->assertSessionHasNoErrors();
+
+        $submissao = TrabalhoSubmissaoLatex::firstOrFail();
+        $this->assertSame(['originalidade' => true, 'template' => true, 'ia' => true, 'plagio' => true], $submissao->declaracoes);
+        $this->assertNotNull($submissao->declarado_em);
+    }
+
     private function zipUpload(?callable $alterarTex = null): UploadedFile
     {
         $tmp = tempnam(sys_get_temp_dir(), 'subm');

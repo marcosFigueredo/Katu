@@ -26,10 +26,19 @@ class SubmissaoLatexController extends Controller
     {
         abort_unless(auth()->user()->categoria === 'discente', 403);
 
+        $regrasDeclaracoes = [];
+        $mensagensDeclaracoes = [];
+        foreach (array_keys(TrabalhoSubmissaoLatex::DECLARACOES) as $chave) {
+            $regrasDeclaracoes["declaracoes.{$chave}"] = ['accepted'];
+            $mensagensDeclaracoes["declaracoes.{$chave}.accepted"] = 'Marque esta declaração para enviar o projeto.';
+        }
+
         $request->validate([
             'tipo_documento' => ['nullable', 'in:qualificacao,dissertacao,tese'],
             'zip' => ['required', 'file', 'mimes:zip', 'max:102400'],
+            ...$regrasDeclaracoes,
         ], [
+            ...$mensagensDeclaracoes,
             'zip.required' => 'Selecione o arquivo .zip do projeto LaTeX.',
             'zip.mimes' => 'O arquivo deve ser um .zip com o projeto LaTeX.',
             'zip.max' => 'O arquivo não pode ultrapassar 100 MB.',
@@ -65,6 +74,8 @@ class SubmissaoLatexController extends Controller
                 'banca_id' => $banca->id,
                 'enviado_por_id' => auth()->id(),
                 'tipo_documento' => $tipo,
+                'declaracoes' => array_fill_keys(array_keys(TrabalhoSubmissaoLatex::DECLARACOES), true),
+                'declarado_em' => now(),
                 'idioma' => 'pt',
                 'zip_path' => '',
                 'zip_hash_sha256' => hash_file('sha256', $arquivo->path()),

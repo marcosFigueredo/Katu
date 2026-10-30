@@ -222,6 +222,25 @@
                                 @enderror
                             </div>
 
+                            <fieldset class="mb-3">
+                                <legend class="form-label fw-semibold fs-6">Declarações</legend>
+                                @foreach (\App\Models\TrabalhoSubmissaoLatex::DECLARACOES as $chaveDeclaracao => $textoDeclaracao)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input @error('declaracoes.'.$chaveDeclaracao) is-invalid @enderror"
+                                               type="checkbox" value="1" required
+                                               id="declaracao-{{ $chaveDeclaracao }}" name="declaracoes[{{ $chaveDeclaracao }}]"
+                                               @checked(old('declaracoes.'.$chaveDeclaracao))>
+                                        <label class="form-check-label small" for="declaracao-{{ $chaveDeclaracao }}">{{ $textoDeclaracao }}</label>
+                                        @error('declaracoes.'.$chaveDeclaracao)
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                @endforeach
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>A verificação prévia (compilação, elementos obrigatórios e conferência com o cadastro) é feita pelo próprio sistema após o envio.
+                                </div>
+                            </fieldset>
+
                             <button type="submit" class="btn btn-primary w-100 fw-semibold">
                                 <i class="bi bi-file-earmark-zip-fill me-2"></i>Enviar projeto LaTeX
                             </button>

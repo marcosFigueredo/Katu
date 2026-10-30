@@ -14,7 +14,17 @@ class TrabalhoSubmissaoLatex extends Model
 
     public const STATUS = ['processando', 'ok', 'nao_ok', 'erro'];
 
+    /** Declarações do estudante no envio do projeto (adaptadas das declarações de submissão da IEEE). */
+    public const DECLARACOES = [
+        'originalidade' => 'Declaro que o trabalho é inédito, não foi apresentado como dissertação ou tese em outro programa e não está publicado na íntegra (versões em servidor de preprint e artigos derivados são permitidos).',
+        'template' => 'Declaro que o trabalho foi preparado de acordo com o template e as normas do programa.',
+        'ia' => 'Declaro que todo uso de inteligência artificial (texto, figuras, imagens, código) está informado nos agradecimentos, com o sistema usado, as seções em que foi usado e o nível de uso — ou que não houve uso.',
+        'plagio' => 'Declaro que não há plágio neste trabalho.',
+    ];
+
     protected $fillable = [
+        'declaracoes',
+        'declarado_em',
         'trabalho_academico_id',
         'banca_id',
         'banca_composicao_hash',
@@ -46,6 +56,8 @@ class TrabalhoSubmissaoLatex extends Model
     {
         return [
             'elementos' => 'array',
+            'declaracoes' => 'array',
+            'declarado_em' => 'datetime',
             'conformidade' => 'array',
             'avisos' => 'array',
             'numeracao_linhas' => 'boolean',
