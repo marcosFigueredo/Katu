@@ -34,7 +34,7 @@ Apoiar a CPA na análise do item da ficha da CAPES **"Qualidade das teses, disse
 4. **Estatística:** média, desvio-padrão e nº de avaliadores por dissertação (desvio > 2 = "banca dividida"); concordância entre avaliadores (correlação intraclasse); consistência das perguntas (alfa de Cronbach); aberto × sigiloso (teste pareado de Wilcoxon); distribuição por ano, linha e orientador; evolução qualificação → defesa.
 5. **Guardar:** cada resposta com a dimensão **congelada no momento da avaliação** (avaliador, formulário, etapa) e o resultado calculado por dissertação e dimensão (notas, desvio, n, data do cálculo).
 
-Em aberto: peso das medidas automáticas na nota da dimensão (proposta inicial: 80% banca / 20% medida automática).
+**Peso das medidas automáticas (decidido em 2026-10-30):** nas dimensões que misturam banca e sistema (1 Rigor, 2 Originalidade, 5 Autonomia, 6 Aderência), padrão **80% banca / 20% medida automática**, **ajustável pela CPA** dimensão por dimensão (registro de quem alterou e quando).
 
 ## Dimensão 1 — Rigor científico (em discussão)
 
@@ -363,7 +363,6 @@ O estudante indica quais publicações saíram da dissertação.
 
 ## Perguntas em aberto
 
-- [ ] Peso das medidas automáticas na nota de cada dimensão.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
