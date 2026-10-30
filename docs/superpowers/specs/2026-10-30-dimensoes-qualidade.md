@@ -290,7 +290,8 @@ Verificações que **não se aplicam** não entram na conta.
 - **Banca:** no formulário **sigiloso**, tem um check **"Identifiquei plágio"**, com a **indicação de onde** (trechos, páginas, fontes). A banca pode, assim, refutar a declaração do estudante.
 - **Se a banca identificar plágio, a dissertação é automaticamente REPROVADA** (resultado da banca = reprovado, registrado na ata), e a CPA recebe o alerta. Decidido em 2026-10-30.
 - **A decisão tem que ser unânime:** só reprova quando **todos os avaliadores** marcam plágio no formulário sigiloso.
-- Se **só parte** da banca marcar: não reprova; gera **alerta de divergência** para o presidente da banca e para a CPA, com os trechos indicados. *(Proposta — a confirmar.)*
+- Se **só parte** da banca marcar (sinalização sem ciência dos demais): é uma **pendência** — enquanto existir, o **orientador (presidente) não consegue finalizar a banca nem gerar a ata e a folha de aprovação**. A banca alinha: quem marcou desmarca, ou os demais também marcam (aí vale a reprovação unânime). Decidido em 2026-10-30.
+- *(Proposta)* O orientador vê só que **existe uma pendência de integridade a ser resolvida pela banca** — sem saber quem marcou nem os trechos (é do formulário sigiloso). Os trechos indicados ficam visíveis aos avaliadores e à CPA.
 
 ### Nota da dimensão
 % das verificações aplicáveis atendidas × 10. Verificação essencial não atendida (declaração de originalidade, ética quando se aplica) gera **alerta** para a banca e a CPA, mesmo com nota alta. Plágio identificado pela banca reprova a dissertação (regra acima).
@@ -367,7 +368,6 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Plágio marcado por só parte da banca: alerta de divergência sem reprovar (confirmar).
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
