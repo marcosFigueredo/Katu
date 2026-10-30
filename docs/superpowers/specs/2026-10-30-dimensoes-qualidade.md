@@ -13,7 +13,7 @@ Apoiar a CPA na análise do item da ficha da CAPES **"Qualidade das teses, disse
 - **Todos os itens são medidos de 0 a 10** (escala tipo Likert de 0 a 10).
 - A qualidade envolve as **8 dimensões** abaixo — nenhuma é descartada.
 - A análise segue **dimensão por dimensão** ("vamos por item").
-- **Espelho do discente:** toda pergunta que a banca avalia também é **indicada pelo discente na submissão da defesa** (o discente responde às mesmas perguntas). Isso permite comparar, pergunta a pergunta, o que o estudante declara com o que a banca reconhece.
+- **Espelho do discente:** toda pergunta que a banca avalia também é **indicada pelo discente na submissão da defesa** (o discente responde às mesmas perguntas). Isso permite comparar, pergunta a pergunta, o que o estudante declara com o que a banca reconhece. **Forma (decidida em 2026-10-30): o discente dá nota de 0 a 10 em todas as perguntas**, exceto nos itens de sim/não (declarações, checks), que continuam sim/não.
 
 ## As 8 dimensões
 
@@ -365,7 +365,6 @@ O estudante indica quais publicações saíram da dissertação.
 
 - [ ] Peso das medidas automáticas na nota de cada dimensão.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
