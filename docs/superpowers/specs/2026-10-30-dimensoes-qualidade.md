@@ -226,7 +226,8 @@ Confirma linha e área; descreve em 1–2 frases **como o trabalho usa modelagem
 
 ### Projetos de pesquisa (decidido)
 - A **Secretaria cadastra os projetos dos docentes permanentes**, como no Lattes: **início, título, descrição** (proposta: também **fim**/"em andamento" e **situação** ativo/concluído, para não oferecer projeto encerrado).
-- O **estudante é vinculado ao projeto no mesmo momento em que a Secretaria registra o orientador** (edição do discente em Usuários); na **troca de orientador**, o projeto também é trocado.
+- **Um único projeto por orientador** (decidido).
+- O **estudante é vinculado automaticamente ao projeto do orientador** no momento em que a Secretaria registra o orientador (edição do discente em Usuários) — sem escolha; na **troca de orientador**, o projeto também é trocado.
 
 ### Aderência ao projeto calculada pelo sistema (decidido: viável; na qualificação e na defesa)
 - Entrada: título, resumo e palavras-chave extraídos do LaTeX × título e descrição do projeto vinculado.
@@ -318,7 +319,6 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Projetos: orientador com mais de um projeto ativo — a Secretaria escolhe ao registrar o orientador, ou o sistema vincula sozinho quando há um só e pede escolha quando há vários?
 - [ ] Dimensões 7 e 8: a discutir.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
