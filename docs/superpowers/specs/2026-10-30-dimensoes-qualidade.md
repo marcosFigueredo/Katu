@@ -303,7 +303,7 @@ Verificações que **não se aplicam** não entram na conta.
 
 Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
 
-Tabela nova que **vincula o estudante à bolsa** (um estudante pode ter mais de uma bolsa ao longo do curso):
+Tabela nova que **vincula o estudante à bolsa** (um estudante pode ter mais de uma bolsa ao longo do curso). **Quem cadastra (decidido em 2026-10-30): a Secretaria**, a partir dos dados oficiais (termos de concessão, planilhas das agências).
 
 | Campo | Descrição |
 |---|---|
@@ -364,7 +364,6 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
