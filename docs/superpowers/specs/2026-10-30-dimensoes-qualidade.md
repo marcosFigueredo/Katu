@@ -308,7 +308,11 @@ Verificações que **não se aplicam** não entram na conta.
 - Com mandato vigente, **a dashboard do docente mostra o acesso à área da CPA**; ao fim do mandato o acesso acaba, e o histórico de quem foi membro fica guardado.
 - **Só a CPA** acessa: avaliações das dissertações (inclusive sigilosas), autoavaliação do orientador, avaliação do orientando pelo orientador, média completa e os relatórios das 8 dimensões. **Os nomes aparecem** (orientadores e orientandos) — a análise serve também para credenciamento, recredenciamento e descredenciamento.
 - **Conflito de interesse (opção c):** o membro **vê tudo**, mas os itens em que ele tem conflito (próprios orientandos, a avaliação dele como orientador, bancas de que participou) aparecem **sinalizados**, e **todo acesso fica registrado** (quem viu o quê e quando).
-- A CPA pode **alterar as ponderações** das dimensões (registro de quem alterou e quando).
+- **Papel da CPA (três partes):**
+  1. **Conceber os instrumentos** — define o conteúdo dos baremas e formulários (perguntas, seções e a dimensão de cada pergunta). **Quem lança no sistema é a Secretaria**, como hoje: a CPA cria, a Secretaria cadastra. No Katu a CPA **vê** os baremas, sem editar.
+  2. **Configurar o cálculo** — altera os percentuais das dimensões (são regras de cálculo, não a avaliação em si); registro de quem alterou e quando.
+  3. **Analisar, conferir e dar publicidade** aos resultados.
+- A CPA **não age sobre nenhum elemento de avaliação**: não altera avaliações respondidas, não classifica dissertações, não emite parecer. O resultado de cada dissertação é o que o sistema calcula a partir das avaliações.
 
 ### Fora desta versão
 - **Membros externos à CPA** (indicados pela CPA): ficam para uma próxima atualização.
@@ -378,7 +382,7 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Perfil CPA: telas e relatórios; indicador de qualidade (faixas, índice ponderado ou parecer da CPA).
+- [ ] Perfil CPA: telas e relatórios; como o sistema apresenta o resultado (faixas da nota geral ou índice ponderado — sem parecer da CPA); o que é "dar publicidade" no sistema.
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
