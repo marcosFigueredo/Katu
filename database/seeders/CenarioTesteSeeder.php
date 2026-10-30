@@ -10,6 +10,7 @@ use App\Models\BancaMembro;
 use App\Models\Barema;
 use App\Models\BaremaItem;
 use App\Models\BaremaSecao;
+use App\Models\DimensaoQualidade;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
@@ -37,6 +38,22 @@ use Illuminate\Support\Facades\Hash;
 class CenarioTesteSeeder extends Seeder
 {
     private const SENHA = 'uneb@123';
+
+    /** Dimensão de cada pergunta dos baremas de teste (escolha pelo conteúdo; a CPA ajusta nos baremas reais). */
+    private const DIMENSAO_DAS_PERGUNTAS = [
+        'Clareza do problema e dos objetivos' => 'rigor',
+        'Adequação da metodologia proposta' => 'rigor',
+        'Viabilidade do cronograma' => 'rigor',
+        'Relevância e originalidade dos resultados' => 'originalidade',
+        'Rigor metodológico e análise' => 'rigor',
+        'Qualidade da redação e da apresentação' => 'rigor',
+        'Maturidade do discente para seguir à defesa' => 'autonomia',
+        'Autonomia do discente na pesquisa' => 'autonomia',
+        'Desempenho na arguição' => 'autonomia',
+        'Domínio do tema demonstrado na arguição' => 'autonomia',
+        'Contribuição do trabalho para a área' => 'relevancia',
+        'Recomendação de publicação dos resultados' => 'producao',
+    ];
 
     public function run(): void
     {
@@ -278,7 +295,8 @@ class CenarioTesteSeeder extends Seeder
             foreach ($perguntas as $i => $pergunta) {
                 BaremaItem::updateOrCreate(
                     ['barema_secao_id' => $secao->id, 'ordem' => $i + 1],
-                    ['nome' => $pergunta, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
+                    ['nome' => $pergunta, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true,
+                        'dimensao_qualidade_id' => DimensaoQualidade::doCodigo(self::DIMENSAO_DAS_PERGUNTAS[$pergunta] ?? 'rigor')->id],
                 );
             }
         }
@@ -330,7 +348,8 @@ class CenarioTesteSeeder extends Seeder
             foreach ($afirmacoes as $i => $afirmacao) {
                 BaremaItem::updateOrCreate(
                     ['barema_secao_id' => $secao->id, 'ordem' => $i + 1],
-                    ['nome' => $afirmacao, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true],
+                    ['nome' => $afirmacao, 'nota_maxima' => 10, 'peso' => 1, 'obrigatorio' => true, 'ativo' => true,
+                        'dimensao_qualidade_id' => DimensaoQualidade::doCodigo('processo')->id],
                 );
             }
         }

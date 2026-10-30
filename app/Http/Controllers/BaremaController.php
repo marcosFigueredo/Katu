@@ -81,9 +81,10 @@ class BaremaController extends Controller
         $this->autorizarSecretaria();
         $this->garantirProgramaDaSecretaria($barema->programa_id);
 
-        $barema->load(['secoes.itens']);
+        $barema->load(['secoes.itens.dimensao']);
+        $dimensoes = \App\Models\DimensaoQualidade::orderBy('ordem')->get();
 
-        return view('baremas.edit', compact('barema'));
+        return view('baremas.edit', compact('barema', 'dimensoes'));
     }
 
     public function update(Request $request, Barema $barema)
@@ -101,6 +102,12 @@ class BaremaController extends Controller
         ]);
 
         $data['ativo'] = $request->boolean('ativo');
+
+        if ($data['ativo'] && $barema->temPerguntaSemDimensao()) {
+            return back()->withInput()->withErrors([
+                'ativo' => 'Todas as perguntas ativas precisam de uma dimensão antes de ativar o barema.',
+            ]);
+        }
 
         $barema->update($data);
 

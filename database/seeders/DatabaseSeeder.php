@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             DocumentoChecklistsSeeder::class,
             PerguntasEstrategicasSeeder::class,
             TabelasLattesSeeder::class,
+            DimensoesQualidadeSeeder::class,
         ]);
     }
 }

@@ -56,4 +56,13 @@ class Barema extends Model
             fn ($item) => (float) $item->nota_maxima * (float) $item->peso
         );
     }
+
+    /** Há pergunta ativa (em seção ativa) sem dimensão? Barema assim não pode ser ativado nem usado. */
+    public function temPerguntaSemDimensao(): bool
+    {
+        return BaremaItem::whereHas('secao', fn ($q) => $q->where('barema_id', $this->id)->where('ativo', true))
+            ->where('ativo', true)
+            ->whereNull('dimensao_qualidade_id')
+            ->exists();
+    }
 }

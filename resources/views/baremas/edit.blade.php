@@ -222,6 +222,13 @@
                                                                     {{ Str::limit($item->descricao, 80) }}
                                                                 </div>
                                                             @endif
+                                                            @if ($item->dimensao)
+                                                                <span class="badge text-bg-info bg-opacity-25 text-dark border" style="font-size:11px;">
+                                                                    {{ $item->dimensao->nome }}
+                                                                </span>
+                                                            @else
+                                                                <span class="badge text-bg-warning" style="font-size:11px;">Sem dimensão</span>
+                                                            @endif
                                                             @if ($item->indicador_capes)
                                                                 <span class="badge text-bg-light border" style="font-size:11px;">
                                                                     CAPES: {{ $item->indicador_capes }}
@@ -261,6 +268,7 @@
                                                                     data-obrigatorio="{{ $item->obrigatorio ? '1' : '0' }}"
                                                                     data-indicador_capes="{{ $item->indicador_capes }}"
                                                                     data-ordem="{{ $item->ordem }}"
+                                                                    data-dimensao="{{ $item->dimensao_qualidade_id }}"
                                                                     data-ativo="{{ $item->ativo ? '1' : '0' }}"
                                                                     data-action="{{ route('barema-itens.update', $item) }}">
                                                                 <i class="bi bi-pencil-fill"></i>
@@ -428,6 +436,16 @@
                             <textarea name="descricao" rows="2" class="form-control"
                                       placeholder="Explique o que o avaliador deve observar…"></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="ni-dimensao">Dimensão da qualidade</label>
+                            <select name="dimensao_qualidade_id" id="ni-dimensao" class="form-select" required>
+                                <option value="">Selecione…</option>
+                                @foreach ($dimensoes as $dimensao)
+                                    <option value="{{ $dimensao->id }}">{{ $dimensao->ordem }}. {{ $dimensao->nome }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Conforme definido pela CPA para esta pergunta.</div>
+                        </div>
                         <div class="row g-3 mb-3">
                             <div class="col-sm-3">
                                 <label class="form-label fw-semibold">Nota máxima</label>
@@ -487,6 +505,16 @@
                                 Descrição <span class="fw-normal text-muted">(opcional)</span>
                             </label>
                             <textarea name="descricao" id="ei-descricao" rows="2" class="form-control"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="ei-dimensao">Dimensão da qualidade</label>
+                            <select name="dimensao_qualidade_id" id="ei-dimensao" class="form-select" required>
+                                <option value="">Selecione…</option>
+                                @foreach ($dimensoes as $dimensao)
+                                    <option value="{{ $dimensao->id }}">{{ $dimensao->ordem }}. {{ $dimensao->nome }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Conforme definido pela CPA para esta pergunta.</div>
                         </div>
                         <div class="row g-3 mb-3">
                             <div class="col-sm-3">
@@ -596,6 +624,7 @@
             document.getElementById('ei-indicador_capes').value   = btn.dataset.indicador_capes || '';
             document.getElementById('ei-obrigatorio').checked     = btn.dataset.obrigatorio === '1';
             document.getElementById('ei-ativo').checked           = btn.dataset.ativo === '1';
+            document.getElementById('ei-dimensao').value          = btn.dataset.dimensao || '';
         });
 
         // Confirmar Exclusão genérico

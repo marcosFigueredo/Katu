@@ -25,6 +25,9 @@ class BaremaItemController extends Controller
             'obrigatorio'     => ['nullable', 'boolean'],
             'indicador_capes' => ['nullable', 'string', 'max:100'],
             'ordem'           => ['required', 'integer', 'min:1'],
+            'dimensao_qualidade_id' => ['required', 'integer', 'exists:dimensoes_qualidade,id'],
+        ], [
+            'dimensao_qualidade_id.required' => 'Escolha a dimensão da pergunta.',
         ]);
     }
 

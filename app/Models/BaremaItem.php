@@ -11,6 +11,7 @@ class BaremaItem extends Model
 
     protected $fillable = [
         'barema_secao_id',
+        'dimensao_qualidade_id',
         'nome',
         'descricao',
         'nota_maxima',
@@ -29,6 +30,11 @@ class BaremaItem extends Model
             'nota_maxima'=> 'float',
             'peso'       => 'float',
         ];
+    }
+
+    public function dimensao(): BelongsTo
+    {
+        return $this->belongsTo(DimensaoQualidade::class, 'dimensao_qualidade_id');
     }
 
     public function secao(): BelongsTo

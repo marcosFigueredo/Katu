@@ -36,8 +36,11 @@ class BaremasDaBancaService
     {
         $faltantes = [];
         foreach ($this->tiposExigidos($banca) as $tipo) {
-            if ($this->baremaAtivo($banca, $tipo) === null) {
+            $barema = $this->baremaAtivo($banca, $tipo);
+            if ($barema === null) {
                 $faltantes[] = 'Barema de '.Barema::TIPOS[$tipo].' não cadastrado.';
+            } elseif ($barema->temPerguntaSemDimensao()) {
+                $faltantes[] = 'Barema de '.Barema::TIPOS[$tipo].' com perguntas sem dimensão.';
             }
         }
 
