@@ -288,10 +288,10 @@ Verificações que **não se aplicam** não entram na conta.
 - **O sistema não faz verificação de plágio.**
 - **Estudante:** no envio da **qualificação e da defesa**, marca a declaração de que **não houve plágio**.
 - **Banca:** no formulário **sigiloso**, tem um check **"Identifiquei plágio"**, com a **indicação de onde** (trechos, páginas, fontes). A banca pode, assim, refutar a declaração do estudante.
-- **Se a banca marcar plágio, a nota da dissertação é zerada automaticamente**, e a CPA recebe o alerta.
+- **Se a banca identificar plágio, a dissertação é automaticamente REPROVADA** (resultado da banca = reprovado, registrado na ata), e a CPA recebe o alerta. Decidido em 2026-10-30.
 
 ### Nota da dimensão
-% das verificações aplicáveis atendidas × 10. Verificação essencial não atendida (declaração de originalidade, ética quando se aplica) gera **alerta** para a banca e a CPA, mesmo com nota alta. Plágio marcado pela banca zera a nota da dissertação (regra acima).
+% das verificações aplicáveis atendidas × 10. Verificação essencial não atendida (declaração de originalidade, ética quando se aplica) gera **alerta** para a banca e a CPA, mesmo com nota alta. Plágio identificado pela banca reprova a dissertação (regra acima).
 
 ### Estatística
 % de dissertações com todas as verificações atendidas, por ano e linha; verificações que mais falham; integridade × rigor.
@@ -365,7 +365,7 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Plágio: basta **um** membro da banca marcar para zerar, ou precisa da **maioria**? E "nota zerada" vale para todas as dimensões ou para o índice geral da dissertação?
+- [ ] Plágio: basta **um** membro da banca marcar para reprovar, ou precisa da **maioria**?
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
