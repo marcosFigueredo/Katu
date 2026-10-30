@@ -169,6 +169,41 @@ Média ponderada dos 4 blocos. **Ponderação padrão:** publicações **50%** �
 ### Estatística
 Distribuição dos tipos de produção por ano e linha; % de dissertações com pelo menos um artigo; produção × notas das outras dimensões; mestrado e doutorado separados; bolsista × não bolsista (quando a bolsa for registrada).
 
+## Dimensão 5 — Autonomia do estudante (registrada)
+
+Avalia o **estudante como pesquisador** (domínio, decisão própria, amadurecimento), não o trabalho.
+
+### Elementos medidos de 0 a 10 no formulário da banca (e indicados pelo discente na submissão da defesa)
+| # | Elemento | O que a banca avalia | Formulário |
+|---|---|---|---|
+| 1 | Domínio do tema | conhece a literatura e os conceitos; responde com segurança na arguição | aberto |
+| 2 | Domínio do método | explica e justifica as escolhas metodológicas | aberto |
+| 3 | Capacidade crítica | reconhece limitações e discute alternativas | aberto |
+| 4 | Independência nas decisões | as decisões de pesquisa parecem dele, não só do orientador | sigiloso |
+| 5 | Resposta às críticas da qualificação | incorporou, ou justificou não incorporar, as recomendações | aberto (só defesa) |
+| 6 | Amadurecimento | evolução como pesquisador desde a qualificação | sigiloso (só defesa) |
+| 7 | Grau geral de autonomia | juízo franco da banca | sigiloso |
+
+Qualificação: elementos 1–4 e 7 (linha de base). Defesa: todos.
+
+### Recomendações da qualificação (proposto — a confirmar)
+1. Na qualificação, a banca registra as recomendações (uma por linha).
+2. Na submissão da defesa, o estudante responde cada uma: atendida · atendida em parte · não atendida (com justificativa), indicando onde está no texto.
+3. Na defesa, a banca vê a lista ao avaliar o elemento 5.
+Medida automática de apoio: % de recomendações atendidas (0–10).
+
+### Avaliação do orientando pelo orientador (decidido)
+- Formulário **próprio**, em que o orientador avalia o orientando (elementos 1–4 e 6).
+- Pedido **só na defesa**, **junto com a autoavaliação do orientador**.
+- **Não conta** para o resultado da qualificação nem da defesa — é dado para a CPA (comparação estudante × banca × orientador).
+- Privado à CPA, como a autoavaliação.
+
+### Medidas automáticas
+Evolução (nota da dimensão na defesa − na qualificação, elementos 1–4) e % de recomendações atendidas.
+
+### Estatística
+Mesmo modelo, mais: aberto (1–3) × sigiloso (4, 6, 7); evolução qualificação → defesa; recomendações atendidas × nota da defesa; **estudante × banca × orientador**.
+
 ## Bolsa do estudante (planejado — implementar depois)
 
 Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
@@ -243,7 +278,8 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Dimensões 5 a 8: a discutir, uma por vez.
+- [ ] Recomendações da qualificação registradas pela banca e respondidas pelo estudante na defesa: confirmar.
+- [ ] Dimensões 6 a 8: a discutir, uma por vez.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
