@@ -245,6 +245,26 @@ Confirma linha e área; descreve em 1–2 frases **como o trabalho usa modelagem
 ### Estatística
 Mesmo modelo, mais: banca × IA (concordância); % de aderentes por linha e equilíbrio entre linhas; aderência × outras dimensões.
 
+## Dimensão 7 — Processo formativo (registrada)
+
+Avalia **como foi a formação** (percurso, prazos, orientação recebida). A banca não acompanha o percurso: os dados vêm de declarações, questionários e registros do sistema, **não do formulário da banca**.
+
+### Componentes (0–10)
+| # | Componente | Fonte | Conversão para 0–10 |
+|---|---|---|---|
+| 1 | Atividades formativas | estudante informa na defesa as 4 atividades (proficiência, publicação, extensão, popularização); **a Secretaria confere (check)** | % de atividades cumpridas e conferidas × 10 |
+| 2 | Prazos | datas de ingresso, qualificação e defesa × prazos do curso | 10 dentro do prazo; −1 por mês de atraso (média qualificação e defesa) |
+| 3 | Orientação na visão do estudante | avaliação da orientação feita pelo estudante (1–5) | convertida para 0–10 |
+| 4 | Trâmite do pedido de banca | nº de devoluções na homologação | 10 sem devolução; −2 por devolução |
+
+**Só para comparação (fora da nota):** autoavaliação do orientador; avaliação do orientando pelo orientador; bolsa (contexto).
+
+### Nota da dimensão
+Ponderação padrão: atividades **30%** · prazos **30%** · orientação na visão do estudante **30%** · trâmite **10%**. **A CPA pode alterar** (mesma regra da dimensão 4).
+
+### Estatística
+Por orientador (média entre os orientandos — dado para credenciamento); estudante × orientador (avaliação da orientação × autoavaliação); bolsista × não bolsista; processo × produto (correlação com as dimensões 1–6).
+
 ## Bolsa do estudante (planejado — implementar depois)
 
 Hoje o sistema **não registra** bolsa (só há o texto livre `\Financiamento` no template LaTeX, não extraído).
@@ -295,15 +315,12 @@ Vale para dissertação e tese. Modelo inspirado nas perguntas de submissão da 
 
 Regras: código e dados com "repositório público" exigem o link; "Sim" em seres humanos exige CAAE e nº do parecer; "Sim" em animais exige o nº do protocolo. Esses números aparecem para a banca (apoiam os elementos *Cuidado* e *Respeito* do Rigor científico) e para a CPA.
 
-### C. Na proposta de defesa — Formação (cumpriu / não cumpriu)
-1. Atividades Programadas Inter-Linhas
-2. Proficiência em Língua Estrangeira
-3. Publicação de Produção Científica
-4. Atividade Extensionista
-5. Popularização das Ciências
-6. Exame de Qualificação (o sistema já sabe — pode vir preenchido)
-7. Tirocínio Docente
-8. Estágio Docência
+### C. Na defesa — Atividades formativas (cumpriu / não cumpriu)
+Redefinido em 2026-10-30: **apenas 4 atividades**, informadas pelo estudante na defesa e **conferidas pela Secretaria (check)**:
+1. Proficiência em Língua Estrangeira
+2. Publicação de Produção Científica
+3. Atividade Extensionista
+4. Popularização das Ciências
 
 Mais as **publicações** do estudante, buscadas no OpenAlex, com opção de indicar as que não estiverem lá.
 
@@ -312,14 +329,12 @@ O estudante indica quais publicações saíram da dissertação.
 
 ## Perguntas em aberto
 
-- [ ] Itens "cumpriu / não cumpriu" (Formação): convertem para 10/0 e entram na estatística, ou ficam como requisito sem nota?
-- [ ] Formação entra em qual dimensão (provavelmente Processo formativo)?
 - [ ] Peso das medidas automáticas na nota de cada dimensão.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
 - [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
 - [ ] Acompanhamento posterior do impacto (2 e 5 anos após a defesa): entra?
 - [ ] Bolsa: quem cadastra — Secretaria (dados oficiais) ou estudante (com comprovante)?
-- [ ] Dimensões 7 e 8: a discutir.
+- [ ] Dimensão 8 (Integridade e conformidade): a discutir.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
