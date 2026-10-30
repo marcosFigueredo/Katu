@@ -35,6 +35,7 @@ Cada usuário Secretaria administra **um único programa**, ligado a uma institu
 6. Acesse **Membros externos**, envie o convite e acompanhe o cadastro; abra o diploma, devolva com observação ou aprove.
 7. Acesse **Critérios da CPA** e mantenha uma versão ativa para qualificação e defesa.
    Em **Configurações → Áreas CNPq e CNAE**, confira as listas usadas pelos estudantes nos dados para o Lattes (já carregadas das tabelas oficiais; inclua, edite ou desative itens — vale para todos os programas). No cadastro do **programa**, informe a **Homepage dos trabalhos**; no da **instituição**, País, Estado e Município.
+   Os baremas são concebidos pela **CPA** e lançados pela Secretaria: ao incluir cada pergunta, escolha a **dimensão da qualidade** que a CPA definiu (o barema só pode ser ativado com todas as perguntas ativas vinculadas a uma dimensão).
    Em **Baremas**, mantenha ativo um barema de cada tipo: Qualificação, Qualificação Confidencial, Defesa, Defesa Confidencial e **Autoavaliação do orientador** — sem eles a banca não é homologada.
 8. Cadastre ou homologue bancas: o sistema confere a regra do curso e o **ORCID do discente**; sem eles a banca não é salva/homologada. O discente informa o ORCID em **Meu perfil**.
 9. Somente bancas homologadas ficam liberadas para envio do trabalho e avaliação (o envio também exige ORCID).
