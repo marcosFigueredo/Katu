@@ -13,6 +13,7 @@ Apoiar a CPA na análise do item da ficha da CAPES **"Qualidade das teses, disse
 - **Todos os itens são medidos de 0 a 10** (escala tipo Likert de 0 a 10).
 - A qualidade envolve as **8 dimensões** abaixo — nenhuma é descartada.
 - A análise segue **dimensão por dimensão** ("vamos por item").
+- **Espelho do discente:** toda pergunta que a banca avalia também é **indicada pelo discente na submissão da defesa** (o discente responde às mesmas perguntas). Isso permite comparar, pergunta a pergunta, o que o estudante declara com o que a banca reconhece.
 
 ## As 8 dimensões
 
@@ -52,6 +53,38 @@ Execução do projeto · Conflitos de interesse · Tutoria.
 
 ### Reclassificado
 "Responsabilidade na formação e supervisão" → vira **Formação** (declaração do estudante, abaixo).
+
+## Dimensão 2 — Originalidade (registrada)
+
+### Elementos medidos de 0 a 10 no formulário da banca (e indicados pelo discente na submissão da defesa)
+1. **Problema ou pergunta de pesquisa** — a pergunta ainda não foi respondida ou o tema é pouco explorado.
+2. **Lacuna demonstrada** — o estado da arte mostra com clareza o que ainda não se sabe e onde o trabalho entra.
+3. **Abordagem ou método** — método novo, combinação nova de métodos ou aplicação inédita de método conhecido.
+4. **Dados** — dados novos (população, contexto, período ou região ainda não estudados).
+5. **Resultados** — achados novos e não triviais.
+6. **Contribuição teórica ou conceitual** — avanço, revisão ou proposta de modelo, teoria ou conceito.
+7. **Produto ou inovação** — software, modelo computacional, protocolo, tecnologia ou processo novo (relevante sobretudo no mestrado profissional).
+8. **Grau geral de originalidade** — no formulário **sigiloso**: juízo franco da banca (original, replicação aplicada ou revisão).
+
+### Declaração do discente na submissão da defesa
+- Onde está a contribuição original (pode marcar mais de um): problema · método · dados · resultados · teoria · produto.
+- Em uma ou duas frases, qual é a contribuição original.
+- As mesmas perguntas 1 a 7 da banca (regra do espelho do discente).
+
+### Medidas automáticas (a decidir)
+- **Produtos registrados** (patente, registro de software no INPI, produto técnico) informados pelo discente → pontuação 0–10.
+- **Proximidade com trabalhos existentes** — resumo comparado aos resumos indexados no OpenAlex pela busca semântica do sistema; **experimental**, alerta para a banca, não nota.
+- Similaridade de texto (plágio) não mede originalidade → fica em **Integridade e conformidade**.
+
+### Qualificação × defesa
+Na qualificação a banca avalia o **potencial** de originalidade (problema, lacuna, método proposto); na defesa, a originalidade **realizada** (dados, resultados, contribuição). A diferença mede a evolução.
+
+### Estatística
+Mesmo modelo da dimensão 1, mais:
+- originalidade costuma ter a **menor concordância entre avaliadores** — acompanhar a correlação intraclasse;
+- **aberto × sigiloso**: média dos elementos 1–7 comparada ao "grau geral" do sigiloso;
+- **declarado × reconhecido**: o que o discente marcou e respondeu comparado às notas da banca nos mesmos elementos;
+- **mestrado e doutorado separados** (a exigência de originalidade é diferente).
 
 ## Declarações do estudante
 
@@ -108,7 +141,8 @@ O estudante indica quais publicações saíram da dissertação.
 - [ ] Formação entra em qual dimensão (provavelmente Processo formativo)?
 - [ ] Peso das medidas automáticas na nota de cada dimensão.
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Dimensões 2 a 8: a discutir, uma por vez.
+- [ ] Espelho do discente: o discente dá **nota de 0 a 10** a cada pergunta (autoavaliação) ou **indica onde, no trabalho, está a evidência** (seção/página)?
+- [ ] Dimensões 3 a 8: a discutir, uma por vez.
 - [ ] Perfil CPA (membros internos com número do ato; externos indicados pela CPA) — depois das dimensões.
 
 ## Referências usadas
