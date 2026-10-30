@@ -316,7 +316,23 @@ Verificações que **não se aplicam** não entram na conta.
 
 ### Saídas da CPA nesta versão (decidido em 2026-10-30)
 - **Dashboard da CPA** — só para membros com mandato vigente — para analisar as 8 dimensões (por dissertação, por orientador e do programa).
-- **Relatórios exportáveis** (PDF e planilha) para a CPA analisar.
+- **Relatórios exportáveis** (PDF e planilha) para a CPA analisar — os mesmos blocos da dashboard.
+
+### Dashboard da CPA — sobre AS dissertações e AS avaliações
+A CPA analisa a **qualidade do conjunto** das dissertações e teses do programa. A dashboard é o retrato agregado; ver uma dissertação isolada é detalhamento a partir dela.
+
+1. **Panorama do período** — quantidade de dissertações e teses; **média de cada dimensão no conjunto** (radar das 8 dimensões); **distribuição** das notas por dimensão (mínimo, quartis, máximo).
+2. **Evolução** — média de cada dimensão ano a ano.
+3. **Recortes** — por **linha de pesquisa**, **área de concentração**, **nível** e **orientador** (itens com conflito de interesse sinalizados).
+4. **Pontos fortes e fracos** — perguntas dos baremas com maiores e menores médias no conjunto.
+5. **Confiabilidade das avaliações** — concordância entre avaliadores; formulário aberto × sigiloso; estudante × banca (espelho do discente).
+6. **Lista das dissertações e teses** — detalhamento, com o perfil de cada uma nas 8 dimensões.
+
+**Filtros (decidido):**
+- **Período: anual** — abre no ano corrente.
+- **Linha de pesquisa:** seleção de **várias** linhas.
+- **Nível:** mestrado e/ou doutorado.
+- **Curso:** sem filtro nem recorte — o programa tem um só curso; o que varia é o nível.
 
 ### Fora desta versão
 - **Publicidade** dos resultados (painel para outros docentes ou página pública): fica para depois.
@@ -387,7 +403,7 @@ O estudante indica quais publicações saíram da dissertação.
 ## Perguntas em aberto
 
 - [ ] Redação oficial da declaração de dados da IEEE (usuário buscando).
-- [ ] Perfil CPA: telas e relatórios; como o sistema apresenta o resultado (faixas da nota geral ou índice ponderado — sem parecer da CPA); conteúdo da dashboard e dos relatórios.
+- [ ] Resultado individual de cada dissertação no detalhamento: só o perfil das 8 dimensões, ou também uma nota geral (média ponderada)?
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
