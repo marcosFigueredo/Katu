@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Banca;
 use App\Models\BancaMembro;
+use App\Models\Barema;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
 use App\Models\DocenteProgramaVinculo;
+use App\Models\EspelhoDiscente;
 use App\Models\Instituicao;
 use App\Models\Orientacao;
 use App\Models\Programa;
@@ -266,6 +268,13 @@ class PedidoHomologacaoTest extends TestCase
         $this->actingAs($discente)->get(route('meu-trabalho.index'))
             ->assertSee(route('meu-trabalho.enviar-homologacao', $docDissertacao), false)
             ->assertDontSee(route('meu-trabalho.enviar-homologacao', $docQualificacao), false);
+
+        // A defesa exige o espelho do discente antes do pedido.
+        $barema = Barema::create([
+            'programa_id' => $trabalho->programa_id, 'nome' => 'Defesa', 'tipo' => 'defesa',
+            'nivel' => 'ambos', 'versao' => '1', 'ativo' => true,
+        ]);
+        EspelhoDiscente::create(['banca_id' => $defesa->id, 'barema_id' => $barema->id, 'nota_final' => 8, 'enviada_em' => now()]);
 
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $docDissertacao))
             ->assertSessionHasNoErrors();

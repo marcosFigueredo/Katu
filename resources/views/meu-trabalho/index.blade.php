@@ -407,6 +407,32 @@
                 </div>
             </div>
 
+            @if ($bancaPedido?->tipo === 'defesa')
+                @php $espelhoEnviado = \App\Models\EspelhoDiscente::where('banca_id', $bancaPedido->id)->exists(); @endphp
+                <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                                <i class="bi bi-ui-checks me-2"></i>Espelho da avaliação
+                                @if ($espelhoEnviado)
+                                    <span class="badge bg-success-subtle text-success-emphasis ms-1">Enviado</span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning-emphasis ms-1">Pendente</span>
+                                @endif
+                            </h2>
+                            <p class="text-muted small mb-0">
+                                Suas notas, de 0 a 10, às perguntas que a banca vai avaliar. Obrigatório para enviar a defesa à homologação; privado à CPA.
+                            </p>
+                        </div>
+                        @unless ($espelhoEnviado)
+                            <a href="{{ route('meu-trabalho.espelho.form') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-fill me-1"></i>Responder
+                            </a>
+                        @endunless
+                    </div>
+                </div>
+            @endif
+
             <div class="card border-0 shadow-sm mt-3">
                 <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>

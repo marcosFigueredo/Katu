@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Banca;
+use App\Models\EspelhoDiscente;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,12 @@ class PedidoHomologacaoService
         if (! $banca->trabalhoAcademico->dadosPesquisa()->whereNotNull('preenchido_em')->exists()) {
             throw ValidationException::withMessages([
                 'homologacao' => 'Preencha os dados da pesquisa (código, dados e ética) em Meu trabalho antes de enviar à homologação.',
+            ]);
+        }
+
+        if ($banca->tipo === 'defesa' && ! EspelhoDiscente::where('banca_id', $banca->id)->exists()) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Responda o espelho da avaliação (suas notas de 0 a 10 às perguntas da banca) antes de enviar a defesa à homologação.',
             ]);
         }
 

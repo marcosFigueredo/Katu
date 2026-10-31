@@ -24,6 +24,7 @@ use App\Http\Controllers\AutoavaliacaoOrientadorController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\TabelaLattesController;
 use App\Http\Controllers\TrabalhoDadosPesquisaController;
+use App\Http\Controllers\EspelhoDiscenteController;
 use App\Http\Controllers\TrabalhoLattesController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
@@ -329,6 +330,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/meu-trabalho/dados-pesquisa', [TrabalhoDadosPesquisaController::class, 'update'])
         ->name('meu-trabalho.dados-pesquisa.update');
+
+    Route::get('/meu-trabalho/espelho', [EspelhoDiscenteController::class, 'form'])
+        ->name('meu-trabalho.espelho.form');
+
+    Route::post('/meu-trabalho/espelho', [EspelhoDiscenteController::class, 'store'])
+        ->name('meu-trabalho.espelho.store');
 
     Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
         ->name('trabalho-impacto.edit');
