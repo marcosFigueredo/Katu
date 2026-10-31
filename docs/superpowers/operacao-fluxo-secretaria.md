@@ -39,6 +39,7 @@ Cada usuário Secretaria administra **um único programa**, ligado a uma institu
    Em **Baremas**, mantenha ativo um barema de cada tipo: Qualificação, Qualificação Confidencial, Defesa, Defesa Confidencial e **Autoavaliação do orientador** — sem eles a banca não é homologada.
 8. Cadastre ou homologue bancas: o sistema confere a regra do curso e o **ORCID do discente**; sem eles a banca não é salva/homologada. O discente informa o ORCID em **Meu perfil**.
 9. Somente bancas homologadas ficam liberadas para envio do trabalho e avaliação (o envio também exige ORCID).
+10. Antes de o pedido chegar à fila, o discente já marcou as declarações do envio do projeto (originalidade, template, IA, plágio), preencheu os **Dados da pesquisa** (código, dados, CAAE/parecer, protocolo de ética animal) e, na defesa, respondeu o **espelho da avaliação** — sem eles o pedido não é enviado. A Secretaria não vê as notas do espelho (privadas à CPA).
 
 ## Rotas de operação
 
@@ -85,7 +86,7 @@ Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
 
 | E-mail | Situação |
 | --- | --- |
-| `discente.completo@ppgmsb.test` | Juliana Ribeiro Santos — com ORCID; orientadora Beatriz Carvalho Mendes (`permanente1`) e coorientador Rafael Teixeira Nunes (`permanente2`) — banca pode ser cadastrada. Projeto LaTeX fictício pronto em `dissertacao-teste.zip` |
+| `discente.completo@ppgmsb.test` | Juliana Ribeiro Santos — com ORCID; orientadora Beatriz Carvalho Mendes (`permanente1`) e coorientador Rafael Teixeira Nunes (`permanente2`) — banca pode ser cadastrada. Projeto LaTeX fictício pronto em `dissertacao-teste.zip`; dados da pesquisa já preenchidos (o espelho da defesa fica para responder) |
 | `discente.sem.orcid@ppgmsb.test` | Com orientador e **sem ORCID** — cadastro de banca deve ser recusado até ele informar o ORCID em Meu perfil |
 | `discente.sem.orientador@ppgmsb.test` | Com ORCID e sem orientador — selo "sem orientador" e registro do orientador na edição |
 | `discente.com.troca@ppgmsb.test` | Orientadora trocada há 2 meses (SEI fictício) — linha do tempo da orientação |
@@ -93,7 +94,7 @@ Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
 
 ### Roteiro sugerido
 
-0. Defesa da Juliana (`discente.completo`): como Secretaria, homologue a banca de defesa; entre como `permanente1@ppgmsb.test` (orientadora) — em **Verificação das referências** só aparecem as dela; o bloco **Autoavaliação** fica antes de "Status dos avaliadores"; responda as 15 afirmações; depois que `colaborador@` e `externo.ufba@` enviarem as avaliações, finalize — ata e folha vão por e-mail aos avaliadores (`storage/logs/laravel.log`).
+0. Defesa da Juliana (`discente.completo`): como ela, em **Meu trabalho** responda o **Espelho da avaliação** (notas de 0 a 10), envie o `.zip` marcando as 4 declarações e envie o pedido à homologação; como Secretaria, homologue a banca de defesa; entre como `permanente1@ppgmsb.test` (orientadora) — em **Verificação das referências** só aparecem as dela; o bloco **Autoavaliação** fica antes de "Status dos avaliadores"; responda as 15 afirmações; depois que `colaborador@` e `externo.ufba@` enviarem as avaliações, finalize — ata e folha vão por e-mail aos avaliadores (`storage/logs/laravel.log`).
 
 1. Como Secretaria, defina coordenador e vice no Programa (as permanentes aparecem na lista).
 2. Cadastre banca para o discente sem ORCID e confira a recusa; entre como ele, informe o ORCID em **Meu perfil** e tente de novo.

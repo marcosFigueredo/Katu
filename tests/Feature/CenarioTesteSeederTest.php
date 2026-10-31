@@ -89,4 +89,19 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertNotNull($trabalho->setor_cnae_id);
         $this->assertNotNull($programa->fresh()->homepage_trabalhos);
     }
+
+    public function test_trabalho_da_juliana_tem_dados_da_pesquisa_preenchidos(): void
+    {
+        $this->programaDoUsuario();
+
+        $this->seed(CenarioTesteSeeder::class);
+
+        $trabalho = User::where('email', 'discente.completo@ppgmsb.test')->firstOrFail()
+            ->discenteProfile->vinculosPrograma->first()->trabalhoAcademico;
+        $dados = $trabalho->dadosPesquisa;
+        $this->assertNotNull($dados?->preenchido_em);
+        $this->assertSame('publico', $dados->codigo);
+        $this->assertNotNull($dados->codigo_link);
+        $this->assertFalse($dados->seres_humanos);
+    }
 }

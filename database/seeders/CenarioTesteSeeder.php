@@ -22,6 +22,7 @@ use App\Models\Orientacao;
 use App\Models\Programa;
 use App\Models\ProgramaCurso;
 use App\Models\TrabalhoAcademico;
+use App\Models\TrabalhoDadosPesquisa;
 use App\Models\User;
 use App\Services\ContextoSecretaria;
 use App\Services\CursoProgramaService;
@@ -419,6 +420,25 @@ class CenarioTesteSeeder extends Seeder
         ]);
         $trabalho->areasCnpq()->sync(AreaCnpq::whereIn('codigo', ['40601005', '10104003'])->pluck('id'));
         $trabalho->programa?->update(['homepage_trabalhos' => 'https://ppgmsb.uneb.br/trabalhos']);
+
+        // Dados da pesquisa (código, dados e ética): exigidos para enviar o pedido à homologação
+        TrabalhoDadosPesquisa::updateOrCreate(['trabalho_academico_id' => $trabalho->id], [
+            'codigo' => 'publico',
+            'codigo_link' => 'https://github.com/ppgmsb/modelo-vigilancia-teste',
+            'codigo_justificativa' => null,
+            'dados_tipos' => ['secundarios_publicos', 'simulados'],
+            'dados_disponibilidade' => 'publico',
+            'dados_link' => 'https://doi.org/10.5281/zenodo.0000000',
+            'dados_justificativa' => null,
+            'seres_humanos' => false,
+            'caae' => null,
+            'parecer_numero' => null,
+            'tcle' => null,
+            'tcle_justificativa' => null,
+            'animais' => false,
+            'ceua_protocolo' => null,
+            'preenchido_em' => now(),
+        ]);
 
         // Qualificação já aprovada para permitir banca de defesa
         $qualificacao = Banca::updateOrCreate(
