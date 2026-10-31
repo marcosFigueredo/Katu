@@ -90,6 +90,18 @@ class LatexmkCompiladorTest extends TestCase
         $this->assertSame('', $this->pretex($cmd));
     }
 
+    /**
+     * Segurança: programas auxiliares de glossário (makeglossaries, makeindex, xindy) leem nomes e opções
+     * do .aux, que o projeto do estudante controla. O template usa \makenoidxglossaries (o LaTeX ordena
+     * sozinho); o servidor não executa nenhum deles.
+     */
+    public function test_compilador_nao_executa_programa_externo_de_glossario(): void
+    {
+        $codigo = file_get_contents((new \ReflectionClass(LatexmkCompilador::class))->getFileName());
+
+        $this->assertDoesNotMatchRegularExpression('/makeglossaries|makeindex|xindy/i', $codigo);
+    }
+
     public function test_comando_contem_norc(): void
     {
         $cmd = (new LatexmkCompilador('latexmk', 180, false, false))->montarComando($this->projeto(), 'pdflatex', false, '/tmp/out');

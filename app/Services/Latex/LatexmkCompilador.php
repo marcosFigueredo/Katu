@@ -94,20 +94,6 @@ class LatexmkCompilador implements CompiladorLatex
         $bbl = $outdir.DIRECTORY_SEPARATOR.$base.'.bbl';
         $arquivoLog = $outdir.DIRECTORY_SEPARATOR.$base.'.log';
 
-        // Com -no-shell-escape, o automake do glossaries não pode rodar makeindex dentro do TeX.
-        // Se o documento gerou arquivo .ist (\makeglossaries), rodamos makeglossaries no outdir
-        // e mais uma passada do latexmk para incorporar as listas de símbolos/abreviações e o sumário.
-        $logInicial = is_file($arquivoLog) ? (string) file_get_contents($arquivoLog) : '';
-        if (is_file($outdir.DIRECTORY_SEPARATOR.$base.'.ist') && ! preg_match('/^! /m', $logInicial)) {
-            if ($this->gerarGlossarios($outdir, $base)) {
-                try {
-                    $processo->run();
-                } catch (\Throwable) {
-                    // mantém o resultado da passada anterior se a recompilação falhar
-                }
-            }
-        }
-
         $log = is_file($arquivoLog) ? (string) file_get_contents($arquivoLog) : '';
         if ($log === '') {
             $log = $processo->getOutput()."\n".$processo->getErrorOutput();
@@ -119,24 +105,6 @@ class LatexmkCompilador implements CompiladorLatex
             $log,
             $outdir,
         );
-    }
-
-    private function gerarGlossarios(string $outdir, string $base): bool
-    {
-        try {
-            $proc = new Process(
-                ['makeglossaries', '-q', $base],
-                $outdir,
-                ['openout_any' => 'p', 'openin_any' => 'p', 'TEXMFOUTPUT' => $outdir],
-            );
-            $proc->setTimeout(30);
-            $proc->setInput(null);
-            $proc->run();
-
-            return $proc->isSuccessful();
-        } catch (\Throwable) {
-            return false;
-        }
     }
 
     /** @return list<string> */
