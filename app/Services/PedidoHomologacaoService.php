@@ -75,7 +75,8 @@ class PedidoHomologacaoService
             ]);
         }
 
-        if (! $banca->trabalhoAcademico->dadosPesquisa()->whereNotNull('preenchido_em')->exists()) {
+        $dadosPesquisa = $banca->trabalhoAcademico->dadosPesquisa()->whereNotNull('preenchido_em')->first();
+        if (! $dadosPesquisa) {
             throw ValidationException::withMessages([
                 'homologacao' => 'Preencha os dados da pesquisa (código, dados e ética) em Meu trabalho antes de enviar à homologação.',
             ]);
@@ -91,9 +92,11 @@ class PedidoHomologacaoService
 
         $tentativa = (int) ($banca->homologacao_tentativa ?? 1);
 
-        DB::transaction(function () use ($banca, $documento, $tentativa) {
+        DB::transaction(function () use ($banca, $documento, $tentativa, $dadosPesquisa) {
             $banca->update([
                 'documento_homologacao_id' => $documento->id,
+                // Cópia do momento do envio: editar os dados depois não muda o que acompanhou este pedido.
+                'dados_pesquisa_enviados' => $dadosPesquisa->makeHidden(['id', 'trabalho_academico_id', 'created_at', 'updated_at'])->toArray(),
                 'homologacao_status' => 'aguardando',
                 'homologacao_tentativa' => $tentativa + ($banca->homologacao_status === 'devolvida' ? 1 : 0),
                 'libera_envio_trabalho' => false,

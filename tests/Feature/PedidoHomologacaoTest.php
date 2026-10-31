@@ -124,6 +124,27 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
     }
 
+    public function test_enviar_homologacao_guarda_copia_dos_dados_da_pesquisa_na_banca(): void
+    {
+        Mail::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+        $documento = $this->documento($trabalho, $discente);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+
+        // Editar depois não muda o que foi enviado com o pedido.
+        $trabalho->dadosPesquisa()->update(['codigo' => 'publico', 'codigo_link' => 'https://github.com/x/y']);
+
+        $copia = $banca->fresh()->dados_pesquisa_enviados;
+        $this->assertSame('nao_houve', $copia['codigo']);
+        $this->assertNull($copia['codigo_link']);
+        $this->assertFalse($copia['seres_humanos']);
+        $this->assertArrayNotHasKey('id', $copia);
+        $this->assertArrayNotHasKey('trabalho_academico_id', $copia);
+    }
+
     public function test_enviar_homologacao_exige_composicao_valida(): void
     {
         [$discente, , $trabalho] = $this->estrutura();

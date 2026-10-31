@@ -333,6 +333,7 @@ A CPA analisa a **qualidade do conjunto** das dissertações e teses do programa
 - **Linha de pesquisa:** seleção de **várias** linhas.
 - **Nível:** mestrado e/ou doutorado.
 - **Curso:** sem filtro nem recorte — o programa tem um só curso; o que varia é o nível.
+- **Barema por período (decidido em 2026-10-31):** a avaliação acontece por data; o barema vale para o período da avaliação (em geral, 4 anos). As comparações (estudante × banca, pergunta a pergunta) se fazem dentro do mesmo período; cada espelho e cada avaliação guardam o barema usado (`barema_id`) e a dimensão de cada nota.
 
 ### Fora desta versão
 - **Publicidade** dos resultados (painel para outros docentes ou página pública): fica para depois.

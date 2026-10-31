@@ -14,6 +14,7 @@ class Banca extends Model
         'status',
         'homologacao_status',
         'documento_homologacao_id',
+        'dados_pesquisa_enviados',
         'homologacao_tentativa',
         'resultado',
         'nota_media',
@@ -43,6 +44,7 @@ class Banca extends Model
             'ata_enviada_em'        => 'datetime',
             'devolvida_em'          => 'datetime',
             'homologacao_tentativa' => 'integer',
+            'dados_pesquisa_enviados' => 'array',
         ];
     }
 
