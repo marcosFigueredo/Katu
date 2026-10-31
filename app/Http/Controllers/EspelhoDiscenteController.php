@@ -7,6 +7,7 @@ use App\Models\Barema;
 use App\Models\EspelhoDiscente;
 use App\Services\BaremasDaBancaService;
 use App\Services\PedidoHomologacaoService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -61,6 +62,18 @@ class EspelhoDiscenteController extends Controller
             $maximo += (float) $item->nota_maxima * $peso;
         }
 
+        try {
+            $this->gravar($banca, $barema, $itens, $dados, $obtido, $maximo);
+        } catch (UniqueConstraintViolationException) {
+            // Envio simultâneo (clique duplo): o outro pedido já gravou o espelho.
+            throw ValidationException::withMessages(['espelho' => 'O espelho da avaliação já foi enviado.']);
+        }
+
+        return redirect()->route('meu-trabalho.index')->with('success', 'Espelho da avaliação enviado.');
+    }
+
+    private function gravar(Banca $banca, Barema $barema, $itens, array $dados, float $obtido, float $maximo): void
+    {
         DB::transaction(function () use ($banca, $barema, $itens, $dados, $obtido, $maximo) {
             $espelho = EspelhoDiscente::create([
                 'banca_id' => $banca->id,
@@ -77,8 +90,6 @@ class EspelhoDiscenteController extends Controller
                 ]);
             }
         });
-
-        return redirect()->route('meu-trabalho.index')->with('success', 'Espelho da avaliação enviado.');
     }
 
     /** @return array{0: Banca, 1: Barema} */

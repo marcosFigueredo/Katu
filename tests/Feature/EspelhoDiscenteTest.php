@@ -100,6 +100,22 @@ class EspelhoDiscenteTest extends TestCase
         $this->actingAs($discente)->get(route('meu-trabalho.espelho.form'))->assertRedirect(route('meu-trabalho.index'));
     }
 
+    public function test_envio_simultaneo_nao_gera_erro_500(): void
+    {
+        [$discente, $banca, $barema] = $this->defesaProposta();
+
+        // Simula o outro POST gravando o espelho entre a checagem e o insert deste.
+        EspelhoDiscente::creating(function () use ($banca, $barema) {
+            EspelhoDiscente::withoutEvents(fn () => EspelhoDiscente::create([
+                'banca_id' => $banca->id, 'barema_id' => $barema->id, 'nota_final' => 8, 'enviada_em' => now(),
+            ]));
+        });
+
+        $this->actingAs($discente)->post(route('meu-trabalho.espelho.store'), ['notas' => $this->notas($barema, [1, 1])])
+            ->assertSessionHasErrors('espelho');
+        // (no teste o espelho "concorrente" cai no rollback da mesma conexão; na vida real ele já está gravado)
+    }
+
     public function test_qualificacao_nao_pede_espelho(): void
     {
         [$discente] = $this->defesaProposta('qualificacao');

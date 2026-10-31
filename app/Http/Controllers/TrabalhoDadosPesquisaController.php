@@ -22,35 +22,37 @@ class TrabalhoDadosPesquisaController extends Controller
     {
         $trabalho = $this->trabalho();
 
+        // Campos que a resposta tornou sem efeito são ignorados (exclude_*): um radio não se desmarca,
+        // e o valor que sobrou no formulário não pode impedir o salvamento.
         $dados = $request->validate([
             'codigo' => ['required', Rule::in(array_keys(TrabalhoDadosPesquisa::CODIGO))],
-            'codigo_link' => ['nullable', 'required_if:codigo,publico', 'url', 'max:500'],
-            'codigo_justificativa' => ['nullable', 'required_if:codigo,nao_compartilhavel', 'string', 'max:2000'],
+            'codigo_link' => ['exclude_unless:codigo,publico', 'required', 'url', 'max:500'],
+            'codigo_justificativa' => ['exclude_unless:codigo,nao_compartilhavel', 'required', 'string', 'max:2000'],
             'dados_disponibilidade' => ['required', Rule::in(array_keys(TrabalhoDadosPesquisa::DADOS_DISPONIBILIDADE))],
-            'dados_tipos' => ['nullable', 'array', 'required_unless:dados_disponibilidade,nao_se_aplica'],
-            'dados_tipos.*' => [Rule::in(array_keys(TrabalhoDadosPesquisa::DADOS_TIPOS))],
-            'dados_link' => ['nullable', 'required_if:dados_disponibilidade,publico', 'url', 'max:500'],
-            'dados_justificativa' => ['nullable', 'required_if:dados_disponibilidade,nao_compartilhavel', 'string', 'max:2000'],
+            'dados_tipos' => ['exclude_if:dados_disponibilidade,nao_se_aplica', 'required', 'array'],
+            'dados_tipos.*' => ['exclude_if:dados_disponibilidade,nao_se_aplica', Rule::in(array_keys(TrabalhoDadosPesquisa::DADOS_TIPOS))],
+            'dados_link' => ['exclude_unless:dados_disponibilidade,publico', 'required', 'url', 'max:500'],
+            'dados_justificativa' => ['exclude_unless:dados_disponibilidade,nao_compartilhavel', 'required', 'string', 'max:2000'],
             'seres_humanos' => ['required', 'boolean'],
             // CAAE da Plataforma Brasil: 00000000.0.0000.0000
-            'caae' => ['nullable', 'required_if:seres_humanos,1', 'regex:/^\d{8}\.\d\.\d{4}\.\d{4}$/'],
-            'parecer_numero' => ['nullable', 'required_if:seres_humanos,1', 'string', 'max:30'],
-            'tcle' => ['nullable', 'required_if:seres_humanos,1', Rule::in(array_keys(TrabalhoDadosPesquisa::TCLE))],
-            'tcle_justificativa' => ['nullable', 'required_if:tcle,dispensa', 'string', 'max:2000'],
+            'caae' => ['exclude_unless:seres_humanos,1', 'required', 'regex:/^\d{8}\.\d\.\d{4}\.\d{4}$/'],
+            'parecer_numero' => ['exclude_unless:seres_humanos,1', 'required', 'string', 'max:30'],
+            'tcle' => ['exclude_unless:seres_humanos,1', 'required', Rule::in(array_keys(TrabalhoDadosPesquisa::TCLE))],
+            'tcle_justificativa' => ['exclude_unless:seres_humanos,1', 'exclude_unless:tcle,dispensa', 'required', 'string', 'max:2000'],
             'animais' => ['required', 'boolean'],
-            'ceua_protocolo' => ['nullable', 'required_if:animais,1', 'string', 'max:60'],
+            'ceua_protocolo' => ['exclude_unless:animais,1', 'required', 'string', 'max:60'],
         ], [
-            'codigo_link.required_if' => 'Informe o link do repositório do código.',
-            'codigo_justificativa.required_if' => 'Justifique por que o código não pode ser compartilhado.',
-            'dados_tipos.required_unless' => 'Marque que dados foram usados.',
-            'dados_link.required_if' => 'Informe o link ou DOI do repositório dos dados.',
-            'dados_justificativa.required_if' => 'Justifique por que os dados não podem ser compartilhados.',
-            'caae.required_if' => 'Informe o CAAE da Plataforma Brasil.',
+            'codigo_link.required' => 'Informe o link do repositório do código.',
+            'codigo_justificativa.required' => 'Justifique por que o código não pode ser compartilhado.',
+            'dados_tipos.required' => 'Marque que dados foram usados.',
+            'dados_link.required' => 'Informe o link ou DOI do repositório dos dados.',
+            'dados_justificativa.required' => 'Justifique por que os dados não podem ser compartilhados.',
+            'caae.required' => 'Informe o CAAE da Plataforma Brasil.',
             'caae.regex' => 'O CAAE tem o formato 00000000.0.0000.0000.',
-            'parecer_numero.required_if' => 'Informe o número do parecer do Comitê de Ética.',
-            'tcle.required_if' => 'Informe se houve Termo de Consentimento ou dispensa.',
-            'tcle_justificativa.required_if' => 'Justifique a dispensa do Termo de Consentimento.',
-            'ceua_protocolo.required_if' => 'Informe o número do protocolo da Comissão de Ética no Uso de Animais.',
+            'parecer_numero.required' => 'Informe o número do parecer do Comitê de Ética.',
+            'tcle.required' => 'Informe se houve Termo de Consentimento ou dispensa.',
+            'tcle_justificativa.required' => 'Justifique a dispensa do Termo de Consentimento.',
+            'ceua_protocolo.required' => 'Informe o número do protocolo da Comissão de Ética no Uso de Animais.',
         ]);
 
         $codigo = $dados['codigo'];

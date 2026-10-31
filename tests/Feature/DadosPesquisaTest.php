@@ -99,6 +99,32 @@ class DadosPesquisaTest extends TestCase
         $this->assertDatabaseCount('trabalho_dados_pesquisa', 0);
     }
 
+    public function test_campos_que_deixaram_de_valer_nao_impedem_salvar(): void
+    {
+        [$discente, $trabalho] = $this->estrutura();
+
+        // Radio não desmarca: "dispensa" e um CAAE incompleto continuam indo depois de trocar para "Não".
+        $this->actingAs($discente)->put(route('meu-trabalho.dados-pesquisa.update'), [
+            ...$this->completo(),
+            'codigo' => 'sob_solicitacao',
+            'codigo_link' => 'github.com/sem-protocolo',
+            'dados_disponibilidade' => 'nao_se_aplica',
+            'dados_tipos' => ['inexistente'],
+            'dados_link' => 'doi incompleto',
+            'seres_humanos' => '0',
+            'caae' => '123',
+            'tcle' => 'dispensa',
+            'tcle_justificativa' => '',
+            'animais' => '0',
+        ])->assertSessionHasNoErrors();
+
+        $dados = TrabalhoDadosPesquisa::where('trabalho_academico_id', $trabalho->id)->sole();
+        $this->assertNull($dados->caae);
+        $this->assertNull($dados->tcle);
+        $this->assertNull($dados->codigo_link);
+        $this->assertSame([], $dados->dados_tipos);
+    }
+
     public function test_outro_perfil_nao_acessa(): void
     {
         $docente = User::factory()->docente()->create();
