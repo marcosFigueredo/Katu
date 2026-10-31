@@ -74,6 +74,12 @@ class PedidoHomologacaoService
             ]);
         }
 
+        if (! $banca->trabalhoAcademico->dadosPesquisa()->whereNotNull('preenchido_em')->exists()) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Preencha os dados da pesquisa (código, dados e ética) em Meu trabalho antes de enviar à homologação.',
+            ]);
+        }
+
         $this->verificacao->exigir($this->verificacao->verificarBanca($banca), 'homologacao');
 
         $tentativa = (int) ($banca->homologacao_tentativa ?? 1);

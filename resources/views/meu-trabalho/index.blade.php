@@ -385,7 +385,29 @@
         </div>
 
         @if ($trabalho)
+            @php $dadosPesquisaOk = $trabalho->dadosPesquisa?->preenchido_em !== null; @endphp
             <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                            <i class="bi bi-clipboard2-data me-2"></i>Dados da pesquisa
+                            @if ($dadosPesquisaOk)
+                                <span class="badge bg-success-subtle text-success-emphasis ms-1">Preenchido</span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning-emphasis ms-1">Pendente</span>
+                            @endif
+                        </h2>
+                        <p class="text-muted small mb-0">
+                            Código, dados e ética (CAAE, Comissão de Ética no Uso de Animais). Obrigatório para enviar o pedido à homologação.
+                        </p>
+                    </div>
+                    <a href="{{ route('meu-trabalho.dados-pesquisa.edit') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-fill me-1"></i>{{ $dadosPesquisaOk ? 'Revisar' : 'Preencher' }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-3">
                 <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
                         <h2 class="h6 fw-bold mb-1" style="color:#00303A;">

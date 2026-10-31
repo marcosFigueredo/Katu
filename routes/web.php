@@ -23,6 +23,7 @@ use App\Http\Controllers\SubmissaoLatexController;
 use App\Http\Controllers\AutoavaliacaoOrientadorController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\TabelaLattesController;
+use App\Http\Controllers\TrabalhoDadosPesquisaController;
 use App\Http\Controllers\TrabalhoLattesController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
@@ -322,6 +323,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/meu-trabalho/lattes', [TrabalhoLattesController::class, 'update'])
         ->name('meu-trabalho.lattes.update');
+
+    Route::get('/meu-trabalho/dados-pesquisa', [TrabalhoDadosPesquisaController::class, 'edit'])
+        ->name('meu-trabalho.dados-pesquisa.edit');
+
+    Route::put('/meu-trabalho/dados-pesquisa', [TrabalhoDadosPesquisaController::class, 'update'])
+        ->name('meu-trabalho.dados-pesquisa.update');
 
     Route::get('/meu-trabalho/impacto', [TrabalhoImpactoController::class, 'edit'])
         ->name('trabalho-impacto.edit');

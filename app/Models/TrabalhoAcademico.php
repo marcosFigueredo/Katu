@@ -101,6 +101,11 @@ class TrabalhoAcademico extends Model
         return $this->hasOne(TrabalhoImpacto::class);
     }
 
+    public function dadosPesquisa(): HasOne
+    {
+        return $this->hasOne(TrabalhoDadosPesquisa::class);
+    }
+
     public function submissoesLatex(): HasMany
     {
         return $this->hasMany(TrabalhoSubmissaoLatex::class);

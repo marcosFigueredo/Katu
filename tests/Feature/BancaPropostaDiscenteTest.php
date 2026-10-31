@@ -17,11 +17,13 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\Concerns\CriaBaremasAtivos;
+use Tests\Concerns\CriaDadosPesquisa;
 use Tests\TestCase;
 
 class BancaPropostaDiscenteTest extends TestCase
 {
     use CriaBaremasAtivos;
+    use CriaDadosPesquisa;
     use RefreshDatabase;
 
     public function test_discente_propoe_banca_e_fica_proposta_sem_liberar_envio(): void
@@ -183,6 +185,7 @@ class BancaPropostaDiscenteTest extends TestCase
             'nivel' => 'mestrado',
             'status' => 'em_andamento',
         ]);
+        $this->criarDadosPesquisa($trabalho);
 
         $orientadorUser = User::factory()->docente()->create();
         $orientadorProfile = DocenteProfile::create([

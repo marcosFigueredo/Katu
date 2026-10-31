@@ -20,10 +20,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\CriaDadosPesquisa;
 use Tests\TestCase;
 
 class PedidoHomologacaoTest extends TestCase
 {
+    use CriaDadosPesquisa;
     use RefreshDatabase;
 
     public function test_discente_propoe_banca_que_fica_proposta_e_fora_da_fila(): void
@@ -97,6 +99,27 @@ class PedidoHomologacaoTest extends TestCase
         $this->actingAs($secretaria)->get(route('bancas.index'))
             ->assertOk()
             ->assertSee(route('bancas.homologacao.show', $banca), false);
+    }
+
+    public function test_enviar_homologacao_exige_dados_da_pesquisa(): void
+    {
+        Mail::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $trabalho->dadosPesquisa()->delete();
+        $banca = $this->proporBanca($discente, $trabalho);
+        $documento = $this->documento($trabalho, $discente);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors([
+                'homologacao' => 'Preencha os dados da pesquisa (código, dados e ética) em Meu trabalho antes de enviar à homologação.',
+            ]);
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+
+        $this->criarDadosPesquisa($trabalho);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
     }
 
     public function test_enviar_homologacao_exige_composicao_valida(): void
@@ -419,6 +442,8 @@ class PedidoHomologacaoTest extends TestCase
                 'ativo' => true,
             ]);
         }
+
+        $this->criarDadosPesquisa($trabalho);
 
         return [$discenteUser, $secretaria, $trabalho->fresh()];
     }

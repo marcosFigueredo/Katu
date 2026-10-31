@@ -25,11 +25,13 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\CriaDadosPesquisa;
 use Tests\TestCase;
 use ZipArchive;
 
 class SubmissaoLatexTest extends TestCase
 {
+    use CriaDadosPesquisa;
     use RefreshDatabase;
 
     private CompiladorFalso $compilador;
@@ -650,6 +652,7 @@ class SubmissaoLatexTest extends TestCase
             'nivel' => 'mestrado',
             'status' => 'em_andamento',
         ]);
+        $this->criarDadosPesquisa($trabalho);
 
         $orientador = $this->docente($programa, 'Antonio Guimarães Rosa', 'interno', orientar: true);
         Orientacao::create([
