@@ -30,8 +30,17 @@ class IndiceQualidadeService
     {
     }
 
+    /** Reamostras do bootstrap e percentis do intervalo de 95%. */
+    private const REAMOSTRAS = 500;
+
     /** [codigo => nota 0–10 ou null] a partir das avaliações enviadas pelos avaliadores ativos da banca. */
     public function dimensoesDaBanca(Banca $banca): array
+    {
+        return $this->dimensoesDe($this->notasPorAvaliador($banca));
+    }
+
+    /** Lista, por avaliador, de [item_id => ['codigo', 'peso', 'nota' normalizada 0–10]]. */
+    public function notasPorAvaliador(Banca $banca): array
     {
         $codigos = DimensaoQualidade::pluck('codigo', 'id');
         $membros = $banca->avaliadores()->pluck('id');
@@ -42,8 +51,7 @@ class IndiceQualidadeService
             ->with('notas.baremaItem')
             ->get();
 
-        // Por pergunta: notas normalizadas de cada avaliador, a dimensão congelada e o peso da pergunta.
-        $porItem = [];
+        $porAvaliador = [];
         foreach ($avaliacoes as $avaliacao) {
             foreach ($avaliacao->notas as $nota) {
                 $item = $nota->baremaItem;
@@ -51,9 +59,26 @@ class IndiceQualidadeService
                 if ($nota->nota === null || ! $item || ! $codigo || (float) $item->nota_maxima <= 0) {
                     continue;
                 }
-                $porItem[$item->id]['codigo'] = $codigo;
-                $porItem[$item->id]['peso'] = (float) $item->peso > 0 ? (float) $item->peso : 1.0;
-                $porItem[$item->id]['notas'][] = (float) $nota->nota / (float) $item->nota_maxima * 10;
+                $porAvaliador[$avaliacao->banca_membro_id][$item->id] = [
+                    'codigo' => $codigo,
+                    'peso' => (float) $item->peso > 0 ? (float) $item->peso : 1.0,
+                    'nota' => (float) $nota->nota / (float) $item->nota_maxima * 10,
+                ];
+            }
+        }
+
+        return array_values($porAvaliador);
+    }
+
+    /** Mediana dos avaliadores por pergunta; na dimensão, média das perguntas ponderada pelo peso de cada uma. */
+    private function dimensoesDe(array $porAvaliador): array
+    {
+        $porItem = [];
+        foreach ($porAvaliador as $itens) {
+            foreach ($itens as $itemId => $dados) {
+                $porItem[$itemId]['codigo'] = $dados['codigo'];
+                $porItem[$itemId]['peso'] = $dados['peso'];
+                $porItem[$itemId]['notas'][] = $dados['nota'];
             }
         }
 
@@ -71,6 +96,16 @@ class IndiceQualidadeService
         }
 
         return $resultado;
+    }
+
+    /** A dimensão "producao" combina a parte da banca (se houver) com a pontuação de produção. */
+    private static function comProducao(array $dimensoes, ?float $producao): array
+    {
+        if ($producao !== null) {
+            $dimensoes['producao'] = $dimensoes['producao'] === null ? $producao : round(($dimensoes['producao'] + $producao) / 2, 2);
+        }
+
+        return $dimensoes;
     }
 
     /**
@@ -104,39 +139,50 @@ class IndiceQualidadeService
     }
 
     /**
-     * Índice do trabalho: ['dimensoes', 'indice', 'classe', 'periodo', 'regras'].
+     * Índice do trabalho: ['dimensoes', 'indice', 'classe', 'periodo', 'regras'] e, com $comIntervalo (só para a CPA),
+     * 'intervalo' [lo, hi] por bootstrap dos avaliadores e 'fronteira' (classe vizinha que o intervalo alcança).
      * Só defesa finalizada recebe índice e classe.
      */
-    public function indiceTrabalho(Banca $defesa): array
+    public function indiceTrabalho(Banca $defesa, bool $comIntervalo = false): array
     {
         $trabalho = $defesa->trabalhoAcademico;
         $data = $defesa->data_hora ?? $defesa->updated_at ?? now();
         $periodo = $trabalho?->programa ? PeriodoQualidade::doPrograma($trabalho->programa, $data) : null;
+        $faixas = $periodo ?? new PeriodoQualidade();
+        $pesos = $faixas->pesos('dimensao');
 
-        $dimensoes = $this->dimensoesDaBanca($defesa);
+        $porAvaliador = $this->notasPorAvaliador($defesa);
         $producao = $trabalho ? $this->pontuacaoProducao($trabalho) : null;
-        if ($producao !== null) {
-            $dimensoes['producao'] = $dimensoes['producao'] === null ? $producao : round(($dimensoes['producao'] + $producao) / 2, 2);
-        }
+        $dimensoes = self::comProducao($this->dimensoesDe($porAvaliador), $producao);
 
-        $vazio = ['dimensoes' => $dimensoes, 'indice' => null, 'classe' => null, 'periodo' => $periodo, 'regras' => []];
+        $vazio = ['dimensoes' => $dimensoes, 'indice' => null, 'classe' => null, 'periodo' => $periodo, 'regras' => []]
+            + ($comIntervalo ? ['intervalo' => null, 'fronteira' => null] : []);
         if ($defesa->tipo !== 'defesa' || $defesa->status !== 'finalizada') {
             return $vazio;
         }
 
-        $indice = self::mediaGeometrica($dimensoes, ($periodo ?? new PeriodoQualidade())->pesos('dimensao'));
+        $indice = self::mediaGeometrica($dimensoes, $pesos);
         if ($indice === null) {
             return $vazio;
         }
 
-        [$classe, $regras] = $this->classificarTrabalho($defesa, $indice, $dimensoes, $periodo ?? new PeriodoQualidade());
+        [$classe, $regras] = $this->classificarTrabalho($defesa, $indice, $dimensoes, $faixas);
+        $resultado = ['dimensoes' => $dimensoes, 'indice' => $indice, 'classe' => $classe, 'periodo' => $periodo, 'regras' => $regras];
 
-        return ['dimensoes' => $dimensoes, 'indice' => $indice, 'classe' => $classe, 'periodo' => $periodo, 'regras' => $regras];
+        if ($comIntervalo) {
+            $intervalo = self::bootstrap($porAvaliador, 'trabalho-'.$defesa->id,
+                fn (array $amostra) => self::mediaGeometrica(self::comProducao($this->dimensoesDe($amostra), $producao), $pesos));
+            $resultado['intervalo'] = $intervalo;
+            $resultado['fronteira'] = self::fronteira($intervalo, $indice, $faixas);
+        }
+
+        return $resultado;
     }
 
     /**
-     * Índice do programa no período: por fonte e dimensão, a mediana entre os trabalhos; a dimensão do programa combina
+     * Índice do programa no período: por fonte e dimensão, a mediana entre as defesas; a dimensão do programa combina
      * as fontes com os pesos de "fonte"; o índice é a média geométrica ponderada pelos pesos de "dimensao".
+     * Intervalo de 95% (informativo à CPA) por bootstrap das defesas.
      */
     public function indicePrograma(PeriodoQualidade $periodo): array
     {
@@ -149,22 +195,18 @@ class IndiceQualidadeService
             ->orderBy('data_hora')
             ->get();
 
-        $codigos = array_column(DimensaoQualidade::PADRAO, 'codigo');
         $trabalhos = [];
-        $porFonte = array_fill_keys(array_keys(PeriodoQualidade::FONTES), array_fill_keys($codigos, []));
         $distribuicao = array_fill_keys(array_keys(self::CLASSES), 0);
+        // Por defesa: as notas por dimensão de cada fonte.
+        $porDefesa = [];
 
         foreach ($defesas as $defesa) {
-            $indice = $this->indiceTrabalho($defesa);
+            $indice = $this->indiceTrabalho($defesa, comIntervalo: true);
             $trabalhos[$defesa->id] = $indice + ['banca' => $defesa];
             if ($indice['classe'] !== null) {
                 $distribuicao[$indice['classe']]++;
             }
-            foreach ($indice['dimensoes'] as $codigo => $nota) {
-                if ($nota !== null) {
-                    $porFonte['trabalhos'][$codigo][] = $nota;
-                }
-            }
+            $porDefesa[$defesa->id]['trabalhos'] = array_filter($indice['dimensoes'], fn ($n) => $n !== null);
         }
 
         $ids = $defesas->pluck('id');
@@ -172,17 +214,41 @@ class IndiceQualidadeService
             'autoavaliacao_orientador' => $this->dimensoesQuestionario('autoavaliacao_orientador_notas', 'autoavaliacoes_orientador', 'autoavaliacao_orientador_id', $ids),
             'espelho' => $this->dimensoesQuestionario('espelho_discente_notas', 'espelhos_discente', 'espelho_discente_id', $ids),
             'avaliacao_orientando' => $this->dimensoesOrientando($ids),
-        ] as $fonte => $porAvaliacao) {
-            foreach ($porAvaliacao as $notasPorDimensao) {
-                foreach ($notasPorDimensao as $codigo => $nota) {
-                    $porFonte[$fonte][$codigo][] = $nota;
-                }
+        ] as $fonte => $porBanca) {
+            foreach ($porBanca as $bancaId => $notasPorDimensao) {
+                $porDefesa[$bancaId][$fonte] = $notasPorDimensao;
             }
         }
 
+        $pontual = $this->agregarPrograma(array_values($porDefesa), $periodo);
+        $intervalo = $pontual['indice'] === null ? null
+            : self::bootstrap(array_values($porDefesa), 'programa-'.$periodo->id, fn (array $amostra) => $this->agregarPrograma($amostra, $periodo)['indice']);
+
+        return [
+            'trabalhos' => $trabalhos,
+            'fontes' => $pontual['fontes'],
+            'dimensoes' => $pontual['dimensoes'],
+            'indice' => $pontual['indice'],
+            'classe' => $pontual['indice'] === null ? null : $periodo->classe($pontual['indice']),
+            'distribuicao' => $distribuicao,
+            'intervalo' => $intervalo,
+            'fronteira' => $pontual['indice'] === null ? null : self::fronteira($intervalo, $pontual['indice'], $periodo),
+        ];
+    }
+
+    /** Combina uma lista de defesas (cada uma com [fonte => [codigo => nota]]) em fontes, dimensões e índice do programa. */
+    private function agregarPrograma(array $defesas, PeriodoQualidade $periodo): array
+    {
+        $codigos = array_column(DimensaoQualidade::PADRAO, 'codigo');
         $fontes = [];
-        foreach ($porFonte as $fonte => $porDimensao) {
-            foreach ($porDimensao as $codigo => $notas) {
+        foreach (array_keys(PeriodoQualidade::FONTES) as $fonte) {
+            foreach ($codigos as $codigo) {
+                $notas = [];
+                foreach ($defesas as $defesa) {
+                    if (isset($defesa[$fonte][$codigo])) {
+                        $notas[] = $defesa[$fonte][$codigo];
+                    }
+                }
                 $fontes[$fonte][$codigo] = $notas === [] ? null : round(self::mediana($notas), 2);
             }
         }
@@ -202,19 +268,57 @@ class IndiceQualidadeService
             $dimensoes[$codigo] = $somaPesos > 0 ? round($soma / $somaPesos, 2) : null;
         }
 
-        $indice = self::mediaGeometrica($dimensoes, $periodo->pesos('dimensao'));
-
-        return [
-            'trabalhos' => $trabalhos,
-            'fontes' => $fontes,
-            'dimensoes' => $dimensoes,
-            'indice' => $indice,
-            'classe' => $indice === null ? null : $periodo->classe($indice),
-            'distribuicao' => $distribuicao,
-        ];
+        return ['fontes' => $fontes, 'dimensoes' => $dimensoes, 'indice' => self::mediaGeometrica($dimensoes, $periodo->pesos('dimensao'))];
     }
 
-    /** Questionário com perguntas de barema (autoavaliação, espelho): [avaliação => [codigo => média normalizada 0–10]]. */
+    /**
+     * Intervalo de 95% por bootstrap: reamostra $unidades com reposição e aplica $estatistica.
+     * Semente fixa ($semente) para o resultado não mudar a cada recarga.
+     */
+    private static function bootstrap(array $unidades, string $semente, callable $estatistica): ?array
+    {
+        $n = count($unidades);
+        if ($n === 0) {
+            return null;
+        }
+
+        mt_srand(crc32($semente));
+        $valores = [];
+        for ($b = 0; $b < self::REAMOSTRAS; $b++) {
+            $amostra = [];
+            for ($i = 0; $i < $n; $i++) {
+                $amostra[] = $unidades[mt_rand(0, $n - 1)];
+            }
+            $valor = $estatistica($amostra);
+            if ($valor !== null) {
+                $valores[] = $valor;
+            }
+        }
+        mt_srand();
+
+        if ($valores === []) {
+            return null;
+        }
+        sort($valores);
+        $ultimo = count($valores) - 1;
+
+        return [round($valores[(int) floor(0.025 * $ultimo)], 2), round($valores[(int) ceil(0.975 * $ultimo)], 2)];
+    }
+
+    /** Classe vizinha alcançada pelo intervalo (a de cima tem preferência); null se o intervalo fica na faixa do índice. */
+    private static function fronteira(?array $intervalo, float $indice, PeriodoQualidade $faixas): ?int
+    {
+        if ($intervalo === null) {
+            return null;
+        }
+        $classe = $faixas->classe($indice);
+        $acima = $faixas->classe($intervalo[1]);
+        $abaixo = $faixas->classe($intervalo[0]);
+
+        return $acima < $classe ? $acima : ($abaixo > $classe ? $abaixo : null);
+    }
+
+    /** Questionário com perguntas de barema (autoavaliação, espelho): [banca_id => [codigo => média normalizada 0–10]]. */
     private function dimensoesQuestionario(string $tabelaNotas, string $tabelaAvaliacoes, string $chave, $bancaIds): array
     {
         $linhas = \Illuminate\Support\Facades\DB::table($tabelaNotas.' as n')
@@ -223,28 +327,28 @@ class IndiceQualidadeService
             ->join('dimensoes_qualidade as d', 'd.id', '=', 'n.dimensao_qualidade_id')
             ->whereIn('a.banca_id', $bancaIds)
             ->where('i.nota_maxima', '>', 0)
-            ->get(['n.'.$chave.' as avaliacao', 'd.codigo', 'n.nota', 'i.nota_maxima']);
+            ->get(['a.banca_id', 'd.codigo', 'n.nota', 'i.nota_maxima']);
 
         $agrupado = [];
         foreach ($linhas as $linha) {
-            $agrupado[$linha->avaliacao][$linha->codigo][] = (float) $linha->nota / (float) $linha->nota_maxima * 10;
+            $agrupado[$linha->banca_id][$linha->codigo][] = (float) $linha->nota / (float) $linha->nota_maxima * 10;
         }
 
         return array_map(fn ($porDimensao) => array_map(fn ($notas) => array_sum($notas) / count($notas), $porDimensao), $agrupado);
     }
 
-    /** Avaliação do orientando (notas 0–10 por elemento): [avaliação => [codigo => média]]. */
+    /** Avaliação do orientando (notas 0–10 por elemento): [banca_id => [codigo => média]]. */
     private function dimensoesOrientando($bancaIds): array
     {
         $linhas = \Illuminate\Support\Facades\DB::table('avaliacao_orientando_notas as n')
             ->join('avaliacoes_orientando as a', 'a.id', '=', 'n.avaliacao_orientando_id')
             ->join('dimensoes_qualidade as d', 'd.id', '=', 'n.dimensao_qualidade_id')
             ->whereIn('a.banca_id', $bancaIds)
-            ->get(['n.avaliacao_orientando_id as avaliacao', 'd.codigo', 'n.nota']);
+            ->get(['a.banca_id', 'd.codigo', 'n.nota']);
 
         $agrupado = [];
         foreach ($linhas as $linha) {
-            $agrupado[$linha->avaliacao][$linha->codigo][] = (float) $linha->nota;
+            $agrupado[$linha->banca_id][$linha->codigo][] = (float) $linha->nota;
         }
 
         return array_map(fn ($porDimensao) => array_map(fn ($notas) => array_sum($notas) / count($notas), $porDimensao), $agrupado);

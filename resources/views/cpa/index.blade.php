@@ -23,6 +23,7 @@
                             <div class="small text-muted">Qualidade do programa — {{ $periodo->nome }}</div>
                             <div class="display-6 fw-bold">{{ $resultado['indice'] !== null ? number_format($resultado['indice'], 2, ',', '') : '—' }}</div>
                             @include('cpa._classe', ['classe' => $resultado['classe']])
+                            @include('cpa._intervalo', ['intervalo' => $resultado['intervalo'], 'fronteira' => $resultado['fronteira']])
                             <div class="small text-muted mt-2">{{ count($resultado['trabalhos']) }} defesa(s) finalizada(s) no período.</div>
                         </div>
                     </div>
@@ -102,7 +103,10 @@
                                 </td>
                                 <td class="small">{{ $item['banca']->data_hora?->format('d/m/Y') }}</td>
                                 <td>{{ $item['indice'] !== null ? number_format($item['indice'], 2, ',', '') : '—' }}</td>
-                                <td>@include('cpa._classe', ['classe' => $item['classe']])</td>
+                                <td>
+                                    @include('cpa._classe', ['classe' => $item['classe']])
+                                    @include('cpa._intervalo', ['intervalo' => $item['intervalo'] ?? null, 'fronteira' => $item['fronteira'] ?? null])
+                                </td>
                                 @php $pubs = $trabalho?->publicacoes ?? collect(); @endphp
                                 <td class="small">{{ $pubs->count() }} <span class="text-muted">({{ $pubs->where('openalex_situacao', 'encontrada')->count() }} no OpenAlex)</span></td>
                                 @foreach (array_keys($dimensoes) as $codigo)
