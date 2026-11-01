@@ -264,6 +264,14 @@ Avalia **como foi a formação** (percurso, prazos, orientação recebida). A ba
 
 **Só para comparação (fora da nota):** autoavaliação do orientador; avaliação do orientando pelo orientador; bolsa (contexto).
 
+### Índice de qualidade — dois níveis (decidido em 2026-11-01)
+- **A CPA não avalia nada:** define as perguntas e os pesos (SWARA) e vê os resultados já ponderados. Quem avalia é a banca, o orientador (autoavaliação e avaliação do orientando) e o estudante (espelho); a produção associada entra como medida.
+- **Índice do trabalho** (cada dissertação/tese): banca + produção associada (depois, aderência ao projeto). Autoavaliação do orientador, avaliação do orientando e espelho **ficam fora da nota do trabalho** — só comparação.
+- **Índice do programa** (por período de avaliação): índices dos trabalhos do período + autoavaliação do orientador + avaliação do orientando + espelho do estudante.
+- **Os dois terminam em 5 classes:** 1. Alta qualidade · 2. Boa qualidade · 3. Suficiente · 4. Pouca qualidade · 5. Baixa qualidade.
+- Não usar média simples: mediana dos avaliadores por pergunta, média geométrica ponderada entre dimensões (dimensão fraca não é compensada), faixas fixas por período (não quintis) e regras de corte (plágio → Baixa; reprovada → no máximo Pouca; dimensão < 4 → no máximo Suficiente; Alta exige todas ≥ 7). Faixas propostas: ≥ 8,5 · 7,0–8,4 · 5,5–6,9 · 4,0–5,4 · < 4,0 (a CPA ajusta).
+- Até a Etapa 6, o papel `admin` faz as vezes da CPA no teste (define pesos e vê resultados).
+
 ### Nota da dimensão
 Ponderação padrão: atividades **30%** · prazos **30%** · orientação na visão do estudante **30%** · trâmite **10%**. **A CPA pode alterar** (mesma regra da dimensão 4).
 
