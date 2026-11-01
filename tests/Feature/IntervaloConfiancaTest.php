@@ -113,11 +113,11 @@ class IntervaloConfiancaTest extends TestCase
     public function test_sem_fronteira_quando_regra_de_corte_muda_a_classe(): void
     {
         $this->notas([7.5, 8, 10]);
-        $this->banca->update(['reprovada_por_plagio' => true]);
+        $this->banca->update(['resultado' => 'reprovado']);
 
         $r = $this->servico->indiceTrabalho($this->banca->fresh(), comIntervalo: true);
 
-        $this->assertSame(5, $r['classe']);
+        $this->assertSame(4, $r['classe']);
         $this->assertNull($r['fronteira']);
     }
 

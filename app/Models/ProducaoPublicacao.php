@@ -55,6 +55,7 @@ class ProducaoPublicacao extends Model
         'encontrada' => 'Encontrada no OpenAlex',
         'nao_encontrada' => 'Não encontrada no OpenAlex',
         'falha' => 'OpenAlex indisponível; nova tentativa depois',
+        'sem_conferencia' => 'Sem DOI e título curto: conferência não feita',
     ];
 
     protected $fillable = [

@@ -111,6 +111,19 @@ class ProducaoOpenAlexTest extends TestCase
         $this->assertSame('nao_encontrada', $publicacao->fresh()->openalex_situacao);
     }
 
+    public function test_sem_doi_e_titulo_curto_nao_consulta(): void
+    {
+        Http::fake();
+        $publicacao = $this->publicacao(['doi' => null, 'titulo' => 'Editorial']);
+
+        app(ProducaoOpenAlexService::class)->verificar($publicacao);
+
+        Http::assertNothingSent();
+        $this->assertSame('sem_conferencia', $publicacao->fresh()->openalex_situacao);
+        $this->actingAs($this->discente)->get(route('meu-trabalho.producao.index'))
+            ->assertSee('Sem DOI e título curto')->assertSee('Zenodo');
+    }
+
     public function test_falha_de_rede_grava_falha(): void
     {
         Http::fake(['api.openalex.org/*' => Http::response('erro', 503)]);

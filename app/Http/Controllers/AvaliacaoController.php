@@ -189,6 +189,9 @@ class AvaliacaoController extends Controller
         $nivelTrabalho = $ehOrientadorPrincipal && $banca->tipo === 'defesa' && $banca->status === 'finalizada'
             ? app(\App\Services\IndiceQualidadeService::class)->indiceTrabalho($banca)
             : null;
+        if ($nivelTrabalho && $nivelTrabalho['excluido']) {
+            $nivelTrabalho = null;
+        }
 
         return view('avaliacoes.banca', compact(
             'nivelTrabalho',

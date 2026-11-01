@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // Conferência informativa no OpenAlex: não encontrar não invalida a produção nem muda a nota.
         Schema::table('producao_publicacoes', function (Blueprint $table) {
-            $table->enum('openalex_situacao', ['encontrada', 'nao_encontrada', 'falha'])->nullable()->after('openalex_id');
+            $table->enum('openalex_situacao', ['encontrada', 'nao_encontrada', 'falha', 'sem_conferencia'])->nullable()->after('openalex_id');
             $table->unsignedInteger('openalex_citacoes')->nullable()->after('openalex_situacao');
             $table->timestamp('openalex_verificada_em')->nullable()->after('openalex_citacoes');
         });

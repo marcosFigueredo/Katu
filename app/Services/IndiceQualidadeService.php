@@ -158,10 +158,14 @@ class IndiceQualidadeService
         $producao = $trabalho ? $this->pontuacaoProducao($trabalho) : null;
         $dimensoes = self::comProducao($this->dimensoesDe($porAvaliador), $producao);
 
-        $vazio = ['dimensoes' => $dimensoes, 'indice' => null, 'classe' => null, 'periodo' => $periodo, 'regras' => []]
+        $vazio = ['dimensoes' => $dimensoes, 'indice' => null, 'classe' => null, 'periodo' => $periodo, 'regras' => [], 'excluido' => false]
             + ($comIntervalo ? ['intervalo' => null, 'fronteira' => null] : []);
         if ($defesa->tipo !== 'defesa' || $defesa->status !== 'finalizada') {
             return $vazio;
+        }
+        // Plágio = jubilamento: o trabalho é como se não existisse e não entra em nenhuma métrica.
+        if ($defesa->reprovada_por_plagio) {
+            return ['excluido' => true] + $vazio;
         }
 
         $indice = self::mediaGeometrica($dimensoes, $pesos);
@@ -171,7 +175,7 @@ class IndiceQualidadeService
 
         [$classe, $regras] = $this->classificarTrabalho($defesa, $indice, $dimensoes, $faixas);
         $resultado = ['dimensoes' => $dimensoes, 'indice' => $indice, 'classe' => $classe, 'periodo' => $periodo, 'regras' => $regras,
-            'avaliadores' => count($porAvaliador)];
+            'excluido' => false, 'avaliadores' => count($porAvaliador)];
 
         if ($comIntervalo) {
             $intervalo = self::bootstrap($porAvaliador, 'trabalho-'.$defesa->id,
@@ -193,6 +197,7 @@ class IndiceQualidadeService
     {
         $defesas = Banca::where('tipo', 'defesa')
             ->where('status', 'finalizada')
+            ->where('reprovada_por_plagio', false)
             ->whereHas('trabalhoAcademico', fn ($q) => $q->where('programa_id', $periodo->programa_id))
             ->whereDate('data_hora', '>=', $periodo->inicio_em)
             ->whereDate('data_hora', '<=', $periodo->fim_em)
@@ -360,13 +365,9 @@ class IndiceQualidadeService
         return array_map(fn ($porDimensao) => array_map(fn ($notas) => array_sum($notas) / count($notas), $porDimensao), $agrupado);
     }
 
-    /** Faixas do período e regras de corte, nesta ordem: plágio, reprovação, dimensão < 4, Alta exige todas ≥ 7. */
+    /** Faixas do período e regras de corte, nesta ordem: reprovação, dimensão < 4, Alta exige todas ≥ 7 (plágio sai antes, de tudo). */
     private function classificarTrabalho(Banca $defesa, float $indice, array $dimensoes, PeriodoQualidade $periodo): array
     {
-        if ($defesa->reprovada_por_plagio) {
-            return [5, ['Reprovada por plágio']];
-        }
-
         $classe = $periodo->classe($indice);
         $regras = [];
         $notas = array_filter($dimensoes, fn ($n) => $n !== null);

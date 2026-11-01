@@ -124,8 +124,9 @@
                             <input type="text" name="veiculo" class="form-control form-control-sm" maxlength="300" required value="{{ $pub['veiculo'] }}">
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label small">DOI</label>
+                            <label class="form-label small">DOI <span class="text-muted">(se houver)</span></label>
                             <input type="text" name="doi" class="form-control form-control-sm" maxlength="255" value="{{ $pub['doi'] }}">
+                            <div class="form-text">A revista não atribui DOI? Você pode depositar o artigo no <a href="https://zenodo.org" target="_blank" rel="noopener">Zenodo</a>, que gera um DOI gratuito. Sem DOI a publicação continua válida.</div>
                         </div>
                         <div class="col-12"><button class="btn btn-sm btn-primary">Adicionar publicação</button></div>
                     </form>

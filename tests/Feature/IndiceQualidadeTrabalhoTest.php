@@ -146,8 +146,12 @@ class IndiceQualidadeTrabalhoTest extends TestCase
         $this->banca->update(['resultado' => 'reprovado']);
         $this->assertSame(4, $this->servico->indiceTrabalho($this->banca->fresh())['classe']);
 
+        // Plágio = jubilamento: o trabalho sai de todas as métricas (sem índice e sem classe).
         $this->banca->update(['reprovada_por_plagio' => true]);
-        $this->assertSame(5, $this->servico->indiceTrabalho($this->banca->fresh())['classe']);
+        $plagio = $this->servico->indiceTrabalho($this->banca->fresh());
+        $this->assertNull($plagio['classe']);
+        $this->assertNull($plagio['indice']);
+        $this->assertTrue($plagio['excluido']);
     }
 
     public function test_dimensao_abaixo_de_4_limita_a_suficiente(): void

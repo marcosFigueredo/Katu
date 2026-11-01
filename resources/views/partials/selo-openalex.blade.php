@@ -10,6 +10,8 @@
     <span class="badge bg-secondary-subtle text-secondary-emphasis" title="O OpenAlex não indexa toda a produção; a publicação continua válida.">
         Não encontrada no OpenAlex — não invalida a produção
     </span>
+@elseif ($publicacao->openalex_situacao === 'sem_conferencia')
+    <span class="badge bg-light text-muted">Sem DOI e título curto: conferência não feita — não invalida a produção</span>
 @else
     <span class="badge bg-light text-muted">Conferência no OpenAlex pendente</span>
 @endif

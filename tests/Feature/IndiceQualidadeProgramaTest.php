@@ -151,6 +151,23 @@ class IndiceQualidadeProgramaTest extends TestCase
         $this->assertSame(0, $distribuicao[3]);
     }
 
+    public function test_plagio_sai_de_todas_as_metricas_do_programa(): void
+    {
+        $this->notasBanca($this->banca, 9);
+        $this->autoavaliacao($this->banca, 9);
+        $outra = $this->outraDefesa();
+        $this->notasBanca($outra, 6);
+        $this->banca->update(['reprovada_por_plagio' => true, 'resultado' => 'reprovado']);
+
+        $resultado = app(IndiceQualidadeService::class)->indicePrograma($this->periodo);
+
+        $this->assertSame([$outra->id], array_keys($resultado['trabalhos']));
+        $this->assertSame(1, array_sum($resultado['distribuicao']));
+        $this->assertNull($resultado['fontes']['autoavaliacao_orientador']['rigor']);
+        $this->assertEqualsWithDelta(6.0, $resultado['dimensoes']['rigor'], 0.001);
+        $this->actingAs($this->membroCpa())->get(route('cpa.index'))->assertDontSee($this->discente->name);
+    }
+
     public function test_cpa_ve_qualidade_do_programa(): void
     {
         $this->notasBanca($this->banca, 9);

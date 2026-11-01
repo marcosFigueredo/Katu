@@ -14,8 +14,17 @@ class ProducaoOpenAlexService
 {
     private const SIMILARIDADE_MINIMA = 90.0;
 
+    /** Sem DOI, títulos com menos palavras que isso ("Editorial", "Introdução") não são buscados: casariam com qualquer obra. */
+    private const PALAVRAS_MINIMAS_TITULO = 4;
+
     public function verificar(ProducaoPublicacao $publicacao): void
     {
+        if (! $publicacao->doi && str_word_count($this->simplificar($publicacao->titulo)) < self::PALAVRAS_MINIMAS_TITULO) {
+            $publicacao->update(['openalex_situacao' => 'sem_conferencia', 'openalex_citacoes' => null, 'openalex_verificada_em' => now()]);
+
+            return;
+        }
+
         try {
             $obra = $publicacao->doi ? $this->porDoi($publicacao->doi) : $this->porTitulo($publicacao->titulo, $publicacao->ano);
         } catch (\Throwable $e) {
