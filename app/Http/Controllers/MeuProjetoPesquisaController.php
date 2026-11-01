@@ -16,19 +16,29 @@ class MeuProjetoPesquisaController extends Controller
 
     public function edit()
     {
-        $docente = $this->docentePermanente();
-        $projetos = $docente->projetos()->withCount(['vinculos as orientandos_count' => fn ($q) => $q->where('ativo', true)])
-            ->orderByDesc('id')->get();
+        // Um projeto por programa em que o docente é permanente.
+        $secoes = $this->vinculosPermanentes()->map(function (DocenteProgramaVinculo $vinculo) {
+            $projetos = $vinculo->projetos()->withCount(['vinculos as orientandos_count' => fn ($q) => $q->where('ativo', true)])
+                ->orderByDesc('id')->get();
 
-        return view('docente.projeto-pesquisa', [
-            'ativo' => $projetos->firstWhere('situacao', 'ativo'),
-            'concluidos' => $projetos->where('situacao', 'concluido'),
-        ]);
+            return [
+                'vinculo' => $vinculo->loadMissing('programa'),
+                'ativo' => $projetos->firstWhere('situacao', 'ativo'),
+                'concluidos' => $projetos->where('situacao', 'concluido'),
+            ];
+        });
+
+        return view('docente.projeto-pesquisa', ['secoes' => $secoes, 'variosProgramas' => $secoes->count() > 1]);
     }
 
     public function store(Request $request)
     {
-        $docente = $this->docentePermanente();
+        $vinculos = $this->vinculosPermanentes();
+        $docente = $request->filled('vinculo_id')
+            ? $vinculos->firstWhere('id', (int) $request->input('vinculo_id'))
+            : $vinculos->first();
+        abort_unless($docente, 403);
+
         $this->service->cadastrar($docente, $this->validar($request), auth()->user());
 
         return redirect()->route('meu-projeto.edit')->with('success', 'Projeto de pesquisa cadastrado. Seus orientandos foram vinculados a ele.');
@@ -36,8 +46,7 @@ class MeuProjetoPesquisaController extends Controller
 
     public function update(Request $request, ProjetoPesquisa $projeto)
     {
-        $docente = $this->docentePermanente();
-        abort_unless($projeto->docente_programa_vinculo_id === $docente->id, 403);
+        abort_unless($this->vinculosPermanentes()->contains('id', $projeto->docente_programa_vinculo_id), 403);
 
         $this->service->atualizar($projeto, $this->validar($request));
 
@@ -56,15 +65,17 @@ class MeuProjetoPesquisaController extends Controller
         ]);
     }
 
-    private function docentePermanente(): DocenteProgramaVinculo
+    /** Vínculos ativos em que o docente logado é permanente; nenhum → 403. */
+    private function vinculosPermanentes(): \Illuminate\Support\Collection
     {
         $user = auth()->user();
         abort_unless($user->categoria === 'docente', 403);
 
-        $vinculo = $user->docenteProfile?->vinculosPrograma()->where('ativo', true)->get()
-            ->first(fn (DocenteProgramaVinculo $v) => $v->ehPermanente());
-        abort_unless($vinculo, 403, 'Só docente permanente cadastra projeto de pesquisa.');
+        $vinculos = ($user->docenteProfile?->vinculosPrograma()->where('ativo', true)->get() ?? collect())
+            ->filter(fn (DocenteProgramaVinculo $v) => $v->ehPermanente())
+            ->values();
+        abort_if($vinculos->isEmpty(), 403, 'Só docente permanente cadastra projeto de pesquisa.');
 
-        return $vinculo;
+        return $vinculos;
     }
 }

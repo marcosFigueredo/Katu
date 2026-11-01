@@ -115,6 +115,27 @@ class ProjetoPesquisaTelaTest extends TestCase
         $this->actingAs(User::factory()->discente()->create())->post(route('meu-projeto.store'), $this->dados())->assertForbidden();
     }
 
+    public function test_docente_permanente_em_dois_programas_cadastra_um_projeto_em_cada(): void
+    {
+        $docente = $this->docente();
+        $outro = Programa::create(['nome' => 'PPG2', 'sigla' => 'PPG2', 'instituicao_id' => $this->programa->instituicao_id]);
+        $vinculo2 = DocenteProgramaVinculo::create([
+            'programa_id' => $outro->id, 'docente_profile_id' => $docente->docenteProfile->id, 'tipo_vinculo' => 'interno',
+            'categoria_docente' => 'permanente', 'pode_orientar' => true, 'pode_avaliar' => true, 'ativo' => true,
+        ]);
+
+        $this->actingAs($docente)->post(route('meu-projeto.store'), $this->dados('Projeto P1'));
+        $this->actingAs($docente)->post(route('meu-projeto.store'), $this->dados('Projeto P2') + ['vinculo_id' => $vinculo2->id])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('ativo', ProjetoPesquisa::where('titulo', 'Projeto P1')->value('situacao'));
+        $this->assertSame($vinculo2->id, ProjetoPesquisa::where('titulo', 'Projeto P2')->value('docente_programa_vinculo_id'));
+        $this->actingAs($docente)->get(route('meu-projeto.edit'))->assertSee('Projeto P1')->assertSee('Projeto P2')->assertSee('PPG2');
+
+        $alheio = $this->docente();
+        $this->actingAs($alheio)->post(route('meu-projeto.store'), $this->dados('Invasão') + ['vinculo_id' => $vinculo2->id])->assertForbidden();
+    }
+
     public function test_fim_antes_do_inicio_e_recusado(): void
     {
         $this->actingAs($this->docente())->post(route('meu-projeto.store'), $this->dados() + ['fim_em' => '2024-01-01'])

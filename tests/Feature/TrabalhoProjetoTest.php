@@ -166,6 +166,16 @@ class TrabalhoProjetoTest extends TestCase
         $this->assertSame('Primeiro', $this->trabalho->projetoVinculoVigente()->objetivo);
     }
 
+    public function test_mantem_sem_objetivo_anterior_e_erro_de_validacao(): void
+    {
+        $this->projeto();
+        $this->vincular();
+
+        $this->actingAs($this->discente)->put(route('meu-trabalho.projeto.update'), ['mantem_objetivo' => '1'])
+            ->assertSessionHasErrors('objetivo');
+        $this->assertNull($this->trabalho->projetoVinculoVigente()->objetivo);
+    }
+
     public function test_sem_vinculo_mostra_aviso(): void
     {
         $this->vincular();

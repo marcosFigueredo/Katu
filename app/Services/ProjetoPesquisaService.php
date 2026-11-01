@@ -44,7 +44,9 @@ class ProjetoPesquisaService
                 ->where('ativo', true)
                 ->with('trabalhoAcademico')
                 ->get()
-                ->each(fn (Orientacao $o) => $o->trabalhoAcademico && $this->vincular($o->trabalhoAcademico, 'novo_projeto'));
+                // Egressos (já defenderam) ficam no projeto em que defenderam.
+                ->filter(fn (Orientacao $o) => $o->trabalhoAcademico && $o->trabalhoAcademico->status !== 'defendido')
+                ->each(fn (Orientacao $o) => $this->vincular($o->trabalhoAcademico, 'novo_projeto'));
 
             return $projeto;
         });

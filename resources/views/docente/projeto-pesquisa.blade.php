@@ -19,52 +19,59 @@
             </div>
         @endif
 
-        @if ($ativo)
+        @foreach ($secoes as $secao)
+            @php ['vinculo' => $vinculo, 'ativo' => $ativo, 'concluidos' => $concluidos] = $secao; @endphp
+            @if ($variosProgramas)
+                <h2 class="h4 fw-bold mt-4" style="color:#00303A;">{{ $vinculo->programa?->sigla ?: $vinculo->programa?->nome }}</h2>
+            @endif
+            @if ($ativo)
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h2 class="h5 fw-bold mb-0">Projeto ativo</h2>
+                            <span class="badge text-bg-light">{{ $ativo->orientandos_count }} orientando(s) vinculado(s)</span>
+                        </div>
+                        <form method="POST" action="{{ route('meu-projeto.update', $ativo) }}">
+                            @csrf
+                            @method('PUT')
+                            @include('docente.partials.projeto-campos', ['projeto' => $ativo, 'prefixoId' => 'ativo'.$vinculo->id])
+                            <button class="btn btn-outline-primary btn-sm">Salvar correções</button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-warning">Você ainda não cadastrou seu projeto de pesquisa.</div>
+            @endif
+
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h2 class="h5 fw-bold mb-0">Projeto ativo</h2>
-                        <span class="badge text-bg-light">{{ $ativo->orientandos_count }} orientando(s) vinculado(s)</span>
-                    </div>
-                    <form method="POST" action="{{ route('meu-projeto.update', $ativo) }}">
+                    <h2 class="h5 fw-bold mb-2">{{ $ativo ? 'Passar a um novo projeto' : 'Cadastrar projeto' }}</h2>
+                    @if ($ativo)
+                        <p class="small text-muted">O projeto atual será concluído e seus orientandos passarão ao novo projeto, indicando se mantêm seus objetivos.</p>
+                    @endif
+                    <form method="POST" action="{{ route('meu-projeto.store') }}">
                         @csrf
-                        @method('PUT')
-                        @include('docente.partials.projeto-campos', ['projeto' => $ativo, 'prefixoId' => 'ativo'])
-                        <button class="btn btn-outline-primary btn-sm">Salvar correções</button>
+                        <input type="hidden" name="vinculo_id" value="{{ $vinculo->id }}">
+                        @include('docente.partials.projeto-campos', ['projeto' => null, 'prefixoId' => 'novo'.$vinculo->id])
+                        <button class="btn btn-primary btn-sm">Cadastrar projeto</button>
                     </form>
                 </div>
             </div>
-        @else
-            <div class="alert alert-warning">Você ainda não cadastrou seu projeto de pesquisa.</div>
-        @endif
 
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h5 fw-bold mb-2">{{ $ativo ? 'Passar a um novo projeto' : 'Cadastrar projeto' }}</h2>
-                @if ($ativo)
-                    <p class="small text-muted">O projeto atual será concluído e seus orientandos passarão ao novo projeto, indicando se mantêm seus objetivos.</p>
-                @endif
-                <form method="POST" action="{{ route('meu-projeto.store') }}">
-                    @csrf
-                    @include('docente.partials.projeto-campos', ['projeto' => null, 'prefixoId' => 'novo'])
-                    <button class="btn btn-primary btn-sm">Cadastrar projeto</button>
-                </form>
-            </div>
-        </div>
-
-        @if ($concluidos->isNotEmpty())
-            <h2 class="h6 fw-bold">Projetos anteriores</h2>
-            <ul class="list-group mb-5">
-                @foreach ($concluidos as $projeto)
-                    <li class="list-group-item">
-                        <div class="fw-semibold">{{ $projeto->titulo }}</div>
-                        <div class="small text-muted">
-                            {{ ProjetoPesquisa::SITUACOES[$projeto->situacao] }} ·
-                            {{ $projeto->inicio_em?->format('d/m/Y') }} a {{ $projeto->fim_em?->format('d/m/Y') ?? '—' }}
-                        </div>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
+            @if ($concluidos->isNotEmpty())
+                <h2 class="h6 fw-bold">Projetos anteriores</h2>
+                <ul class="list-group mb-5">
+                    @foreach ($concluidos as $projeto)
+                        <li class="list-group-item">
+                            <div class="fw-semibold">{{ $projeto->titulo }}</div>
+                            <div class="small text-muted">
+                                {{ ProjetoPesquisa::SITUACOES[$projeto->situacao] }} ·
+                                {{ $projeto->inicio_em?->format('d/m/Y') }} a {{ $projeto->fim_em?->format('d/m/Y') ?? '—' }}
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        @endforeach
     </div>
 </x-app-layout>

@@ -135,6 +135,20 @@ class ProjetoPesquisaServiceTest extends TestCase
         $this->assertNull($coorientando->projetoVinculoVigente());
     }
 
+    public function test_novo_projeto_nao_move_egresso(): void
+    {
+        $docente = $this->docente();
+        $this->projeto($docente, 'Projeto A');
+        $egresso = $this->trabalho();
+        $this->orientacao->definirOrientadorInicial($egresso, $docente->id, $this->secretaria);
+        $egresso->update(['status' => 'defendido']);
+
+        $this->projeto($docente, 'Projeto B');
+
+        $this->assertSame('Projeto A', $egresso->projetoVinculoVigente()->projeto->titulo);
+        $this->assertSame(1, $egresso->projetoVinculos()->count());
+    }
+
     public function test_troca_para_orientador_sem_projeto_encerra_vinculo(): void
     {
         $docente = $this->docente();

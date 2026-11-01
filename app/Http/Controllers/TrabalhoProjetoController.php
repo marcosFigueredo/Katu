@@ -41,9 +41,12 @@ class TrabalhoProjetoController extends Controller
         }
 
         $anterior = $vigente->objetivo === null ? $this->service->objetivoAnterior($trabalho) : null;
-        $dados = $request->validate([
-            'mantem_objetivo' => [$anterior !== null ? 'required' : 'nullable', 'boolean'],
+        // Sem objetivo anterior não há o que manter: o texto é sempre exigido (ex.: formulário antigo em outra aba).
+        $dados = $request->validate($anterior !== null ? [
+            'mantem_objetivo' => ['required', 'boolean'],
             'objetivo' => ['exclude_if:mantem_objetivo,1', 'required', 'string', 'max:3000'],
+        ] : [
+            'objetivo' => ['required', 'string', 'max:3000'],
         ], [
             'mantem_objetivo.required' => 'Indique se mantém os objetivos que informou antes.',
             'objetivo.required' => 'Indique qual objetivo do projeto sua pesquisa avança.',
