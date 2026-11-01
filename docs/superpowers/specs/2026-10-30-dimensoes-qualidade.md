@@ -225,11 +225,13 @@ Qualificação e defesa: todos os elementos (a diferença mostra se o trabalho s
 Confirma linha e área; descreve em 1–2 frases **como o trabalho usa modelagem e simulação**; responde às perguntas 1–5.
 
 ### Projetos de pesquisa (decidido)
-- A **Secretaria cadastra os projetos dos docentes permanentes**, como no Lattes: **início, título, descrição, fim** ("em andamento" enquanto vazio) e **situação** ativo/concluído (confirmado em 2026-11-01).
+- **O próprio docente permanente cadastra o seu projeto** (corrigido em 2026-11-01; antes: a Secretaria), como no Lattes: **início, título, descrição, fim** ("em andamento" enquanto vazio) e **situação** ativo/concluído (confirmado em 2026-11-01).
 - **Um único projeto ativo por orientador** (decidido). O docente pode passar a outro projeto: o novo entra ativo e o anterior é concluído; **nunca fica sem projeto** — não há como concluir o único ativo sem cadastrar outro (2026-11-01).
 - O **estudante é vinculado automaticamente ao projeto do orientador** no momento em que a Secretaria registra o orientador (edição do discente em Usuários) — sem escolha; na **troca de orientador**, o projeto também é trocado.
 - **Não há vínculo com projeto concluído** (2026-11-01). Sempre que o projeto do orientador muda (troca de orientador ou novo projeto do docente), o vínculo do estudante muda junto.
 - **Objetivo da pesquisa no projeto** (2026-11-01): no seu espaço, o estudante indica **qual objetivo do projeto do orientador a sua pesquisa avança**; fica registrado para conferência posterior. Quando o projeto muda, ele indica se **mantém ou não** os objetivos que tinha informado. Os vínculos nunca são apagados (histórico).
+- **Só permanente precisa de projeto**; o docente pode mudar de permanente para colaborador e vice-versa (quem passa a permanente precisa cadastrar). O estudante cujo orientador é permanente **só envia qualificação e defesa com o vínculo e o objetivo indicados** (2026-11-01).
+- **Quando o objetivo muda** (2026-11-01): além da mudança de projeto do orientador, só em dois momentos — **antes de enviar a qualificação** e **depois da qualificação finalizada** (se o orientador entender que o rumo do trabalho precisa mudar); **depois de enviar a defesa, não muda mais**.
 - **Quem vê** (2026-11-01): o estudante vê o projeto do orientador e o objetivo que ele próprio indicou; a **CPA vê todos os projetos e todos os objetivos** indicados (tela na Etapa 6).
 
 ### Aderência ao projeto calculada pelo sistema (decidido: viável; na qualificação e na defesa)

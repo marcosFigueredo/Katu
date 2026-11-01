@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A Secretaria cadastra o projeto de pesquisa de cada docente permanente e as bolsas dos estudantes; o estudante é vinculado sozinho ao projeto do orientador, indica qual objetivo do projeto sua pesquisa avança e vê suas bolsas.
+**Goal:** Cada docente permanente cadastra o próprio projeto de pesquisa e a Secretaria as bolsas dos estudantes; o estudante é vinculado sozinho ao projeto do orientador, indica qual objetivo do projeto sua pesquisa avança e vê suas bolsas.
 
-**Architecture:** Duas tabelas de projeto (`projetos_pesquisa`, `trabalho_projeto_vinculos`, esta com histórico que nunca apaga) e uma de bolsa (`bolsas`). Um `ProjetoPesquisaService` concentra as regras (um ativo por docente, nunca sem projeto, vínculo só com projeto ativo, revinculação quando o projeto do orientador muda) e é chamado pelo `OrientacaoService`. Telas da Secretaria ficam na edição do usuário (como o bloco "Orientação"); a do estudante em Meu trabalho.
+**Architecture:** Duas tabelas de projeto (`projetos_pesquisa`, `trabalho_projeto_vinculos`, esta com histórico que nunca apaga) e uma de bolsa (`bolsas`). Um `ProjetoPesquisaService` concentra as regras (um ativo por docente, nunca sem projeto, vínculo só com projeto ativo, revinculação quando o projeto do orientador muda) e é chamado pelo `OrientacaoService`. O projeto é cadastrado pelo próprio docente na área dele; a bolsa pela Secretaria na edição do usuário; o estudante usa Meu trabalho.
 
 **Tech Stack:** Laravel 12, Blade + Bootstrap, PHPUnit (SQLite em memória).
 
@@ -24,8 +24,8 @@
 
 1. Docente com projeto ativo recebe outro: todos os orientandos vigentes (orientador, não coorientador) passam ao novo vínculo com objetivo pendente; quem tinha objetivo pode mantê-lo.
 2. Troca de orientador para docente colaborador (sem projeto): o vínculo anterior é encerrado e o estudante fica sem projeto — não pode continuar ligado ao projeto do orientador antigo.
-3. Secretaria de outro programa tentando cadastrar projeto/bolsa por URL de usuário alheio → 403/404.
-4. Estudante tenta mudar o objetivo com pedido aguardando homologação → bloqueado.
+3. Docente editando projeto de outro, ou Secretaria de outro programa mexendo em bolsa de usuário alheio → 403/404.
+4. Estudante tenta mudar o objetivo fora das janelas (qualificação enviada e ainda não finalizada; defesa enviada) → bloqueado, salvo vínculo novo sem objetivo.
 5. Formulário do estudante com "mantenho" e texto vazio, ou "não mantenho" sem texto novo → erro de validação, não objetivo vazio gravado.
 
 ---
@@ -45,11 +45,14 @@
   - `projetos_pesquisa`: `docente_programa_vinculo_id` (fk, cascade), `titulo` string 500, `descricao` text, `inicio_em` date, `fim_em` date null, `situacao` enum `ativo|concluido` default ativo, `registrado_por` fk users null, timestamps.
   - `trabalho_projeto_vinculos`: `trabalho_academico_id` (fk, cascade), `projeto_pesquisa_id` (fk, cascade), `motivo` enum `orientador|troca_orientador|novo_projeto`, `inicio_em` date, `fim_em` date null, `ativo` bool default true, `objetivo` text null, `mantem_objetivo` bool null, `objetivo_informado_em` datetime null, timestamps.
   - `ProjetoPesquisa::SITUACOES = ['ativo' => 'Ativo', 'concluido' => 'Concluído']`.
-  - `ProjetoPesquisaService::cadastrar(DocenteProgramaVinculo $docente, array $dados, User $secretaria): ProjetoPesquisa` — `$dados`: titulo, descricao, inicio_em, fim_em?. Exige docente permanente interno (senão `ValidationException` em `titulo`: "Projeto de pesquisa só para docente permanente do programa."). Conclui o ativo anterior (`situacao = concluido`, `fim_em = fim_em ?? today()`), cria o novo ativo e chama `revincularOrientandos($docente, 'novo_projeto')`.
+  - `ProjetoPesquisaService::cadastrar(DocenteProgramaVinculo $docente, array $dados, User $autor): ProjetoPesquisa` — `$dados`: titulo, descricao, inicio_em, fim_em?. Exige docente permanente interno (senão `ValidationException` em `titulo`: "Projeto de pesquisa só para docente permanente do programa."). Conclui o ativo anterior (`situacao = concluido`, `fim_em = fim_em ?? today()`), cria o novo ativo e chama `revincularOrientandos($docente, 'novo_projeto')`.
   - `ProjetoPesquisaService::atualizar(ProjetoPesquisa $projeto, array $dados): void` — corrige titulo/descricao/inicio_em/fim_em do projeto; não revincula; concluído não se edita.
   - `ProjetoPesquisaService::vincular(TrabalhoAcademico $trabalho, string $motivo): ?TrabalhoProjetoVinculo` — encerra o vínculo vigente (`ativo=false`, `fim_em=today()`) se for de outro projeto; acha o orientador vigente (`orientacoes()->where('tipo','orientador')`), o projeto ativo dele; cria o novo vínculo ou devolve null (sem projeto). Se o vigente já é desse projeto, devolve-o sem mudar.
   - `ProjetoPesquisaService::objetivoAnterior(TrabalhoAcademico $trabalho): ?string` — objetivo do último vínculo encerrado que tinha objetivo.
   - Não existe método para concluir projeto isolado (regra "nunca sem projeto").
+  - Mudança de categoria: só permanente cadastra; o docente que passa a colaborador mantém o projeto e os vínculos existentes; o colaborador que passa a permanente precisa cadastrar (orientandos ficam bloqueados no pedido até lá).
+  - `ProjetoPesquisaService::projetoExigido(TrabalhoAcademico $trabalho): bool` — orientador vigente é permanente interno ou já tem projeto ativo.
+  - `ProjetoPesquisaService::objetivoEditavel(TrabalhoAcademico $trabalho): bool` — true se o vínculo vigente ainda não tem objetivo; senão false quando `PedidoHomologacaoService::defesaEnviada` ou quando há qualificação não cancelada com `homologacao_status` aguardando/homologada e `status` diferente de finalizada; true nos demais casos (antes de enviar a qualificação; entre a qualificação finalizada e o envio da defesa).
 
 - [ ] **Step 1: Write the failing tests** em `ProjetoPesquisaServiceTest` (usar `CriaCenarioDeBanca`/fábricas existentes para docente, discente e orientação):
   - `test_cadastrar_conclui_o_anterior_e_deixa_um_so_ativo` — dois `cadastrar` → primeiro `concluido` com `fim_em` hoje, segundo `ativo`; `projetoAtivo()` é o segundo.
@@ -72,27 +75,27 @@ Expected: FAIL (classe/tabela inexistente).
 
 ---
 
-### Task 2: Secretaria cadastra o projeto na edição do docente
+### Task 2: O docente permanente cadastra o próprio projeto
 
 **Files:**
-- Create: `app/Http/Controllers/ProjetoPesquisaController.php`
-- Create: `resources/views/usuarios/partials/projeto-pesquisa.blade.php`
-- Modify: `app/Http/Controllers/UsuarioController.php::edit` (passa `$docenteProjeto` = vínculo do docente no programa quando permanente interno, com `projetos` ordenados por `inicio_em` desc)
-- Modify: `resources/views/usuarios/edit.blade.php` (inclui o bloco depois do formulário, como `orientacao`)
-- Modify: `routes/web.php`
+- Create: `app/Http/Controllers/MeuProjetoPesquisaController.php`
+- Create: `resources/views/docente/projeto-pesquisa.blade.php`
+- Modify: `resources/views/dashboards/docente.blade.php` (quadro "Meu projeto de pesquisa" no topo: título do ativo ou alerta "Cadastre seu projeto de pesquisa: seus orientandos precisam dele para enviar a qualificação e a defesa.")
+- Create: `resources/views/usuarios/partials/projeto-pesquisa.blade.php` (só leitura, na edição do docente, para a Secretaria)
+- Modify: `UsuarioController::edit`, `resources/views/usuarios/edit.blade.php`, `routes/web.php`
 - Test: `tests/Feature/ProjetoPesquisaTelaTest.php`
 
 **Interfaces:**
 - Consumes: `ProjetoPesquisaService::cadastrar`, `::atualizar` (Task 1).
-- Produces: rotas `usuarios.projetos.store` (POST `/usuarios/{usuario}/projetos`) e `usuarios.projetos.update` (PUT `/usuarios/{usuario}/projetos/{projeto}`), só `sec`, usuário do programa da Secretaria, projeto pertencente ao docente.
+- Produces: rotas `meu-projeto.edit` (GET `/meu-projeto`), `meu-projeto.store` (POST), `meu-projeto.update` (PUT `/meu-projeto/{projeto}`), só `docente` com vínculo permanente interno ativo; o projeto precisa ser dele.
 
-Bloco "Projeto de pesquisa": projeto ativo (título, início, fim ou "em andamento", descrição, nº de orientandos vinculados) com formulário de correção; formulário "Cadastrar novo projeto" (título, descrição, início, fim opcional) com aviso "O projeto atual será concluído e os orientandos passarão ao novo projeto, indicando de novo seu objetivo."; lista dos concluídos. Sem projeto ativo: alerta "Docente permanente sem projeto de pesquisa cadastrado." Validação: titulo required max 500, descricao required max 5000, inicio_em required date, fim_em nullable date after_or_equal:inicio_em.
+Tela do docente: projeto ativo (título, início, fim ou "em andamento", descrição, nº de orientandos vinculados) com formulário de correção; "Cadastrar novo projeto" (título, descrição, início, fim opcional) com aviso "O projeto atual será concluído e seus orientandos passarão ao novo projeto, indicando se mantêm seus objetivos."; lista dos concluídos. Docente não permanente: 403 nas rotas e o quadro não aparece. A Secretaria vê o bloco só leitura na edição do docente. Validação: titulo required max 500, descricao required max 5000, inicio_em required date, fim_em nullable date after_or_equal:inicio_em.
 
-- [ ] **Step 1: Failing tests**: `test_secretaria_cadastra_projeto_do_docente_permanente` (POST → 1 ativo; GET edit mostra título); `test_novo_projeto_conclui_o_anterior_pela_tela`; `test_secretaria_corrige_projeto_ativo`; `test_bloco_nao_aparece_para_colaborador`; `test_secretaria_de_outro_programa_nao_cadastra` (403/404); `test_docente_e_discente_nao_acessam` (403); `test_fim_antes_do_inicio_e_recusado`.
+- [ ] **Step 1: Failing tests**: `test_docente_permanente_cadastra_o_proprio_projeto`; `test_novo_projeto_conclui_o_anterior_pela_tela`; `test_docente_corrige_projeto_ativo`; `test_docente_nao_edita_projeto_de_outro` (403); `test_colaborador_nao_cadastra` (403, quadro ausente); `test_secretaria_ve_projeto_na_edicao_do_docente`; `test_discente_e_secretaria_nao_acessam_rotas` (403); `test_fim_antes_do_inicio_e_recusado`.
 - [ ] **Step 2: Run** `php artisan test --compact --filter=ProjetoPesquisaTelaTest` → FAIL.
-- [ ] **Step 3: Implement** controller, rotas, partial, `edit`.
+- [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** — `feat: Secretaria cadastra e troca o projeto de pesquisa do docente na edição do usuário`
+- [ ] **Step 5: Commit** — `feat: docente permanente cadastra e troca o próprio projeto de pesquisa`
 
 ---
 
@@ -107,15 +110,15 @@ Bloco "Projeto de pesquisa": projeto ativo (título, início, fim ou "em andamen
 - Test: `tests/Feature/TrabalhoProjetoTest.php`
 
 **Interfaces:**
-- Consumes: `TrabalhoAcademico::projetoVinculoVigente()`, `ProjetoPesquisaService::objetivoAnterior()` (Task 1); `AtividadesFormativasService::travado()` (pedido aguardando → só leitura).
+- Consumes: `TrabalhoAcademico::projetoVinculoVigente()`, `ProjetoPesquisaService::objetivoAnterior()`, `::objetivoEditavel()`, `::projetoExigido()` (Task 1).
 - Produces: rotas `meu-trabalho.projeto.edit` (GET) e `meu-trabalho.projeto.update` (PUT), só `discente`, trabalho do próprio estudante.
-- Mensagem do pedido: `'Indique, em Meu trabalho → Projeto de pesquisa, qual objetivo do projeto do orientador sua pesquisa avança.'` (chave `homologacao`). Só exigida quando há vínculo vigente.
+- Mensagens do pedido (chave `homologacao`), qualificação e defesa: sem vínculo e `projetoExigido` → `'Seu orientador ainda não cadastrou o projeto de pesquisa. O pedido só pode ser enviado depois que ele cadastrar e você indicar seu objetivo.'`; vínculo sem objetivo → `'Indique, em Meu trabalho → Projeto de pesquisa, qual objetivo do projeto do orientador sua pesquisa avança.'`. Orientador colaborador sem projeto: nada exigido.
 
-Tela: projeto do orientador (título, descrição, início, situação, nome do orientador) e campo "Qual objetivo do projeto sua pesquisa avança?" (textarea, max 3000). Se há `objetivoAnterior` e o vínculo vigente ainda não tem objetivo: mostra o texto anterior e o rádio `mantem_objetivo` = 1 "Mantenho estes objetivos" (grava o texto anterior) / 0 "Não mantenho; indico novos objetivos" (exige `objetivo`). Sem vínculo: "Seu orientador ainda não tem projeto de pesquisa ativo cadastrado. Procure a Secretaria." Grava `objetivo_informado_em = now()` a cada envio.
+Tela: projeto do orientador (título, descrição, início, situação, nome do orientador) e campo "Qual objetivo do projeto sua pesquisa avança?" (textarea, max 3000). Se há `objetivoAnterior` e o vínculo vigente ainda não tem objetivo: mostra o texto anterior e o rádio `mantem_objetivo` = 1 "Mantenho estes objetivos" (grava o texto anterior) / 0 "Não mantenho; indico novos objetivos" (exige `objetivo`). Sem vínculo: "Seu orientador ainda não tem projeto de pesquisa ativo cadastrado." Grava `objetivo_informado_em = now()` a cada envio. Fora das janelas (`objetivoEditavel` false) a tela é só leitura com "O objetivo só pode ser alterado antes de enviar a qualificação, depois da qualificação finalizada (até enviar a defesa) ou quando o projeto do orientador muda."
 
-- [ ] **Step 1: Failing tests**: `test_estudante_ve_projeto_do_orientador_e_informa_objetivo`; `test_mantem_objetivo_anterior_apos_novo_projeto` (grava texto anterior e `mantem_objetivo=true`); `test_nao_mantem_exige_novo_texto` (sem texto → erro `objetivo`); `test_bloqueado_com_pedido_aguardando`; `test_sem_vinculo_mostra_aviso`; `test_pedido_exige_objetivo_quando_ha_vinculo` (enviar → erro com a mensagem; com objetivo → passa adiante); `test_outro_usuario_nao_acessa`.
+- [ ] **Step 1: Failing tests**: `test_estudante_ve_projeto_do_orientador_e_informa_objetivo`; `test_mantem_objetivo_anterior_apos_novo_projeto` (grava texto anterior e `mantem_objetivo=true`); `test_nao_mantem_exige_novo_texto` (sem texto → erro `objetivo`); `test_bloqueado_com_qualificacao_enviada_e_liberado_apos_finalizada`; `test_bloqueado_apos_enviar_defesa`; `test_vinculo_novo_sem_objetivo_responde_mesmo_com_defesa_enviada`; `test_orientador_permanente_sem_projeto_bloqueia_pedido`; `test_sem_vinculo_mostra_aviso`; `test_pedido_exige_objetivo_quando_ha_vinculo` (enviar → erro com a mensagem; com objetivo → passa adiante); `test_outro_usuario_nao_acessa`.
 - [ ] **Step 2: Run** `php artisan test --compact --filter=TrabalhoProjetoTest` → FAIL.
-- [ ] **Step 3: Implement.** Ajustar fixtures que enviam pedido com orientador que tenha projeto (`CriaCenarioDeBanca`): se o cenário não cria projeto, nada muda.
+- [ ] **Step 3: Implement.** Ajustar `CriaCenarioDeBanca` (e demais fixtures que enviam pedido com orientador permanente): criar o projeto do orientador e o objetivo do estudante.
 - [ ] **Step 4: Run** o filtro → PASS; `php artisan test --compact --filter=PedidoHomologacao` → PASS.
 - [ ] **Step 5: Commit** — `feat: estudante indica o objetivo do projeto do orientador que sua pesquisa avança; exigido no pedido à homologação`
 
@@ -147,7 +150,7 @@ Tela: projeto do orientador (título, descrição, início, situação, nome do 
 ### Task 5: Cenário de teste e documentação
 
 **Files:**
-- Modify: `database/seeders/CenarioTesteSeeder.php` — projeto ativo e um concluído para o orientador da Juliana; vínculo da Juliana com objetivo; uma bolsa CAPES de mestrado para ela.
+- Modify: `database/seeders/CenarioTesteSeeder.php` — projeto ativo e um concluído para cada docente permanente orientador (Juliana e demais discentes com orientador); vínculo da Juliana com objetivo; uma bolsa CAPES de mestrado para ela.
 - Modify: `CLAUDE.md` (módulos: Projetos de pesquisa e Bolsa; pontos de atenção: nunca sem projeto, vínculo só com ativo, objetivo exigido no pedido), `docs/superpowers/operacao-fluxo-secretaria.md` (roteiro), spec (Etapa 4 feita).
 - Test: `php artisan migrate:fresh --seed` sem erro; suíte completa.
 
