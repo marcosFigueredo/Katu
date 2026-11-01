@@ -36,6 +36,16 @@ class PedidoHomologacaoService
     ) {
     }
 
+    /** O pedido de defesa já foi enviado (aguardando ou homologado)? Então os itens da defesa ficam só leitura. */
+    public function defesaEnviada(TrabalhoAcademico $trabalho): bool
+    {
+        return $trabalho->bancas()
+            ->where('tipo', 'defesa')
+            ->where('status', '!=', 'cancelada')
+            ->whereIn('homologacao_status', ['aguardando', 'homologada'])
+            ->exists();
+    }
+
     /** A banca não cancelada mais recente que ainda aceita trabalho e envio à homologação. */
     public function bancaDoPedido(TrabalhoAcademico $trabalho): ?Banca
     {
@@ -85,6 +95,12 @@ class PedidoHomologacaoService
         if ($banca->tipo === 'defesa' && ! EspelhoDiscente::where('banca_id', $banca->id)->exists()) {
             throw ValidationException::withMessages([
                 'homologacao' => 'Responda o espelho da avaliação (suas notas de 0 a 10 às perguntas da banca) antes de enviar a defesa à homologação.',
+            ]);
+        }
+
+        if ($banca->tipo === 'defesa' && ! $banca->trabalhoAcademico->impacto()->exists()) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Preencha o impacto da dissertação em Meu trabalho antes de enviar a defesa à homologação.',
             ]);
         }
 

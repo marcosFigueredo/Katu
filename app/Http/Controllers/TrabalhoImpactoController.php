@@ -2,66 +2,61 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoImpacto;
+use App\Services\PedidoHomologacaoService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
+/** Tipo de impacto da dissertação, informado pelo estudante; exigido no pedido de defesa. */
 class TrabalhoImpactoController extends Controller
 {
-    private function resolverTrabalho()
-    {
-        $user    = auth()->user();
-        $vinculo = $user->discenteProfile?->vinculosPrograma?->first();
-        return $vinculo?->trabalhoAcademico;
-    }
+    public const DIMENSOES = [
+        'cientifico', 'metodologico', 'tecnologico',
+        'social', 'ambiental', 'formativo', 'institucional',
+    ];
+
+    public const MENSAGEM_TRAVADO = 'O pedido de defesa já foi enviado à homologação; estes dados não podem mais ser alterados.';
+
+    public function __construct(
+        private readonly PedidoHomologacaoService $pedidoHomologacao,
+    ) {}
 
     // GET /meu-trabalho/impacto
     public function edit()
     {
-        if (auth()->user()->categoria !== 'discente') {
-            abort(403);
-        }
-
-        $trabalho = $this->resolverTrabalho();
-
-        if (! $trabalho) {
-            return redirect()->route('meu-trabalho.index')
-                ->with('error', 'Nenhum trabalho acadêmico encontrado.');
-        }
-
+        $trabalho = $this->trabalho();
         $impacto = $trabalho->impacto ?? new TrabalhoImpacto(['trabalho_academico_id' => $trabalho->id]);
+        $travado = $this->pedidoHomologacao->defesaEnviada($trabalho);
 
-        return view('trabalho-impacto.edit', compact('trabalho', 'impacto'));
+        return view('trabalho-impacto.edit', compact('trabalho', 'impacto', 'travado'));
     }
 
     // PUT /meu-trabalho/impacto
     public function update(Request $request)
     {
-        if (auth()->user()->categoria !== 'discente') {
-            abort(403);
+        $trabalho = $this->trabalho();
+
+        if ($this->pedidoHomologacao->defesaEnviada($trabalho)) {
+            throw ValidationException::withMessages(['travado' => self::MENSAGEM_TRAVADO]);
         }
-
-        $trabalho = $this->resolverTrabalho();
-
-        if (! $trabalho) {
-            abort(404);
-        }
-
-        $dimensoes = [
-            'cientifico', 'metodologico', 'tecnologico',
-            'social', 'ambiental', 'formativo', 'institucional',
-        ];
 
         $rules = [];
-        foreach ($dimensoes as $dim) {
-            $rules["impacto_{$dim}_aplicavel"]   = ['nullable', 'boolean'];
-            $rules["impacto_{$dim}_descricao"]   = ['nullable', 'string', 'max:2000'];
+        $mensagens = [];
+        foreach (self::DIMENSOES as $dim) {
+            $rules["impacto_{$dim}_aplicavel"] = ['nullable', 'boolean'];
+            // Descrição de tipo não marcado é ignorada (e gravada vazia).
+            $rules["impacto_{$dim}_descricao"] = ["exclude_unless:impacto_{$dim}_aplicavel,1", 'required', 'string', 'max:2000'];
+            $mensagens["impacto_{$dim}_descricao.required"] = 'Descreva o impacto marcado.';
         }
 
-        $dados = $request->validate($rules);
+        $validados = $request->validate($rules, $mensagens);
 
-        // Checkbox booleanos
-        foreach ($dimensoes as $dim) {
-            $dados["impacto_{$dim}_aplicavel"] = $request->boolean("impacto_{$dim}_aplicavel");
+        $dados = [];
+        foreach (self::DIMENSOES as $dim) {
+            $aplicavel = $request->boolean("impacto_{$dim}_aplicavel");
+            $dados["impacto_{$dim}_aplicavel"] = $aplicavel;
+            $dados["impacto_{$dim}_descricao"] = $aplicavel ? $validados["impacto_{$dim}_descricao"] : null;
         }
 
         TrabalhoImpacto::updateOrCreate(
@@ -71,5 +66,17 @@ class TrabalhoImpactoController extends Controller
 
         return redirect()->route('trabalho-impacto.edit')
             ->with('success', 'Dimensões de impacto salvas com sucesso.');
+    }
+
+    private function trabalho(): TrabalhoAcademico
+    {
+        $user = auth()->user();
+        abort_unless($user->categoria === 'discente', 403);
+
+        $trabalho = $user->discenteProfile?->vinculosPrograma()->with('trabalhoAcademico')->get()
+            ->pluck('trabalhoAcademico')->filter()->first();
+        abort_unless($trabalho, 404);
+
+        return $trabalho;
     }
 }

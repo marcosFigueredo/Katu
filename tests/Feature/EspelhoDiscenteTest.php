@@ -12,12 +12,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\CriaCenarioDeBanca;
 use Tests\Concerns\CriaDadosPesquisa;
+use Tests\Concerns\CriaItensDaDefesa;
 use Tests\TestCase;
 
 class EspelhoDiscenteTest extends TestCase
 {
     use CriaCenarioDeBanca;
     use CriaDadosPesquisa;
+    use CriaItensDaDefesa;
     use RefreshDatabase;
 
     /** @return array{0: User, 1: Banca, 2: Barema, 3: User, 4: User, 5: list<User>} discente, banca, barema, secretaria, orientador, avaliadores */
@@ -129,6 +131,7 @@ class EspelhoDiscenteTest extends TestCase
     {
         [$discente, $banca, $barema] = $this->defesaProposta();
         $this->criarDadosPesquisa($banca->trabalhoAcademico);
+        $this->criarItensDaDefesa($banca->trabalhoAcademico);
         $documento = TrabalhoDocumento::firstOrFail();
         $documento->update(['tipo_documento' => 'dissertacao']);
         $servico = app(PedidoHomologacaoService::class);

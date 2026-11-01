@@ -23,11 +23,13 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\CriaDadosPesquisa;
+use Tests\Concerns\CriaItensDaDefesa;
 use Tests\TestCase;
 
 class PedidoHomologacaoTest extends TestCase
 {
     use CriaDadosPesquisa;
+    use CriaItensDaDefesa;
     use RefreshDatabase;
 
     public function test_discente_propoe_banca_que_fica_proposta_e_fora_da_fila(): void
@@ -296,6 +298,7 @@ class PedidoHomologacaoTest extends TestCase
             'nivel' => 'ambos', 'versao' => '1', 'ativo' => true,
         ]);
         EspelhoDiscente::create(['banca_id' => $defesa->id, 'barema_id' => $barema->id, 'nota_final' => 8, 'enviada_em' => now()]);
+        $this->criarItensDaDefesa($trabalho);
 
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $docDissertacao))
             ->assertSessionHasNoErrors();
@@ -341,6 +344,52 @@ class PedidoHomologacaoTest extends TestCase
             'status' => 'cadastrada',
         ] + $this->dadosQualificacao($trabalho, local: 'Sala 3'))->assertSessionHasNoErrors();
         $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
+    public function test_pedido_de_defesa_exige_tipo_de_impacto(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Preencha o impacto da dissertação em Meu trabalho antes de enviar a defesa à homologação.']);
+        $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
+
+        $this->criarItensDaDefesa($trabalho);
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
+    }
+
+    public function test_pedido_de_qualificacao_nao_exige_itens_da_defesa(): void
+    {
+        Mail::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $banca = $this->proporBanca($discente, $trabalho);
+        $documento = $this->documento($trabalho, $discente);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+        $this->assertDatabaseCount('trabalho_impactos', 0);
+    }
+
+    /** Qualificação aprovada, defesa proposta com espelho respondido e dissertação anexada; faltam só os itens da defesa. */
+    private function defesaProposta(): array
+    {
+        [$discente, , $trabalho] = $this->estrutura();
+        $qualificacao = $this->proporBanca($discente, $trabalho);
+        $qualificacao->update(['status' => 'finalizada', 'resultado' => 'aprovado', 'homologacao_status' => 'homologada']);
+        $this->actingAs($discente)->post(route('bancas.store'), ['tipo' => 'defesa'] + $this->dadosQualificacao($trabalho))
+            ->assertSessionHasNoErrors();
+        $defesa = Banca::where('trabalho_academico_id', $trabalho->id)->where('tipo', 'defesa')->firstOrFail();
+        $documento = $this->documento($trabalho, $discente, 'defesa');
+        $barema = Barema::create([
+            'programa_id' => $trabalho->programa_id, 'nome' => 'Defesa', 'tipo' => 'defesa',
+            'nivel' => 'ambos', 'versao' => '1', 'ativo' => true,
+        ]);
+        EspelhoDiscente::create(['banca_id' => $defesa->id, 'barema_id' => $barema->id, 'nota_final' => 8, 'enviada_em' => now()]);
+
+        return [$discente, $trabalho, $defesa, $documento];
     }
 
     public function test_rota_enviar_banca_nao_existe_mais(): void

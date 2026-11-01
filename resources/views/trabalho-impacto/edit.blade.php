@@ -22,8 +22,21 @@
             </div>
         @endif
 
+        @if ($travado)
+            <div class="alert alert-info">
+                <i class="bi bi-lock-fill me-2"></i>{{ \App\Http\Controllers\TrabalhoImpactoController::MENSAGEM_TRAVADO }}
+            </div>
+        @endif
+
+        @error('travado')
+            <div class="alert alert-danger">{{ $message }}</div>
+        @enderror
+
+        @unless ($travado)
         <form method="POST" action="{{ route('trabalho-impacto.update') }}">
             @csrf @method('PUT')
+        @endunless
+        <fieldset @disabled($travado)>
 
             @php
             $dimensoes = [
@@ -78,13 +91,18 @@
                 </div>
             @endforeach
 
+        </fieldset>
             <div class="d-flex justify-content-end gap-2 mt-3 mb-5">
                 <a href="{{ route('meu-trabalho.index') }}" class="btn btn-outline-secondary">Voltar</a>
+                @unless ($travado)
                 <button type="submit" class="btn btn-primary fw-semibold">
                     <i class="bi bi-floppy-fill me-2"></i>Salvar dimensões de impacto
                 </button>
+                @endunless
             </div>
+        @unless ($travado)
         </form>
+        @endunless
     </div>
 
     <script>
