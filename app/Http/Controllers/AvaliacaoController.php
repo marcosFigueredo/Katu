@@ -285,6 +285,11 @@ class AvaliacaoController extends Controller
             'acao'               => ['required', 'in:rascunho,enviar'],
             'observacoes_gerais' => ['nullable', 'string', 'max:3000'],
         ];
+        // Recomendações ao estudante: só no formulário padrão da qualificação.
+        $recebeRecomendacoes = $banca->tipo === 'qualificacao' && ! $confidencial;
+        if ($recebeRecomendacoes) {
+            $rules['recomendacoes'] = ['nullable', 'string', 'max:10000'];
+        }
         if ($confidencial) {
             // Plágio só no formulário sigiloso; a indicação de onde é obrigatória quando marcado.
             $rules['plagio_identificado'] = ['nullable', 'boolean'];
@@ -309,6 +314,19 @@ class AvaliacaoController extends Controller
                     'dimensao_qualidade_id' => $item->dimensao_qualidade_id,
                 ]
             );
+        }
+
+        if ($recebeRecomendacoes) {
+            // Uma por linha; salvar de novo substitui as recomendações deste avaliador.
+            $linhas = collect(preg_split('/\R/', (string) ($validated['recomendacoes'] ?? '')))
+                ->map(fn ($l) => trim($l))->filter()->take(50)->values();
+            \App\Models\BancaRecomendacao::where('banca_id', $banca->id)->where('banca_membro_id', $meuMembro->id)->delete();
+            foreach ($linhas as $i => $texto) {
+                \App\Models\BancaRecomendacao::create([
+                    'banca_id' => $banca->id, 'banca_membro_id' => $meuMembro->id,
+                    'texto' => mb_substr($texto, 0, 1000), 'ordem' => $i + 1,
+                ]);
+            }
         }
 
         $plagio = $confidencial && $request->boolean('plagio_identificado');

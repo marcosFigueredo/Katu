@@ -59,6 +59,20 @@ class PedidoHomologacaoService
         return (ProgramaCurso::PADROES[$trabalho->nivel] ?? ProgramaCurso::PADROES['mestrado'])['min_publicacoes_defesa'];
     }
 
+    /** Recomendações registradas na qualificação finalizada mais recente do trabalho. */
+    public function recomendacoesDaQualificacao(TrabalhoAcademico $trabalho): \Illuminate\Support\Collection
+    {
+        $qualificacao = $trabalho->bancas()
+            ->where('tipo', 'qualificacao')
+            ->where('status', 'finalizada')
+            ->latest('id')
+            ->first();
+
+        return $qualificacao
+            ? \App\Models\BancaRecomendacao::where('banca_id', $qualificacao->id)->orderBy('banca_membro_id')->orderBy('ordem')->get()
+            : new \Illuminate\Database\Eloquent\Collection;
+    }
+
     /** A banca não cancelada mais recente que ainda aceita trabalho e envio à homologação. */
     public function bancaDoPedido(TrabalhoAcademico $trabalho): ?Banca
     {
@@ -145,6 +159,14 @@ class PedidoHomologacaoService
             if (! $trabalho->informacoesAdicionais()->whereNotNull('preenchido_em')->exists()) {
                 throw ValidationException::withMessages([
                     'homologacao' => 'Responda as Informações adicionais em Meu trabalho antes de enviar a defesa à homologação.',
+                ]);
+            }
+
+            $recomendacoes = $this->recomendacoesDaQualificacao($trabalho);
+            if ($recomendacoes->isNotEmpty()
+                && \App\Models\RecomendacaoResposta::whereIn('banca_recomendacao_id', $recomendacoes->pluck('id'))->count() < $recomendacoes->count()) {
+                throw ValidationException::withMessages([
+                    'homologacao' => 'Responda as recomendações da qualificação em Meu trabalho antes de enviar a defesa à homologação.',
                 ]);
             }
         }

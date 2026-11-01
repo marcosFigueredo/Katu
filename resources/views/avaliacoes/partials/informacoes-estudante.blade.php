@@ -78,6 +78,24 @@
             @endif
 
             @if ($ehDefesa)
+                @php $recomendacoesInfo = app(\App\Services\PedidoHomologacaoService::class)->recomendacoesDaQualificacao($trabalhoInfo)->load('resposta'); @endphp
+                @if ($recomendacoesInfo->isNotEmpty())
+                    <h3 class="h6 fw-semibold">Recomendações da qualificação</h3>
+                    <ol class="mb-3">
+                        @foreach ($recomendacoesInfo as $rec)
+                            <li>{{ $rec->texto }} —
+                                @if ($rec->resposta)
+                                    <strong>{{ \App\Models\RecomendacaoResposta::SITUACOES[$rec->resposta->situacao] }}</strong>
+                                    @if ($rec->resposta->onde) · {{ $rec->resposta->onde }} @endif
+                                    @if ($rec->resposta->justificativa) · {{ $rec->resposta->justificativa }} @endif
+                                @else
+                                    <span class="text-muted">sem resposta</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+
                 <h3 class="h6 fw-semibold">Tipos de impacto declarados</h3>
                 @php $aplicaveis = $impactoInfo ? collect($tiposImpacto)->filter(fn ($r, $k) => $impactoInfo->{"impacto_{$k}_aplicavel"}) : collect(); @endphp
                 @if ($aplicaveis->isEmpty())

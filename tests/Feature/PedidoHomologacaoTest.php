@@ -460,6 +460,25 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
     }
 
+    public function test_pedido_de_defesa_exige_respostas_as_recomendacoes_da_qualificacao(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $qualificacao = Banca::where('trabalho_academico_id', $trabalho->id)->where('tipo', 'qualificacao')->firstOrFail();
+        $recomendacao = \App\Models\BancaRecomendacao::create([
+            'banca_id' => $qualificacao->id, 'banca_membro_id' => $qualificacao->membros()->firstOrFail()->id,
+            'texto' => 'Ampliar a revisão.', 'ordem' => 1,
+        ]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Responda as recomendações da qualificação em Meu trabalho antes de enviar a defesa à homologação.']);
+
+        \App\Models\RecomendacaoResposta::create(['banca_recomendacao_id' => $recomendacao->id, 'situacao' => 'atendida', 'onde' => 'Cap. 2']);
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
+    }
+
     /** Qualificação aprovada, defesa proposta com espelho respondido e dissertação anexada; faltam só os itens da defesa. */
     private function defesaProposta(): array
     {

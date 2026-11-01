@@ -179,6 +179,21 @@
                 </div>
             </div>
 
+            @if ($banca->tipo === 'qualificacao' && ! str_ends_with((string) $barema->tipo, '_confidencial'))
+                @php
+                    $minhasRecomendacoes = \App\Models\BancaRecomendacao::where('banca_id', $banca->id)
+                        ->where('banca_membro_id', $avaliacao->banca_membro_id ?? 0)->orderBy('ordem')->pluck('texto')->implode("\n");
+                @endphp
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <label class="form-label fw-semibold" for="recomendacoes">Recomendações ao estudante (uma por linha)</label>
+                        <p class="small text-muted mb-2">Na defesa, o estudante responde cada uma (atendida, em parte ou não atendida) e a banca vê as respostas. Ele não vê quem recomendou.</p>
+                        <textarea name="recomendacoes" id="recomendacoes" class="form-control" rows="4"
+                                  {{ $somenteLeitura ? 'readonly' : '' }}>{{ old('recomendacoes', $minhasRecomendacoes) }}</textarea>
+                    </div>
+                </div>
+            @endif
+
             @if (str_ends_with((string) $barema->tipo, '_confidencial'))
                 @php $plagioMarcado = (bool) old('plagio_identificado', $avaliacao->plagio_identificado ?? false); @endphp
                 <div class="card border-0 shadow-sm mb-4" x-data="{ plagio: {{ $plagioMarcado ? 'true' : 'false' }} }">
