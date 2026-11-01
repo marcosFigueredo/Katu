@@ -339,6 +339,7 @@ Verificações que **não se aplicam** não entram na conta.
 - **Mediana e quartis** em todo o painel (não média).
 - **Conflito de interesse continua valendo:** registro de todo acesso (auditoria) e sinalização ao membro da CPA quando o recorte inclui trabalhos em que ele participou (orientação ou banca), indicando que a análise segue essa questão ética.
 - Sem tamanho mínimo de grupo (o usuário confirmou que recortes muito pequenos não ocorrem).
+- **Orientador vê as avaliações confidenciais** de cada avaliador da banca do orientando (decidido em 2026-11-01; antes só o autor via). **Plágio:** a banca informa o orientador na avaliação; a indicação (quem marcou e onde) fica registrada claramente e visível ao orientador, para as medidas cabíveis. A CPA vê tudo isso só anonimizado e calculado.
 
 ### Saídas da CPA nesta versão (decidido em 2026-10-30)
 - **Dashboard da CPA** — só para membros com mandato vigente — para analisar as 8 dimensões (por dissertação, por orientador e do programa).
