@@ -68,4 +68,10 @@ class User extends Authenticatable
 {
     return $this->hasMany(ProgramaUsuario::class);
 }
+
+    /** Programa em que o usuário tem mandato vigente na CPA, ou null. */
+    public function programaCpa(): ?Programa
+    {
+        return MembroCpa::vigentes()->where('user_id', $this->id)->with('programa')->latest('inicio_em')->first()?->programa;
+    }
 }

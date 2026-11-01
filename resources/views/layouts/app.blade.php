@@ -203,6 +203,14 @@
                             <i class="bi bi-clipboard2-check-fill" style="font-size: 15px; flex-shrink:0;"></i>
                             Avaliações
                         </a>
+                        @if (auth()->user()->programaCpa())
+                            <a href="{{ route('cpa.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('cpa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-bar-chart-line-fill" style="font-size: 15px; flex-shrink:0;"></i>
+                                CPA
+                            </a>
+                        @endif
                     </div>
                     @endif
 
@@ -265,6 +273,13 @@
                                       {{ request()->routeIs('criterios-cpa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
                                 <i class="bi bi-list-check" style="font-size: 15px; flex-shrink:0;"></i>
                                 Critérios CPA
+                            </a>
+
+                            <a href="{{ route('membros-cpa.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('membros-cpa.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-people" style="font-size: 15px; flex-shrink:0;"></i>
+                                Membros da CPA
                             </a>
 
                             <a href="{{ route('atividades-formativas.index') }}"

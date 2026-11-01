@@ -42,8 +42,10 @@ use App\Http\Controllers\ProducaoAssociadaController;
 use App\Http\Controllers\InformacoesAdicionaisController;
 use App\Http\Controllers\RecomendacoesQualificacaoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\MembroCpaController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\MeuProjetoPesquisaController;
+use App\Http\Controllers\CpaQualidadeController;
 use App\Http\Controllers\CriterioCpaController;
 use App\Http\Controllers\HomologacaoBancaController;
 
@@ -103,6 +105,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->except(['show', 'destroy']);
     Route::post('criterios-cpa/{criterioCpa}/inativar', [CriterioCpaController::class, 'inativar'])
         ->name('criterios-cpa.inativar');
+
+    Route::get('/membros-cpa', [MembroCpaController::class, 'index'])->name('membros-cpa.index');
+    Route::post('/membros-cpa', [MembroCpaController::class, 'store'])->name('membros-cpa.store');
+    Route::post('/membros-cpa/{membroCpa}/encerrar', [MembroCpaController::class, 'encerrar'])->name('membros-cpa.encerrar');
+
+    Route::get('/cpa', [CpaQualidadeController::class, 'index'])->name('cpa.index');
 
     Route::get('/membros-externos', [MembroExternoController::class, 'index'])
         ->name('membros-externos.index');

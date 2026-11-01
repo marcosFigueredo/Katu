@@ -73,7 +73,7 @@
 - Rotas CPA: `cpa.periodos.index`/`store`/`update` e `cpa.pesos.edit` (GET `/cpa/periodos/{periodo}/pesos/{grupo}`), `cpa.pesos.update` (PUT). Formulário de pesos: a ordem (1..n, sem repetir) e `s_j` (≥ 0, ≤ 1) de cada item; calcula com `SwaraService::calcular` (ids = chaves) e grava `peso = w_j`. Mostra os pesos resultantes em %.
 - Validação de período: `fim_em` ≥ `inicio_em`; cortes decrescentes (alta > boa > suficiente > pouca, entre 0 e 10).
 
-- [ ] **Step 1: Failing tests**: `test_membro_cria_periodo_com_faixas_padrao`; `test_faixas_fora_de_ordem_sao_recusadas`; `test_swara_das_dimensoes_grava_pesos_que_somam_1` (ordem rigor…integridade, s 0,10 em todos → peso de rigor 0,1914… e soma 1 ± 0,0001); `test_ordem_repetida_ou_s_negativo_e_recusado`; `test_sem_swara_pesos_iguais` (8 × 0,125; 4 × 0,25); `test_classe_pelas_faixas` (8,5→1; 8,49→2; 7→2; 5,5→3; 4→4; 3,99→5); `test_nao_membro_e_membro_encerrado_recebem_403`; `test_membro_nao_mexe_em_periodo_de_outro_programa`.
+- [ ] **Step 1: Failing tests**: `test_membro_cria_periodo_com_faixas_padrao`; `test_faixas_fora_de_ordem_sao_recusadas`; `test_swara_das_dimensoes_grava_pesos_que_somam_1` (ordem rigor…integridade, s 0,10 em todos → peso de rigor 0,1704… e soma 1 ± 0,0001); `test_ordem_repetida_ou_s_negativo_e_recusado`; `test_sem_swara_pesos_iguais` (8 × 0,125; 4 × 0,25); `test_classe_pelas_faixas` (8,5→1; 8,49→2; 7→2; 5,5→3; 4→4; 3,99→5); `test_nao_membro_e_membro_encerrado_recebem_403`; `test_membro_nao_mexe_em_periodo_de_outro_programa`.
 - [ ] **Step 2: Run** `php artisan test --compact --filter=CpaPeriodoPesosTest` → FAIL.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** → PASS.
