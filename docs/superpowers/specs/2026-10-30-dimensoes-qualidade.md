@@ -270,10 +270,10 @@ Avalia **como foi a formação** (percurso, prazos, orientação recebida). A ba
 - **Índice do programa** (por período de avaliação): índices dos trabalhos do período + autoavaliação do orientador + avaliação do orientando + espelho do estudante.
 - **Os dois terminam em 5 classes:** 1. Alta qualidade · 2. Boa qualidade · 3. Suficiente · 4. Pouca qualidade · 5. Baixa qualidade.
 - Não usar média simples: mediana dos avaliadores por pergunta, média geométrica ponderada entre dimensões (dimensão fraca não é compensada), faixas fixas por período (não quintis) e regras de corte (plágio → Baixa; reprovada → no máximo Pouca; dimensão < 4 → no máximo Suficiente; Alta exige todas ≥ 7). Faixas propostas: ≥ 8,5 · 7,0–8,4 · 5,5–6,9 · 4,0–5,4 · < 4,0 (a CPA ajusta).
-- Até a Etapa 6, o papel `admin` faz as vezes da CPA no teste (define pesos e vê resultados).
+- **A CPA não é o `admin`** (corrigido em 2026-11-01): o `admin` fica reservado a ajustes futuros do app. A CPA é formada por membros designados (Etapa 6: mandato e número do ato).
 - **O que o app entrega a cada um (decidido em 2026-11-01):**
   - **Estudante:** sua nota e se foi aprovado ou não.
-  - **Orientador:** como o trabalho do orientando foi interpretado pelos avaliadores (perfil por dimensão a partir das notas da banca).
+  - **Orientador:** como o trabalho do orientando foi interpretado pelos avaliadores — o perfil por dimensão e o **nível (das 5 classes) a que o trabalho chegou pela avaliação da banca**.
   - **Programa (CPA):** a qualidade das teses e dissertações do programa (índice e classe de cada trabalho e do programa no período).
 
 ### Nota da dimensão
