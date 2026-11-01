@@ -284,6 +284,10 @@
             @include('avaliacoes.partials.autoavaliacao-bloco')
         @endif
 
+        @if ($nivelTrabalho)
+            @include('avaliacoes.partials.nivel-trabalho')
+        @endif
+
         @if ($ehOrientador)
             <h2 class="h5 fw-bold text-dark mb-3">
                 <i class="bi bi-people me-2" style="color:#00303A;"></i>

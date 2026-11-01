@@ -183,7 +183,15 @@ class AvaliacaoController extends Controller
 
         $autoavaliacaoPendente = $ehOrientador && $this->autoavaliacaoPendente($banca, $vinculo->id);
 
+        // Nível do trabalho (5 classes) só para o orientador (não o coorientador), na defesa finalizada.
+        $ehOrientadorPrincipal = $vinculo && $banca->trabalhoAcademico->orientacoes
+            ->where('docente_programa_vinculo_id', $vinculo->id)->where('tipo', 'orientador')->where('ativo', true)->isNotEmpty();
+        $nivelTrabalho = $ehOrientadorPrincipal && $banca->tipo === 'defesa' && $banca->status === 'finalizada'
+            ? app(\App\Services\IndiceQualidadeService::class)->indiceTrabalho($banca)
+            : null;
+
         return view('avaliacoes.banca', compact(
+            'nivelTrabalho',
             'banca', 'baremas', 'meuMembro', 'minhasAvaliacoes',
             'ehMembro', 'ehOrientador', 'podeFinalizar',
             'avaliadores', 'totalEnviadas', 'totalEsperado',
