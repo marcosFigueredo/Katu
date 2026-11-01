@@ -247,6 +247,8 @@
             </div>
         </div>
 
+        @include('bancas._conferencia-estudante')
+
         {{-- 3. Critérios da CPA (Sim / Não) --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
@@ -355,6 +357,12 @@
                                             @endif
                                             @if (! $analise['baremas_ok'])
                                                 <li>A Secretaria cadastre e ative os baremas da etapa: {{ $analise['baremas']['encontrado'] }}</li>
+                                            @endif
+                                            @if (! $analise['atividades_ok'])
+                                                <li>As atividades formativas exigidas estejam conferidas e confirmadas;</li>
+                                            @endif
+                                            @if (! $analise['publicacoes_ok'])
+                                                <li>As publicações estejam conferidas e atinjam o mínimo do curso;</li>
                                             @endif
                                             @if (! $analise['cpa_ok'])
                                                 <li>Todos os critérios da CPA estejam respondidos com <strong>Sim</strong>.</li>

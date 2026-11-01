@@ -78,6 +78,10 @@ class ProducaoAssociadaController extends Controller
         $item = $classe::where('trabalho_academico_id', $trabalho->id)->findOrFail($id);
         $this->exigirDestravado($trabalho);
 
+        if ($item instanceof ProducaoPublicacao && $item->conferida_em !== null) {
+            throw ValidationException::withMessages(['publicacao' => 'Publicação já conferida pela Secretaria não pode ser excluída.']);
+        }
+
         DB::transaction(function () use ($item, $trabalho) {
             $item->delete();
             $trabalho->update(['producao_confirmada_em' => null]);

@@ -203,6 +203,14 @@ trait CriaCenarioDeBanca
             ]);
         }
 
+        if ($banca->tipo === 'defesa') {
+            // Defesa exige o mínimo de publicações do curso (mestrado: 1), conferido pela Secretaria.
+            $trabalho->publicacoes()->create([
+                'tipo' => 'artigo', 'titulo' => 'Artigo derivado da dissertação', 'ano' => 2025, 'veiculo' => 'Revista X',
+                'situacao' => 'publicada', 'conta_minimo' => true, 'conferida_em' => now(),
+            ]);
+        }
+
         return [
             $secretaria,
             $programa,

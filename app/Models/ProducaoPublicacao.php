@@ -36,6 +36,21 @@ class ProducaoPublicacao extends Model
         ],
     ];
 
+    public const SITUACOES = [
+        'publicada' => 'Publicada',
+        'aceita' => 'Aceita',
+        'submetida' => 'Submetida',
+    ];
+
+    /** Marcações da Secretaria (sim/não) para análise futura. */
+    public const MARCACOES = [
+        'derivada_dissertacao' => 'Saiu da dissertação',
+        'discente_primeiro_autor' => 'Estudante primeiro autor',
+        'coautoria_orientador' => 'Orientador coautor',
+        'coautoria_internacional' => 'Coautoria internacional',
+        'conta_minimo' => 'Conta para o mínimo do curso',
+    ];
+
     protected $fillable = [
         'trabalho_academico_id',
         'tipo',
@@ -46,12 +61,26 @@ class ProducaoPublicacao extends Model
         'doi',
         'issn',
         'openalex_id',
+        'derivada_dissertacao',
+        'situacao',
+        'discente_primeiro_autor',
+        'coautoria_orientador',
+        'coautoria_internacional',
+        'conta_minimo',
+        'conferida_por',
+        'conferida_em',
     ];
 
     protected function casts(): array
     {
         return [
             'ano' => 'integer',
+            'derivada_dissertacao' => 'boolean',
+            'discente_primeiro_autor' => 'boolean',
+            'coautoria_orientador' => 'boolean',
+            'coautoria_internacional' => 'boolean',
+            'conta_minimo' => 'boolean',
+            'conferida_em' => 'datetime',
         ];
     }
 

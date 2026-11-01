@@ -21,6 +21,8 @@ class HomologacaoBancaService
         private readonly VerificacaoBancaService $verificacao,
         private readonly CriterioCpaService $criteriosCpa,
         private readonly BaremasDaBancaService $baremas,
+        private readonly AtividadesFormativasService $atividades,
+        private readonly PedidoHomologacaoService $pedidoHomologacao,
     ) {
     }
 
@@ -195,6 +197,34 @@ class HomologacaoBancaService
         ];
 
         $pendencias = [];
+        $trabalho = $banca->trabalhoAcademico;
+
+        // Atividades formativas: todo lançamento conferido e cada atividade exigida confirmada na quantidade.
+        $semConferencia = $trabalho->atividadesRealizadas()
+            ->whereIn('atividade_formativa_id', $this->atividades->exigidas($trabalho, $banca->tipo)->pluck('id'))
+            ->whereNull('conferencia')->count();
+        $incompletas = $this->atividades->faltantes($trabalho, $banca->tipo, soConfirmadas: true);
+        $atividadesOk = $semConferencia === 0 && $incompletas === [];
+        if ($semConferencia > 0) {
+            $pendencias[] = "Há {$semConferencia} lançamento(s) de atividade formativa sem conferência.";
+        }
+        if ($incompletas !== []) {
+            $pendencias[] = 'Atividades formativas incompletas: '.implode('; ', $incompletas).'.';
+        }
+
+        // Publicações (só na defesa): todas conferidas e o mínimo do curso entre as que contam.
+        $publicacoesOk = true;
+        if ($banca->tipo === 'defesa') {
+            $naoConferidas = $trabalho->publicacoes()->whereNull('conferida_em')->count();
+            $minimo = $this->pedidoHomologacao->minimoPublicacoes($trabalho);
+            $contam = $trabalho->publicacoes()->where('conta_minimo', true)->count();
+            if ($naoConferidas > 0) {
+                $pendencias[] = "Há {$naoConferidas} publicação(ões) sem conferência da Secretaria.";
+            } elseif ($contam < $minimo) {
+                $pendencias[] = "Publicações que contam para o mínimo do curso: {$contam} de {$minimo}.";
+            }
+            $publicacoesOk = $naoConferidas === 0 && $contam >= $minimo;
+        }
 
         foreach ($composicao as $item) {
             if (! $item['ok']) {
@@ -221,7 +251,9 @@ class HomologacaoBancaService
         }
 
         return [
-            'pode' => $composicaoOk && $templateOk && $cpaOk && $baremasOk,
+            'pode' => $composicaoOk && $templateOk && $cpaOk && $baremasOk && $atividadesOk && $publicacoesOk,
+            'atividades_ok' => $atividadesOk,
+            'publicacoes_ok' => $publicacoesOk,
             'baremas' => $baremas,
             'baremas_ok' => $baremasOk,
             'composicao' => $composicao,
