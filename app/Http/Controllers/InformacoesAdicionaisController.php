@@ -114,8 +114,10 @@ class InformacoesAdicionaisController extends Controller
         } else {
             abort_unless($user->categoria === 'docente', 403);
             $vinculos = $user->docenteProfile?->vinculosPrograma()->pluck('id') ?? collect();
-            $ehMembro = $banca->membros()->where('ativo', true)->whereIn('docente_programa_vinculo_id', $vinculos)->exists();
             $ehOrientador = $trabalho->orientacoes()->whereIn('docente_programa_vinculo_id', $vinculos)->exists();
+            // Avaliador só vê o pedido de banca homologada e não cancelada.
+            $ehMembro = $banca->homologacao_status === 'homologada' && $banca->status !== 'cancelada'
+                && $banca->membros()->where('ativo', true)->whereIn('docente_programa_vinculo_id', $vinculos)->exists();
             abort_unless($ehMembro || $ehOrientador, 403);
         }
 

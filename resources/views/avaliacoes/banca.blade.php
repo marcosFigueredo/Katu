@@ -119,7 +119,9 @@
             </div>
         @endif
 
-        @include('avaliacoes.partials.informacoes-estudante')
+        @if ($ehOrientador || ($banca->homologacao_status === 'homologada' && $banca->status !== 'cancelada'))
+            @include('avaliacoes.partials.informacoes-estudante')
+        @endif
 
         {{-- ================================================================
              ÁREA DO AVALIADOR — Meus baremas

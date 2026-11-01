@@ -120,6 +120,28 @@ class InformacoesEstudanteBancaTest extends TestCase
         $this->actingAs($outraSecretaria)->get($rota)->assertNotFound();
     }
 
+    public function test_avaliador_so_ve_informacoes_e_pdfs_com_banca_homologada_e_ativa(): void
+    {
+        Storage::fake('local');
+        [$secretaria, $banca, $avaliador, $orientador] = $this->cenario('defesa');
+        Storage::disk('local')->put('informacoes-adicionais/1/parecer.pdf', '%PDF-1.4 teste');
+        TrabalhoInformacoesAdicionais::create([
+            'trabalho_academico_id' => $banca->trabalho_academico_id, 'conflito_interesses' => false, 'disponibilidade_dados' => 'nenhum_dado_novo',
+            'amostras_fisicas' => false, 'aprovacao_etica' => true, 'aprovacao_etica_path' => 'informacoes-adicionais/1/parecer.pdf',
+            'aprovacao_etica_nome' => 'parecer.pdf', 'participantes' => false, 'uso_ia' => false, 'originalidade_confirmada' => true, 'preenchido_em' => now(),
+        ]);
+        $rota = route('bancas.aprovacao-etica', [$banca, 'documento' => 'aprovacao']);
+
+        $banca->update(['homologacao_status' => 'aguardando']);
+        $this->actingAs($avaliador)->get($rota)->assertForbidden();
+        $this->actingAs($avaliador)->get(route('avaliacoes.banca', $banca))->assertDontSee('Informações do estudante');
+        $this->actingAs($orientador)->get($rota)->assertOk();
+        $this->actingAs($secretaria)->get($rota)->assertOk();
+
+        $banca->update(['homologacao_status' => 'homologada', 'status' => 'cancelada']);
+        $this->actingAs($avaliador)->get($rota)->assertForbidden();
+    }
+
     public function test_tela_de_dados_da_pesquisa_diz_que_a_banca_ve_a_copia(): void
     {
         [, , , , $discente] = $this->cenario('qualificacao');
