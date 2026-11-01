@@ -331,6 +331,15 @@ Verificações que **não se aplicam** não entram na conta.
   3. **Analisar, conferir e dar publicidade** aos resultados.
 - A CPA **não age sobre nenhum elemento de avaliação**: não altera avaliações respondidas, não classifica dissertações, não emite parecer. O resultado de cada dissertação é o que o sistema calcula a partir das avaliações.
 
+### Revisto em 2026-11-01 (Etapa 6) — prevalece sobre o que diverge acima e abaixo
+- **A CPA nunca vê um docente nem um trabalho em si.** Vê dados gerais das bancas e das avaliações, já calculados, e faz o escrutínio por linha de pesquisa, área de concentração, nível, bolsa e ano. Saem: a lista de dissertações com nome e índice (tela da Etapa 5), o recorte por orientador e a regra "os nomes aparecem, para credenciamento".
+- **Avaliações confidenciais:** a CPA vê de forma **anonimizada e calculada** (agregada).
+- **Exceção que permanece:** a CPA vê **todos os projetos de pesquisa e os objetivos indicados pelos estudantes** — a correlação projeto × objetivo é importante para a análise. *(Proposta: sem o nome do estudante.)*
+- **Período do painel:** sempre o **quadriênio cadastrado pela Secretaria** (a CPA não cria períodos; continua definindo faixas e pesos).
+- **Mediana e quartis** em todo o painel (não média).
+- **Conflito de interesse continua valendo:** registro de todo acesso (auditoria) e sinalização ao membro da CPA quando o recorte inclui trabalhos em que ele participou (orientação ou banca), indicando que a análise segue essa questão ética.
+- Sem tamanho mínimo de grupo (o usuário confirmou que recortes muito pequenos não ocorrem).
+
 ### Saídas da CPA nesta versão (decidido em 2026-10-30)
 - **Dashboard da CPA** — só para membros com mandato vigente — para analisar as 8 dimensões (por dissertação, por orientador e do programa).
 - **Relatórios exportáveis** (PDF e planilha) para a CPA analisar — os mesmos blocos da dashboard.
