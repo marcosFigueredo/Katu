@@ -264,6 +264,15 @@
                             </div>
 
                             <div class="col-md-12">
+                                <details @if (old('bolsa_agencia')) open @endif>
+                                    <summary class="fw-semibold">Bolsa <span class="text-muted fw-normal small">(opcional; pode ser registrada depois na edição)</span></summary>
+                                    <div class="mt-2">
+                                        @include('usuarios.partials.bolsa-campos', ['bolsa' => null, 'idBase' => 'cadastro_bolsa', 'nome' => fn ($campo) => 'bolsa_'.$campo])
+                                    </div>
+                                </details>
+                            </div>
+
+                            <div class="col-md-12">
                                 <label for="linha_pesquisa_id" class="form-label fw-semibold">Linha de pesquisa</label>
                                 <select id="linha_pesquisa_id" name="linha_pesquisa_id" class="form-select">
                                     <option value="">Selecione</option>

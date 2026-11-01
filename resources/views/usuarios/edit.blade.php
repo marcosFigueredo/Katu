@@ -405,6 +405,10 @@
             @include('usuarios.partials.orientacao')
         @endif
 
+        @if ($bolsasDiscente !== null)
+            @include('usuarios.partials.bolsas')
+        @endif
+
         @if ($projetosDocente !== null)
             @include('usuarios.partials.projeto-pesquisa')
         @endif

@@ -31,6 +31,7 @@ use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
 use App\Http\Controllers\MabacController;
 use App\Http\Controllers\BibliometriaController;
+use App\Http\Controllers\BolsaController;
 use App\Http\Controllers\AutoavaliacaoController;
 use App\Http\Controllers\PerguntaEstrategicaController;
 use App\Http\Controllers\OrientacaoAvaliacaoController;
@@ -230,6 +231,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Orientação do discente – gerida pela Secretaria na edição do usuário
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/usuarios/{usuario}/bolsas', [BolsaController::class, 'store'])->name('usuarios.bolsas.store');
+    Route::put('/usuarios/{usuario}/bolsas/{bolsa}', [BolsaController::class, 'update'])->name('usuarios.bolsas.update');
+    Route::delete('/usuarios/{usuario}/bolsas/{bolsa}', [BolsaController::class, 'destroy'])->name('usuarios.bolsas.destroy');
+
     Route::post('/usuarios/{usuario}/orientacao/orientador', [OrientacaoDiscenteController::class, 'definir'])
         ->name('usuarios.orientacao.definir');
 

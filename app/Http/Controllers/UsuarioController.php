@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SincronizarOrcidDocenteJob;
+use App\Models\Bolsa;
 use App\Models\DiscenteProfile;
 use App\Models\DiscenteProgramaVinculo;
 use App\Models\DocenteProfile;
@@ -329,7 +330,12 @@ class UsuarioController extends Controller
         $dados['cadastro_status'] = $this->cadastroStatus($dados);
         $senhaTemporaria = 'PPG-' . Str::upper(Str::random(4)) . '-' . random_int(1000, 9999);
 
-        $usuarioCriado = DB::transaction(function () use ($request, $dados, $programaAtual, $senhaTemporaria, $podeSerCoordenador) {
+        // Bolsa opcional no cadastro do discente (só quando a agência vem preenchida).
+        $dadosBolsa = $dados['categoria'] === 'discente' && $request->filled('bolsa_agencia')
+            ? $request->validate(Bolsa::regras('bolsa_'), Bolsa::mensagens('bolsa_'))
+            : null;
+
+        $usuarioCriado = DB::transaction(function () use ($request, $dados, $programaAtual, $senhaTemporaria, $podeSerCoordenador, $dadosBolsa) {
             $usuario = User::create([
                 'name' => $dados['name'],
                 'email' => $dados['email'],
@@ -437,6 +443,18 @@ class UsuarioController extends Controller
                     ]);
 
                     app(OrientacaoService::class)->definirOrientadorInicial($trabalho, (int) $dados['orientador_vinculo_id'], auth()->user());
+
+                    if ($dadosBolsa) {
+                        $vinculo->bolsas()->create([
+                            'agencia' => $dadosBolsa['bolsa_agencia'],
+                            'agencia_outra' => $dadosBolsa['bolsa_agencia'] === 'outra' ? ($dadosBolsa['bolsa_agencia_outra'] ?? null) : null,
+                            'modalidade' => $dadosBolsa['bolsa_modalidade'],
+                            'numero_processo' => $dadosBolsa['bolsa_numero_processo'] ?? null,
+                            'inicio_em' => $dadosBolsa['bolsa_inicio_em'],
+                            'fim_em' => $dadosBolsa['bolsa_fim_em'] ?? null,
+                            'registrado_por' => auth()->id(),
+                        ]);
+                    }
                 }
             }
 
@@ -535,7 +553,13 @@ class UsuarioController extends Controller
             ? $vinculoDocente->projetos()->orderByDesc('id')->get()
             : null;
 
+        $vinculoDiscente = $programaAtual
+            ? $usuario->discenteProfile?->vinculosPrograma->firstWhere('programa_id', $programaAtual->id)
+            : null;
+        $bolsasDiscente = $vinculoDiscente?->bolsas()->with('registradoPor')->get();
+
         return view('usuarios.edit', compact(
+            'bolsasDiscente',
             'projetosDocente',
             'trabalhoOrientacao',
             'motivoTrocaBloqueada',

@@ -50,4 +50,9 @@ class DiscenteProgramaVinculo extends Model
     {
         return $this->hasOne(TrabalhoAcademico::class, 'discente_programa_vinculo_id');
     }
+
+    public function bolsas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Bolsa::class)->orderByDesc('inicio_em');
+    }
 }

@@ -432,6 +432,21 @@
                 </div>
             </div>
 
+            @php $bolsas = $trabalho->discenteVinculo?->bolsas ?? collect(); @endphp
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold mb-1" style="color:#00303A;"><i class="bi bi-cash-coin me-2"></i>Bolsa</h2>
+                    @forelse ($bolsas as $bolsa)
+                        <div class="small">
+                            {{ $bolsa->agenciaNome }} · {{ \App\Models\Bolsa::MODALIDADES[$bolsa->modalidade] ?? $bolsa->modalidade }}
+                            · {{ $bolsa->inicio_em?->format('d/m/Y') }} a {{ $bolsa->fim_em?->format('d/m/Y') ?? 'em andamento' }}
+                        </div>
+                    @empty
+                        <p class="text-muted small mb-0">Nenhuma bolsa registrada pela Secretaria.</p>
+                    @endforelse
+                </div>
+            </div>
+
             @php $impactoOk = $trabalho->impacto !== null; @endphp
             <div class="card border-0 shadow-sm mt-3">
                 <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
