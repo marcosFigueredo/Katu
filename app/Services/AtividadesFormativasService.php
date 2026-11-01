@@ -12,6 +12,9 @@ class AtividadesFormativasService
     /** Atividades ativas do programa exigidas no pedido: a qualificação pede as dela; a defesa pede todas. */
     public function exigidas(TrabalhoAcademico $trabalho, string $tipoBanca): Collection
     {
+        // A lista inicial vale para todo programa, sem depender de a Secretaria abrir a tela antes.
+        AtividadeFormativa::criarPadroes($trabalho->programa);
+
         return AtividadeFormativa::where('programa_id', $trabalho->programa_id)
             ->where('ativo', true)
             ->when($tipoBanca === 'qualificacao', fn ($q) => $q->where('etapa', 'qualificacao'))

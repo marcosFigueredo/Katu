@@ -58,6 +58,17 @@ class AtividadesFormativasTest extends TestCase
         $this->assertSame('Alheia', $alheia->fresh()->nome);
     }
 
+    public function test_programa_novo_ja_exige_as_atividades_padrao_sem_visita_da_secretaria(): void
+    {
+        [, , $discente, $trabalho] = $this->estrutura();
+
+        $faltantes = app(\App\Services\AtividadesFormativasService::class)->faltantes($trabalho, 'defesa');
+        $this->assertContains('Popularização das Ciências (0 de 1)', $faltantes);
+
+        $this->actingAs($discente)->get(route('meu-trabalho.atividades.index'))
+            ->assertSee('Atividade Extensionista');
+    }
+
     public function test_secretaria_altera_quantidade_e_inativa(): void
     {
         [$secretaria, $programa, $discente] = $this->estrutura();

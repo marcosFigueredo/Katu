@@ -117,7 +117,7 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertTrue($trabalho->impacto->impacto_cientifico_aplicavel);
         $this->assertTrue($trabalho->impacto->impacto_social_aplicavel);
         $this->assertSame(4, \App\Models\AtividadeFormativa::where('programa_id', $trabalho->programa_id)->count());
-        $this->assertSame(2, $trabalho->atividadesRealizadas()->whereNull('conferencia')->count());
+        $this->assertSame(3, $trabalho->atividadesRealizadas()->whereNull('conferencia')->count());
         $publicacao = $trabalho->publicacoes()->sole();
         $this->assertSame('artigo', $publicacao->tipo);
         $this->assertSame('10.1016/j.annepidem.2025.06.012', $publicacao->doi);
@@ -127,9 +127,12 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertTrue($trabalho->informacoesAdicionais->uso_ia);
         $this->assertSame('Claude', $trabalho->informacoesAdicionais->ia_ferramentas);
 
+        // A Juliana passa em todas as exigências de atividades do pedido de defesa.
+        $this->assertSame([], app(\App\Services\AtividadesFormativasService::class)->faltantes($trabalho, 'defesa'));
+
         // Idempotente: rodar de novo não duplica.
         $this->seed(CenarioTesteSeeder::class);
         $this->assertSame(1, $trabalho->publicacoes()->count());
-        $this->assertSame(2, $trabalho->atividadesRealizadas()->count());
+        $this->assertSame(3, $trabalho->atividadesRealizadas()->count());
     }
 }

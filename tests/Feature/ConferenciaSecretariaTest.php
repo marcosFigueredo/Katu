@@ -215,8 +215,9 @@ class ConferenciaSecretariaTest extends TestCase
     private function cenarioBase(string $tipo): array
     {
         [$secretaria, $programa, $banca, $discente] = $this->criarCenarioCompleto($tipo);
-        // A publicação padrão do cenário de defesa sai para o teste controlar a lista.
+        // A publicação e os lançamentos padrão do cenário de defesa saem para o teste controlar as listas.
         ProducaoPublicacao::where('trabalho_academico_id', $banca->trabalho_academico_id)->delete();
+        AtividadeRealizada::where('trabalho_academico_id', $banca->trabalho_academico_id)->delete();
 
         return [$secretaria, $discente, $programa, $banca];
     }

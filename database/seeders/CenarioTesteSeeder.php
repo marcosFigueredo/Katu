@@ -373,6 +373,7 @@ class CenarioTesteSeeder extends Seeder
         foreach ([
             'Publicação de Produção Científica' => 'Artigo publicado no Annals of Epidemiology (2025).',
             'Atividade Extensionista' => 'Oficina de modelagem epidemiológica para a rede estadual de ensino.',
+            'Popularização das Ciências' => 'Podcast "Epidemias e modelos no rádio" (Rádio UNEB, 2025).',
         ] as $nome => $descricao) {
             $atividade = AtividadeFormativa::where('programa_id', $trabalho->programa_id)->where('nome', $nome)->first();
             if ($atividade) {

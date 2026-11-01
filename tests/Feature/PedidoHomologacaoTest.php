@@ -353,12 +353,15 @@ class PedidoHomologacaoTest extends TestCase
     public function test_pedido_de_defesa_exige_tipo_de_impacto(): void
     {
         [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $impacto = $trabalho->impacto;
+        $impacto->delete();
 
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
             ->assertSessionHasErrors(['homologacao' => 'Preencha o impacto da dissertação em Meu trabalho antes de enviar a defesa à homologação.']);
         $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
 
-        $this->criarItensDaDefesa($trabalho);
+        \App\Models\TrabalhoImpacto::create($impacto->only(['trabalho_academico_id', 'impacto_cientifico_aplicavel', 'impacto_cientifico_descricao']));
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
             ->assertSessionHasNoErrors();
         $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);

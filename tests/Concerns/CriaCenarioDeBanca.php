@@ -209,6 +209,15 @@ trait CriaCenarioDeBanca
                 'tipo' => 'artigo', 'titulo' => 'Artigo derivado da dissertação', 'ano' => 2025, 'veiculo' => 'Revista X',
                 'situacao' => 'publicada', 'conta_minimo' => true, 'conferida_em' => now(),
             ]);
+
+            // E as atividades formativas padrão, cumpridas e confirmadas.
+            \App\Models\AtividadeFormativa::criarPadroes($programa);
+            foreach (\App\Models\AtividadeFormativa::where('programa_id', $programa->id)->get() as $atividade) {
+                $trabalho->atividadesRealizadas()->create([
+                    'atividade_formativa_id' => $atividade->id, 'descricao' => "Cumprida: {$atividade->nome}",
+                    'conferencia' => 'confirmada', 'conferida_em' => now(),
+                ]);
+            }
         }
 
         return [
