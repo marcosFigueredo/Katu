@@ -145,7 +145,7 @@ class IndiceQualidadeService
             ->whereHas('trabalhoAcademico', fn ($q) => $q->where('programa_id', $periodo->programa_id))
             ->whereDate('data_hora', '>=', $periodo->inicio_em)
             ->whereDate('data_hora', '<=', $periodo->fim_em)
-            ->with('trabalhoAcademico.programa', 'trabalhoAcademico.discenteVinculo.discenteProfile.user')
+            ->with('trabalhoAcademico.programa', 'trabalhoAcademico.publicacoes', 'trabalhoAcademico.discenteVinculo.discenteProfile.user')
             ->orderBy('data_hora')
             ->get();
 

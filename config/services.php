@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Conferência informativa da produção declarada no OpenAlex (desligada nos testes).
+    'openalex' => [
+        'verificar' => env('OPENALEX_VERIFICAR', true),
+    ],
+
 ];

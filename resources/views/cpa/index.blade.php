@@ -83,6 +83,7 @@
                             <th>Defesa</th>
                             <th>Índice</th>
                             <th>Classe</th>
+                            <th class="small" title="Publicações declaradas e quantas o OpenAlex encontrou (informativo)">Publicações</th>
                             @foreach ($dimensoes as $nome)
                                 <th class="small" title="{{ $nome }}">{{ \Illuminate\Support\Str::limit($nome, 12) }}</th>
                             @endforeach
@@ -102,12 +103,14 @@
                                 <td class="small">{{ $item['banca']->data_hora?->format('d/m/Y') }}</td>
                                 <td>{{ $item['indice'] !== null ? number_format($item['indice'], 2, ',', '') : '—' }}</td>
                                 <td>@include('cpa._classe', ['classe' => $item['classe']])</td>
+                                @php $pubs = $trabalho?->publicacoes ?? collect(); @endphp
+                                <td class="small">{{ $pubs->count() }} <span class="text-muted">({{ $pubs->where('openalex_situacao', 'encontrada')->count() }} no OpenAlex)</span></td>
                                 @foreach (array_keys($dimensoes) as $codigo)
                                     <td class="small">{{ $item['dimensoes'][$codigo] !== null ? number_format($item['dimensoes'][$codigo], 1, ',', '') : '—' }}</td>
                                 @endforeach
                             </tr>
                         @empty
-                            <tr><td colspan="{{ 4 + count($dimensoes) }}" class="text-muted">Nenhuma defesa finalizada neste período.</td></tr>
+                            <tr><td colspan="{{ 5 + count($dimensoes) }}" class="text-muted">Nenhuma defesa finalizada neste período.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

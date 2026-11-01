@@ -83,6 +83,7 @@
                             <div class="small text-muted mb-2">
                                 {{ ProducaoPublicacao::TIPOS[$p->tipo] }} · {{ $p->veiculo }} · {{ $p->ano }}
                                 @if ($p->doi) · <a href="https://doi.org/{{ $p->doi }}" target="_blank" rel="noopener">DOI {{ $p->doi }}</a> @endif
+                                <div class="mt-1">@include('partials.selo-openalex', ['publicacao' => $p])</div>
                             </div>
                             <div class="d-flex flex-wrap gap-3 align-items-center small">
                                 <select name="publicacoes[{{ $p->id }}][situacao]" class="form-select form-select-sm w-auto" @disabled($somenteLeitura) required>

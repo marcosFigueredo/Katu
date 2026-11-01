@@ -57,6 +57,7 @@
                                 @if ($p->canal) · {{ ProducaoPublicacao::CANAIS[$p->tipo][$p->canal] ?? $p->canal }} @endif
                                 @if ($p->doi) · DOI {{ $p->doi }} @endif
                             </div>
+                            <div class="mt-1">@include('partials.selo-openalex', ['publicacao' => $p])</div>
                         </div>
                         @unless ($travado)
                             <form method="POST" action="{{ route('meu-trabalho.producao.destroy', ['publicacao', $p->id]) }}">

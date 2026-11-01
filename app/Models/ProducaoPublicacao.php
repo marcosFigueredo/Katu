@@ -51,6 +51,12 @@ class ProducaoPublicacao extends Model
         'conta_minimo' => 'Conta para o mínimo do curso',
     ];
 
+    public const OPENALEX_SITUACOES = [
+        'encontrada' => 'Encontrada no OpenAlex',
+        'nao_encontrada' => 'Não encontrada no OpenAlex',
+        'falha' => 'OpenAlex indisponível; nova tentativa depois',
+    ];
+
     protected $fillable = [
         'trabalho_academico_id',
         'tipo',
@@ -61,6 +67,9 @@ class ProducaoPublicacao extends Model
         'doi',
         'issn',
         'openalex_id',
+        'openalex_situacao',
+        'openalex_citacoes',
+        'openalex_verificada_em',
         'derivada_dissertacao',
         'situacao',
         'discente_primeiro_autor',
@@ -81,6 +90,8 @@ class ProducaoPublicacao extends Model
             'coautoria_internacional' => 'boolean',
             'conta_minimo' => 'boolean',
             'conferida_em' => 'datetime',
+            'openalex_citacoes' => 'integer',
+            'openalex_verificada_em' => 'datetime',
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\VerificarProducaoOpenAlexJob;
 use App\Models\ProducaoExtensao;
 use App\Models\ProducaoPopularizacao;
 use App\Models\ProducaoPublicacao;
@@ -62,10 +63,16 @@ class ProducaoAssociadaController extends Controller
             $dados['canal'] = null;
         }
 
-        DB::transaction(function () use ($classe, $dados, $trabalho) {
-            $classe::create($dados + ['trabalho_academico_id' => $trabalho->id]);
+        $item = DB::transaction(function () use ($classe, $dados, $trabalho) {
             $trabalho->update(['producao_confirmada_em' => null]);
+
+            return $classe::create($dados + ['trabalho_academico_id' => $trabalho->id]);
         });
+
+        // Conferência informativa no OpenAlex, na fila (não encontrar não invalida a produção).
+        if ($tipo === 'publicacao' && config('services.openalex.verificar', true)) {
+            VerificarProducaoOpenAlexJob::dispatch($item->id);
+        }
 
         return redirect()->route('meu-trabalho.producao.index')->with('success', 'Item adicionado. Confirme a lista novamente quando estiver completa.');
     }
