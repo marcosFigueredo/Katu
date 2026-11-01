@@ -175,4 +175,16 @@ class TrabalhoAcademico extends Model
     {
         return $this->hasOne(Banca::class)->where('tipo', 'defesa');
     }
+
+    /** Todos os vínculos com projetos de pesquisa (histórico). */
+    public function projetoVinculos(): HasMany
+    {
+        return $this->hasMany(TrabalhoProjetoVinculo::class);
+    }
+
+    /** Vínculo vigente com o projeto do orientador, ou null. */
+    public function projetoVinculoVigente(): ?TrabalhoProjetoVinculo
+    {
+        return $this->projetoVinculos()->where('ativo', true)->latest('id')->first();
+    }
 }

@@ -30,7 +30,10 @@ class OrientacaoService
 
             $this->exigirOrientadorElegivel($trabalho, $docenteVinculoId);
 
-            return $this->criar($trabalho, $docenteVinculoId, 'orientador', 1, $secretaria);
+            $orientacao = $this->criar($trabalho, $docenteVinculoId, 'orientador', 1, $secretaria);
+            app(ProjetoPesquisaService::class)->vincular($trabalho, 'orientador');
+
+            return $orientacao;
         });
     }
 
@@ -84,6 +87,7 @@ class OrientacaoService
             ]);
 
             $this->devolverQualificacaoAberta($trabalho, trim($processoSei));
+            app(ProjetoPesquisaService::class)->vincular($trabalho, 'troca_orientador');
 
             return $nova;
         });

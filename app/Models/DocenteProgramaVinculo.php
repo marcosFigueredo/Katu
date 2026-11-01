@@ -45,4 +45,20 @@ public function bancaMembros()
 {
     return $this->hasMany(BancaMembro::class, 'docente_programa_vinculo_id');
 }
+
+public function projetos()
+{
+    return $this->hasMany(ProjetoPesquisa::class, 'docente_programa_vinculo_id');
+}
+
+public function projetoAtivo(): ?ProjetoPesquisa
+{
+    return $this->projetos()->where('situacao', 'ativo')->latest('id')->first();
+}
+
+/** Só docente permanente e interno cadastra projeto de pesquisa. */
+public function ehPermanente(): bool
+{
+    return $this->tipo_vinculo === 'interno' && $this->categoria_docente === 'permanente';
+}
 }
