@@ -240,6 +240,33 @@
             </div>
         @endif
 
+        @php
+            $minhaSigilosa = $ehMembro && $meuMembro && ! in_array($banca->status, ['finalizada', 'cancelada'], true)
+                ? \App\Models\BancaAvaliacao::where('banca_membro_id', $meuMembro->id)->where('status', 'enviada')
+                    ->whereHas('barema', fn ($q) => $q->where('tipo', "{$banca->tipo}_confidencial"))->first()
+                : null;
+        @endphp
+        @if ($minhaSigilosa)
+            <div class="card border-0 shadow-sm mb-4" x-data="{ plagio: {{ $minhaSigilosa->plagio_identificado ? 'true' : 'false' }} }">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold mb-1" style="color:#00303A;"><i class="bi bi-shield-exclamation me-1"></i>Plágio</h2>
+                    <p class="small text-muted mb-2">Sua marcação no formulário sigiloso. Se todos os avaliadores marcarem, a banca é reprovada; se só parte marcar, ela não pode ser finalizada até se alinhar.</p>
+                    <form method="POST" action="{{ route('avaliacoes.plagio', $banca) }}">
+                        @csrf
+                        <input type="hidden" name="plagio_identificado" value="0">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="plagio_identificado" id="plagio-quadro" value="1" x-model="plagio" @checked($minhaSigilosa->plagio_identificado)>
+                            <label class="form-check-label" for="plagio-quadro">Identifiquei plágio</label>
+                        </div>
+                        <div x-show="plagio" x-cloak class="mb-2">
+                            <textarea name="plagio_indicacao" class="form-control form-control-sm" rows="2" maxlength="3000" placeholder="Onde está o plágio (trechos, páginas, fontes)">{{ old('plagio_indicacao', $minhaSigilosa->plagio_indicacao) }}</textarea>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger">Salvar marcação</button>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         @if ($ehOrientador && $banca->tipo === 'defesa')
             @include('avaliacoes.partials.autoavaliacao-bloco')
         @endif

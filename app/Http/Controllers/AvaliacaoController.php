@@ -275,6 +275,11 @@ class AvaliacaoController extends Controller
             ['banca_id' => $banca->id, 'status' => 'rascunho'],
         );
 
+        // Avaliação enviada não muda pelo formulário (o plágio se ajusta pelo quadro próprio, em plagio()).
+        if ($avaliacao->status === 'enviada') {
+            return back()->withErrors(['avaliacao' => 'Esta avaliação já foi enviada e não pode ser alterada.']);
+        }
+
         $todosItens = $barema->secoes()->where('ativo', true)
             ->with(['itens' => fn ($q) => $q->where('ativo', true)])
             ->get()
@@ -390,6 +395,38 @@ class AvaliacaoController extends Controller
         }
 
         return back()->with('success', 'Rascunho salvo.');
+    }
+
+    // -------------------------------------------------------------------------
+    // Avaliador marca/desmarca plágio na própria avaliação sigilosa enviada (alinhamento da banca)
+    // -------------------------------------------------------------------------
+    public function plagio(Request $request, Banca $banca)
+    {
+        $user = auth()->user();
+        $this->autorizarDocente($user);
+        $vinculo = $user->docenteProfile?->vinculosPrograma()->first();
+        $meuMembro = $banca->avaliadores()->where('docente_programa_vinculo_id', $vinculo?->id)->first();
+        abort_unless($meuMembro, 403);
+        abort_if(in_array($banca->status, ['finalizada', 'cancelada'], true), 403, 'Banca encerrada.');
+
+        $avaliacao = BancaAvaliacao::where('banca_membro_id', $meuMembro->id)
+            ->where('status', 'enviada')
+            ->whereHas('barema', fn ($q) => $q->where('tipo', "{$banca->tipo}_confidencial"))
+            ->first();
+        abort_unless($avaliacao, 404, 'Envie o formulário sigiloso antes.');
+
+        $dados = $request->validate([
+            'plagio_identificado' => ['required', 'boolean'],
+            'plagio_indicacao' => ['exclude_unless:plagio_identificado,1', 'required', 'string', 'max:3000'],
+        ], ['plagio_indicacao.required' => 'Indique onde está o plágio (trechos, páginas, fontes).']);
+
+        $marcado = (bool) $dados['plagio_identificado'];
+        $avaliacao->update([
+            'plagio_identificado' => $marcado,
+            'plagio_indicacao' => $marcado ? $dados['plagio_indicacao'] : null,
+        ]);
+
+        return redirect()->route('avaliacoes.banca', $banca)->with('success', 'Indicação de plágio atualizada.');
     }
 
     // -------------------------------------------------------------------------

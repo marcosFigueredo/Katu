@@ -18,7 +18,7 @@ class PlagioBancaTest extends TestCase
     use CriaCenarioDeBanca;
     use RefreshDatabase;
 
-    private const PENDENCIA = 'Há uma pendência de integridade a ser resolvida pela banca. Os avaliadores precisam se alinhar (quem marcou desmarca, ou todos marcam) antes da finalização; para alterar uma avaliação enviada, peça à Secretaria que reabra a banca.';
+    private const PENDENCIA = 'Há uma pendência de integridade a ser resolvida pela banca. Os avaliadores precisam se alinhar antes da finalização: quem marcou plágio desmarca, ou os demais também marcam, no quadro "Plágio" da tela da banca.';
 
     protected function setUp(): void
     {
@@ -119,6 +119,51 @@ class PlagioBancaTest extends TestCase
         $this->actingAs($orientador)->get(route('avaliacoes.ata', $banca))
             ->assertOk()
             ->assertSee('Reprovado por plágio identificado pela banca (decisão unânime)');
+    }
+
+    public function test_avaliacao_enviada_nao_pode_ser_alterada_pelo_formulario(): void
+    {
+        [, $banca, , $avaliadores] = $this->cenario();
+        $confidencial = Barema::where('tipo', 'defesa_confidencial')->firstOrFail();
+        $avaliacao = $this->confidencialDe($banca, $avaliadores[0]);
+
+        $this->actingAs($avaliadores[0])->post(route('avaliacoes.salvar', [$banca, $confidencial]), [
+            'acao' => 'rascunho', 'observacoes_gerais' => 'Mudança tardia', 'plagio_identificado' => '1', 'plagio_indicacao' => 'p. 3',
+        ])->assertSessionHasErrors('avaliacao');
+
+        $avaliacao->refresh();
+        $this->assertNull($avaliacao->observacoes_gerais);
+        $this->assertFalse($avaliacao->plagio_identificado);
+    }
+
+    public function test_avaliadores_se_alinham_no_quadro_de_plagio(): void
+    {
+        [, $banca, $orientador, $avaliadores] = $this->cenario();
+        $this->marcar($banca, $avaliadores[0], 'Cap. 2 copiado.');
+        $servico = app(IntegridadeBancaService::class);
+
+        $this->actingAs($avaliadores[1])->get(route('avaliacoes.banca', $banca))
+            ->assertSee('action="'.route('avaliacoes.plagio', $banca).'"', false);
+
+        // Quem marcou desmarca: a pendência some.
+        $this->actingAs($avaliadores[0])->post(route('avaliacoes.plagio', $banca), ['plagio_identificado' => '0'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('nenhuma', $servico->situacao($banca));
+
+        // Os dois marcam: unanimidade.
+        foreach ($avaliadores as $avaliador) {
+            $this->actingAs($avaliador)->post(route('avaliacoes.plagio', $banca), [
+                'plagio_identificado' => '1', 'plagio_indicacao' => 'Cap. 2 copiado.',
+            ])->assertSessionHasNoErrors();
+        }
+        $this->assertSame('unanime', $servico->situacao($banca));
+
+        $this->actingAs($avaliadores[0])->post(route('avaliacoes.plagio', $banca), ['plagio_identificado' => '1', 'plagio_indicacao' => ''])
+            ->assertSessionHasErrors('plagio_indicacao');
+        $this->actingAs($orientador)->post(route('avaliacoes.plagio', $banca), ['plagio_identificado' => '0'])->assertForbidden();
+
+        $banca->update(['status' => 'finalizada']);
+        $this->actingAs($avaliadores[0])->post(route('avaliacoes.plagio', $banca), ['plagio_identificado' => '0'])->assertForbidden();
     }
 
     public function test_secretaria_nao_ve_indicacoes(): void

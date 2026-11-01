@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
  */
 class IntegridadeBancaService
 {
-    public const PENDENCIA = 'Há uma pendência de integridade a ser resolvida pela banca. Os avaliadores precisam se alinhar (quem marcou desmarca, ou todos marcam) antes da finalização; para alterar uma avaliação enviada, peça à Secretaria que reabra a banca.';
+    public const PENDENCIA = 'Há uma pendência de integridade a ser resolvida pela banca. Os avaliadores precisam se alinhar antes da finalização: quem marcou plágio desmarca, ou os demais também marcam, no quadro "Plágio" da tela da banca.';
 
     /** 'nenhuma' | 'parcial' | 'unanime' — só avaliações confidenciais enviadas dos avaliadores ativos. */
     public function situacao(Banca $banca): string
