@@ -407,6 +407,31 @@
                 </div>
             </div>
 
+            @php
+                $vinculoProjeto = $trabalho->projetoVinculoVigente();
+                $projetoPendente = $vinculoProjeto ? $vinculoProjeto->objetivo === null : app(\App\Services\ProjetoPesquisaService::class)->projetoExigido($trabalho);
+            @endphp
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                            <i class="bi bi-journal-text me-2"></i>Projeto de pesquisa
+                            @if ($projetoPendente)
+                                <span class="badge bg-warning-subtle text-warning-emphasis ms-1">Pendente</span>
+                            @elseif ($vinculoProjeto)
+                                <span class="badge bg-success-subtle text-success-emphasis ms-1">Objetivo informado</span>
+                            @endif
+                        </h2>
+                        <p class="text-muted small mb-0">
+                            Projeto do seu orientador e o objetivo dele que sua pesquisa avança. Exigido para enviar a qualificação e a defesa.
+                        </p>
+                    </div>
+                    <a href="{{ route('meu-trabalho.projeto.edit') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye-fill me-1"></i>Abrir
+                    </a>
+                </div>
+            </div>
+
             @php $impactoOk = $trabalho->impacto !== null; @endphp
             <div class="card border-0 shadow-sm mt-3">
                 <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">

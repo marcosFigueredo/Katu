@@ -130,6 +130,33 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
     }
 
+    public function test_pedido_exige_projeto_e_objetivo_quando_orientador_e_permanente(): void
+    {
+        Mail::fake();
+        [$discente, , $trabalho] = $this->estrutura();
+        $orientador = $trabalho->orientacoes()->where('tipo', 'orientador')->first()->docenteProgramaVinculo;
+        $orientador->update(['categoria_docente' => 'permanente']);
+        $banca = $this->proporBanca($discente, $trabalho);
+        $documento = $this->documento($trabalho, $discente);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Seu orientador ainda não cadastrou o projeto de pesquisa. O pedido só pode ser enviado depois que ele cadastrar e você indicar seu objetivo.']);
+
+        app(\App\Services\ProjetoPesquisaService::class)->cadastrar($orientador, [
+            'titulo' => 'Projeto', 'descricao' => 'Descrição', 'inicio_em' => '2025-01-01',
+        ], $orientador->docenteProfile->user);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Indique, em Meu trabalho → Projeto de pesquisa, qual objetivo do projeto do orientador sua pesquisa avança.']);
+        $this->assertSame('proposta', $banca->fresh()->homologacao_status);
+
+        $trabalho->projetoVinculoVigente()->update(['objetivo' => 'Objetivo 2', 'objetivo_informado_em' => now()]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
+    }
+
     public function test_enviar_homologacao_guarda_copia_dos_dados_da_pesquisa_na_banca(): void
     {
         Mail::fake();

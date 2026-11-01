@@ -26,6 +26,7 @@ use App\Http\Controllers\TabelaLattesController;
 use App\Http\Controllers\TrabalhoDadosPesquisaController;
 use App\Http\Controllers\EspelhoDiscenteController;
 use App\Http\Controllers\TrabalhoLattesController;
+use App\Http\Controllers\TrabalhoProjetoController;
 use App\Http\Controllers\BancaController;
 use App\Http\Controllers\SwaraSessaoController;
 use App\Http\Controllers\MabacController;
@@ -352,6 +353,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/meu-trabalho/lattes', [TrabalhoLattesController::class, 'update'])
         ->name('meu-trabalho.lattes.update');
+
+    Route::get('/meu-trabalho/projeto-pesquisa', [TrabalhoProjetoController::class, 'edit'])
+        ->name('meu-trabalho.projeto.edit');
+    Route::put('/meu-trabalho/projeto-pesquisa', [TrabalhoProjetoController::class, 'update'])
+        ->name('meu-trabalho.projeto.update');
 
     Route::get('/meu-trabalho/atividades-formativas', [AtividadesRealizadasController::class, 'index'])
         ->name('meu-trabalho.atividades.index');

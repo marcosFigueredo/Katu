@@ -119,6 +119,18 @@ class PedidoHomologacaoService
             ]);
         }
 
+        $vinculoProjeto = $banca->trabalhoAcademico->projetoVinculoVigente();
+        if (! $vinculoProjeto && app(ProjetoPesquisaService::class)->projetoExigido($banca->trabalhoAcademico)) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Seu orientador ainda não cadastrou o projeto de pesquisa. O pedido só pode ser enviado depois que ele cadastrar e você indicar seu objetivo.',
+            ]);
+        }
+        if ($vinculoProjeto && $vinculoProjeto->objetivo === null) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Indique, em Meu trabalho → Projeto de pesquisa, qual objetivo do projeto do orientador sua pesquisa avança.',
+            ]);
+        }
+
         $faltantes = $this->atividades->faltantes($banca->trabalhoAcademico, $banca->tipo);
         if ($faltantes !== []) {
             throw ValidationException::withMessages([
