@@ -36,10 +36,11 @@ class CpaPeriodoPesosTest extends TestCase
         return $user;
     }
 
-    private function periodo(array $extra = [])
+    /** O quadriênio é cadastrado pela Secretaria (decisão de 2026-11-01); aqui direto no banco. */
+    private function periodo(array $extra = []): PeriodoQualidade
     {
-        return $this->actingAs($this->membro)->post(route('cpa.periodos.store'), [
-            'nome' => 'Quadriênio 2025–2028', 'inicio_em' => '2025-01-01', 'fim_em' => '2028-12-31', ...$extra,
+        return PeriodoQualidade::create([
+            'programa_id' => $this->programa->id, 'nome' => 'Quadriênio 2025–2028', 'inicio_em' => '2025-01-01', 'fim_em' => '2028-12-31', ...$extra,
         ]);
     }
 
@@ -55,23 +56,22 @@ class CpaPeriodoPesosTest extends TestCase
         return ['ordem' => $ordem, 's' => $sj];
     }
 
-    public function test_membro_cria_periodo_com_faixas_padrao(): void
+    public function test_membro_ve_quadrienio_com_faixas_padrao(): void
     {
-        $this->periodo()->assertSessionHasNoErrors();
+        $periodo = $this->periodo();
 
-        $periodo = PeriodoQualidade::firstOrFail();
-        $this->assertSame($this->programa->id, $periodo->programa_id);
-        $this->assertEquals(8.5, $periodo->corte_alta);
-        $this->assertEquals(4.0, $periodo->corte_pouca);
+        $this->assertEquals(8.5, $periodo->fresh()->corte_alta);
+        $this->assertEquals(4.0, $periodo->fresh()->corte_pouca);
         $this->actingAs($this->membro)->get(route('cpa.periodos.index'))->assertOk()->assertSee('Quadriênio 2025–2028');
     }
 
     public function test_faixas_fora_de_ordem_sao_recusadas(): void
     {
-        $this->periodo(['corte_alta' => 7, 'corte_boa' => 8, 'corte_suficiente' => 5.5, 'corte_pouca' => 4])
+        $periodo = $this->periodo();
+
+        $this->actingAs($this->membro)->put(route('cpa.periodos.update', $periodo), ['corte_alta' => 7, 'corte_boa' => 8, 'corte_suficiente' => 5.5, 'corte_pouca' => 4])
             ->assertSessionHasErrors('corte_alta');
-        $this->periodo(['fim_em' => '2024-01-01'])->assertSessionHasErrors('fim_em');
-        $this->assertSame(0, PeriodoQualidade::count());
+        $this->assertEquals(8.5, $periodo->fresh()->corte_alta);
     }
 
     public function test_swara_das_dimensoes_grava_pesos_que_somam_1(): void

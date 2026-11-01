@@ -9,6 +9,7 @@ use App\Http\Controllers\InstituicaoController;
 use App\Http\Controllers\LogoController;
 use App\Http\Controllers\ProgramaCursoController;
 use App\Http\Controllers\ProgramaController;
+use App\Http\Controllers\QuadrienioController;
 use App\Http\Controllers\ProgramaDocumentoReferenciaController;
 use App\Http\Controllers\ProgramaTemplateLatexController;
 use App\Http\Controllers\AreaConcentracaoController;
@@ -107,13 +108,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('criterios-cpa/{criterioCpa}/inativar', [CriterioCpaController::class, 'inativar'])
         ->name('criterios-cpa.inativar');
 
+    Route::get('/quadrienios', [QuadrienioController::class, 'index'])->name('quadrienios.index');
+    Route::post('/quadrienios', [QuadrienioController::class, 'store'])->name('quadrienios.store');
+    Route::put('/quadrienios/{periodo}', [QuadrienioController::class, 'update'])->name('quadrienios.update');
+
     Route::get('/membros-cpa', [MembroCpaController::class, 'index'])->name('membros-cpa.index');
     Route::post('/membros-cpa', [MembroCpaController::class, 'store'])->name('membros-cpa.store');
     Route::post('/membros-cpa/{membroCpa}/encerrar', [MembroCpaController::class, 'encerrar'])->name('membros-cpa.encerrar');
 
     Route::get('/cpa', [CpaQualidadeController::class, 'index'])->name('cpa.index');
     Route::get('/cpa/periodos', [CpaPeriodoController::class, 'periodos'])->name('cpa.periodos.index');
-    Route::post('/cpa/periodos', [CpaPeriodoController::class, 'store'])->name('cpa.periodos.store');
     Route::put('/cpa/periodos/{periodo}', [CpaPeriodoController::class, 'update'])->name('cpa.periodos.update');
     Route::get('/cpa/periodos/{periodo}/pesos/{grupo}', [CpaPeriodoController::class, 'pesos'])
         ->whereIn('grupo', ['dimensao', 'fonte'])->name('cpa.pesos.edit');

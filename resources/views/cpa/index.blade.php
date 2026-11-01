@@ -5,7 +5,7 @@
         @include('cpa._nav')
 
         @if (! $periodo)
-            <div class="alert alert-info">Crie um período de avaliação em <a href="{{ route('cpa.periodos.index') }}">Períodos e pesos</a> para ver os resultados.</div>
+            <div class="alert alert-info">Nenhum quadriênio cadastrado. A Secretaria cadastra em Configurações → Quadriênios.</div>
         @else
             <form method="GET" class="d-flex gap-2 align-items-center mb-3">
                 <label for="periodo" class="small fw-semibold">Período</label>

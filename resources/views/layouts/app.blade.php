@@ -282,6 +282,13 @@
                                 Membros da CPA
                             </a>
 
+                            <a href="{{ route('quadrienios.index') }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                                      {{ request()->routeIs('quadrienios.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">
+                                <i class="bi bi-calendar-range" style="font-size: 15px; flex-shrink:0;"></i>
+                                Quadriênios
+                            </a>
+
                             <a href="{{ route('atividades-formativas.index') }}"
                                class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
                                       {{ request()->routeIs('atividades-formativas.*') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100' }}">

@@ -20,20 +20,13 @@ class CpaPeriodoController extends CpaQualidadeController
         return view('cpa.periodos', compact('programa', 'periodos'));
     }
 
-    public function store(Request $request)
-    {
-        $programa = $this->programaCpa();
-        PeriodoQualidade::create($this->validarPeriodo($request) + ['programa_id' => $programa->id, 'criado_por' => auth()->id()]);
-
-        return redirect()->route('cpa.periodos.index')->with('success', 'Período criado.');
-    }
-
     public function update(Request $request, PeriodoQualidade $periodo)
     {
         $this->doMeuPrograma($periodo);
-        $periodo->update($this->validarPeriodo($request));
+        // O quadriênio (nome e datas) é da Secretaria; a CPA ajusta só as faixas.
+        $periodo->update($this->validarFaixas($request));
 
-        return redirect()->route('cpa.periodos.index')->with('success', 'Período atualizado.');
+        return redirect()->route('cpa.periodos.index')->with('success', 'Faixas atualizadas.');
     }
 
     public function pesos(PeriodoQualidade $periodo, string $grupo)
@@ -89,17 +82,14 @@ class CpaPeriodoController extends CpaQualidadeController
         return redirect()->route('cpa.pesos.edit', [$periodo, $grupo])->with('success', 'Pesos calculados e gravados.');
     }
 
-    private function validarPeriodo(Request $request): array
+    private function validarFaixas(Request $request): array
     {
         $dados = $request->validate([
-            'nome' => ['required', 'string', 'max:100'],
-            'inicio_em' => ['required', 'date'],
-            'fim_em' => ['required', 'date', 'after:inicio_em'],
             'corte_alta' => ['nullable', 'numeric', 'between:0,10'],
             'corte_boa' => ['nullable', 'numeric', 'between:0,10'],
             'corte_suficiente' => ['nullable', 'numeric', 'between:0,10'],
             'corte_pouca' => ['nullable', 'numeric', 'between:0,10'],
-        ], ['fim_em.after' => 'O fim do período deve ser posterior ao início.']);
+        ]);
 
         $cortes = [
             'corte_alta' => (float) ($dados['corte_alta'] ?? 8.5),
@@ -111,7 +101,7 @@ class CpaPeriodoController extends CpaQualidadeController
             throw ValidationException::withMessages(['corte_alta' => 'As faixas devem ser decrescentes: Alta > Boa > Suficiente > Pouca.']);
         }
 
-        return array_merge($dados, $cortes);
+        return $cortes;
     }
 
     private function doMeuPrograma(PeriodoQualidade $periodo): void

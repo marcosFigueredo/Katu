@@ -9,6 +9,7 @@
     ];
 @endphp
 <div class="row g-2">
+    @unless ($soFaixas ?? false)
     <div class="col-md-6">
         <label for="{{ $idBase }}_nome" class="form-label small fw-semibold">Nome</label>
         <input id="{{ $idBase }}_nome" name="nome" type="text" maxlength="100" required class="form-control form-control-sm" value="{{ $v('nome') }}" placeholder="Ex.: Quadriênio 2025–2028">
@@ -21,6 +22,7 @@
         <label for="{{ $idBase }}_fim" class="form-label small fw-semibold">Fim</label>
         <input id="{{ $idBase }}_fim" name="fim_em" type="date" required class="form-control form-control-sm" value="{{ $v('fim_em') }}">
     </div>
+    @endunless
     @foreach ($faixas as $campo => [$rotulo, $padrao])
         <div class="col-md-3">
             <label for="{{ $idBase }}_{{ $campo }}" class="form-label small fw-semibold">{{ $rotulo }}</label>
