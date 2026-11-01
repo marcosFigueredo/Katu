@@ -32,5 +32,16 @@ trait CriaItensDaDefesa
             'doi' => '10.1016/j.annepidem.2025.06.012',
         ]);
         $trabalho->update(['producao_confirmada_em' => now()]);
+
+        $trabalho->informacoesAdicionais()->create([
+            'conflito_interesses' => false,
+            'disponibilidade_dados' => 'nenhum_dado_novo',
+            'amostras_fisicas' => false,
+            'aprovacao_etica' => false,
+            'participantes' => false,
+            'uso_ia' => false,
+            'originalidade_confirmada' => true,
+            'preenchido_em' => now(),
+        ]);
     }
 }

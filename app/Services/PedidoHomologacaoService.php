@@ -141,6 +141,12 @@ class PedidoHomologacaoService
                         ." na produção associada; você informou {$informadas}.",
                 ]);
             }
+
+            if (! $trabalho->informacoesAdicionais()->whereNotNull('preenchido_em')->exists()) {
+                throw ValidationException::withMessages([
+                    'homologacao' => 'Responda as Informações adicionais em Meu trabalho antes de enviar a defesa à homologação.',
+                ]);
+            }
         }
 
         $this->verificacao->exigir($this->verificacao->verificarBanca($banca), 'homologacao');

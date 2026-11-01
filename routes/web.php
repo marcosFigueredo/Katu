@@ -37,6 +37,7 @@ use App\Http\Controllers\TrabalhoImpactoController;
 use App\Http\Controllers\AtividadeFormativaController;
 use App\Http\Controllers\AtividadesRealizadasController;
 use App\Http\Controllers\ProducaoAssociadaController;
+use App\Http\Controllers\InformacoesAdicionaisController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\CriterioCpaController;
@@ -342,6 +343,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('meu-trabalho.atividades.store');
     Route::delete('/meu-trabalho/atividades-formativas/{atividadeRealizada}', [AtividadesRealizadasController::class, 'destroy'])
         ->name('meu-trabalho.atividades.destroy');
+
+    Route::get('/meu-trabalho/informacoes-adicionais', [InformacoesAdicionaisController::class, 'edit'])
+        ->name('meu-trabalho.informacoes.edit');
+    Route::put('/meu-trabalho/informacoes-adicionais', [InformacoesAdicionaisController::class, 'update'])
+        ->name('meu-trabalho.informacoes.update');
+    Route::get('/meu-trabalho/informacoes-adicionais/aprovacao-etica', [InformacoesAdicionaisController::class, 'etica'])
+        ->name('meu-trabalho.informacoes.etica');
 
     Route::get('/meu-trabalho/producao', [ProducaoAssociadaController::class, 'index'])
         ->name('meu-trabalho.producao.index');

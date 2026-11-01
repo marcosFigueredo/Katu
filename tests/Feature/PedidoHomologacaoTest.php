@@ -446,6 +446,17 @@ class PedidoHomologacaoTest extends TestCase
         $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
     }
 
+    public function test_pedido_de_defesa_exige_informacoes_adicionais(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $trabalho->informacoesAdicionais()->delete();
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Responda as Informações adicionais em Meu trabalho antes de enviar a defesa à homologação.']);
+        $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
+    }
+
     /** Qualificação aprovada, defesa proposta com espelho respondido e dissertação anexada; faltam só os itens da defesa. */
     private function defesaProposta(): array
     {

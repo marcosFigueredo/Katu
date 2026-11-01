@@ -473,6 +473,28 @@
                 </div>
             </div>
 
+            @php $informacoesOk = $trabalho->informacoesAdicionais?->preenchido_em !== null; @endphp
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                            <i class="bi bi-patch-check me-2"></i>Informações adicionais
+                            @if ($informacoesOk)
+                                <span class="badge bg-success-subtle text-success-emphasis ms-1">Preenchido</span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning-emphasis ms-1">Pendente</span>
+                            @endif
+                        </h2>
+                        <p class="text-muted small mb-0">
+                            Conflito de interesses, dados, amostras, ética, consentimento, uso de IA e originalidade. Exigidas para enviar a defesa à homologação.
+                        </p>
+                    </div>
+                    <a href="{{ route('meu-trabalho.informacoes.edit') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-fill me-1"></i>{{ $informacoesOk ? 'Revisar' : 'Responder' }}
+                    </a>
+                </div>
+            </div>
+
             @if ($bancaPedido?->tipo === 'defesa')
                 @php $espelhoEnviado = \App\Models\EspelhoDiscente::where('banca_id', $bancaPedido->id)->exists(); @endphp
                 <div class="card border-0 shadow-sm mt-3">
