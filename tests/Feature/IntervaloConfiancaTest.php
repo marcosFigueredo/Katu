@@ -110,6 +110,52 @@ class IntervaloConfiancaTest extends TestCase
         $this->assertSame(1, $r['fronteira']);
     }
 
+    public function test_sem_fronteira_quando_regra_de_corte_muda_a_classe(): void
+    {
+        $this->notas([7.5, 8, 10]);
+        $this->banca->update(['reprovada_por_plagio' => true]);
+
+        $r = $this->servico->indiceTrabalho($this->banca->fresh(), comIntervalo: true);
+
+        $this->assertSame(5, $r['classe']);
+        $this->assertNull($r['fronteira']);
+    }
+
+    public function test_intervalo_nao_altera_o_gerador_aleatorio_global(): void
+    {
+        $this->notas([6, 8, 10]);
+        mt_srand(42);
+        $esperado = [mt_rand(), mt_rand()];
+
+        mt_srand(42);
+        $primeiro = mt_rand();
+        $this->servico->indiceTrabalho($this->banca, comIntervalo: true);
+
+        $this->assertSame($esperado[1], mt_rand());
+        $this->assertSame($esperado[0], $primeiro);
+    }
+
+    public function test_programa_usa_o_periodo_escolhido_para_cada_trabalho(): void
+    {
+        $this->notas([8, 8, 8]);
+        PeriodoQualidade::create(['programa_id' => $this->programa->id, 'nome' => '2026', 'inicio_em' => '2026-01-01', 'fim_em' => '2026-12-31', 'corte_alta' => 9.5, 'corte_boa' => 9, 'corte_suficiente' => 8.5, 'corte_pouca' => 8]);
+        $quadrienio = PeriodoQualidade::where('nome', 'Quadriênio')->first();
+
+        $r = $this->servico->indicePrograma($quadrienio);
+
+        $this->assertSame(2, reset($r['trabalhos'])['classe']);
+        $this->assertSame(1, $r['distribuicao'][2]);
+    }
+
+    public function test_orientador_nao_ve_perfil_com_um_so_avaliador(): void
+    {
+        $this->notas([8]);
+
+        $this->actingAs($this->orientador)->get(route('avaliacoes.banca', $this->banca))
+            ->assertSee('Como a banca interpretou o trabalho')
+            ->assertSee('perfil por dimensão só aparece com pelo menos dois avaliadores');
+    }
+
     public function test_intervalo_do_programa(): void
     {
         $this->notas([6, 8, 10]);

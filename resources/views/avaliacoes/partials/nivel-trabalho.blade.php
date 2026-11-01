@@ -18,11 +18,16 @@
                 <div class="small text-danger mt-1">{{ $regra }}</div>
             @endforeach
         </div>
-        @foreach (\App\Models\PeriodoQualidade::rotulos('dimensao') as $codigo => $nome)
-            <div class="row align-items-center mb-1">
-                <div class="col-sm-4 small">{{ $nome }}</div>
-                <div class="col-sm-8">@include('cpa._barra', ['nota' => $nivelTrabalho['dimensoes'][$codigo]])</div>
-            </div>
-        @endforeach
+        {{-- Com um só avaliador as barras repetiriam as notas dele, inclusive as do formulário confidencial. --}}
+        @if (($nivelTrabalho['avaliadores'] ?? 0) < 2)
+            <p class="small text-muted mb-0">O perfil por dimensão só aparece com pelo menos dois avaliadores, para preservar o sigilo das avaliações.</p>
+        @else
+            @foreach (\App\Models\PeriodoQualidade::rotulos('dimensao') as $codigo => $nome)
+                <div class="row align-items-center mb-1">
+                    <div class="col-sm-4 small">{{ $nome }}</div>
+                    <div class="col-sm-8">@include('cpa._barra', ['nota' => $nivelTrabalho['dimensoes'][$codigo]])</div>
+                </div>
+            @endforeach
+        @endif
     </div>
 </div>

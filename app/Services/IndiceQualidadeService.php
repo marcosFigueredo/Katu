@@ -48,7 +48,9 @@ class IndiceQualidadeService
         $avaliacoes = BancaAvaliacao::where('banca_id', $banca->id)
             ->where('status', 'enviada')
             ->whereIn('banca_membro_id', $membros)
-            ->with('notas.baremaItem')
+            ->with(['notas' => fn ($q) => $q->orderBy('id'), 'notas.baremaItem'])
+            ->orderBy('banca_membro_id')
+            ->orderBy('id')
             ->get();
 
         $porAvaliador = [];
@@ -143,11 +145,12 @@ class IndiceQualidadeService
      * 'intervalo' [lo, hi] por bootstrap dos avaliadores e 'fronteira' (classe vizinha que o intervalo alcança).
      * Só defesa finalizada recebe índice e classe.
      */
-    public function indiceTrabalho(Banca $defesa, bool $comIntervalo = false): array
+    public function indiceTrabalho(Banca $defesa, bool $comIntervalo = false, ?PeriodoQualidade $periodo = null): array
     {
         $trabalho = $defesa->trabalhoAcademico;
         $data = $defesa->data_hora ?? $defesa->updated_at ?? now();
-        $periodo = $trabalho?->programa ? PeriodoQualidade::doPrograma($trabalho->programa, $data) : null;
+        // Na visão do programa, o período escolhido pela CPA vale para todos os trabalhos (faixas e pesos).
+        $periodo ??= $trabalho?->programa ? PeriodoQualidade::doPrograma($trabalho->programa, $data) : null;
         $faixas = $periodo ?? new PeriodoQualidade();
         $pesos = $faixas->pesos('dimensao');
 
@@ -167,13 +170,15 @@ class IndiceQualidadeService
         }
 
         [$classe, $regras] = $this->classificarTrabalho($defesa, $indice, $dimensoes, $faixas);
-        $resultado = ['dimensoes' => $dimensoes, 'indice' => $indice, 'classe' => $classe, 'periodo' => $periodo, 'regras' => $regras];
+        $resultado = ['dimensoes' => $dimensoes, 'indice' => $indice, 'classe' => $classe, 'periodo' => $periodo, 'regras' => $regras,
+            'avaliadores' => count($porAvaliador)];
 
         if ($comIntervalo) {
             $intervalo = self::bootstrap($porAvaliador, 'trabalho-'.$defesa->id,
                 fn (array $amostra) => self::mediaGeometrica(self::comProducao($this->dimensoesDe($amostra), $producao), $pesos));
             $resultado['intervalo'] = $intervalo;
-            $resultado['fronteira'] = self::fronteira($intervalo, $indice, $faixas);
+            // Com regra de corte a classe não vem das faixas: o aviso de fronteira confundiria.
+            $resultado['fronteira'] = $regras === [] ? self::fronteira($intervalo, $indice, $faixas) : null;
         }
 
         return $resultado;
@@ -193,6 +198,7 @@ class IndiceQualidadeService
             ->whereDate('data_hora', '<=', $periodo->fim_em)
             ->with('trabalhoAcademico.programa', 'trabalhoAcademico.publicacoes', 'trabalhoAcademico.discenteVinculo.discenteProfile.user')
             ->orderBy('data_hora')
+            ->orderBy('id')
             ->get();
 
         $trabalhos = [];
@@ -201,7 +207,7 @@ class IndiceQualidadeService
         $porDefesa = [];
 
         foreach ($defesas as $defesa) {
-            $indice = $this->indiceTrabalho($defesa, comIntervalo: true);
+            $indice = $this->indiceTrabalho($defesa, comIntervalo: true, periodo: $periodo);
             $trabalhos[$defesa->id] = $indice + ['banca' => $defesa];
             if ($indice['classe'] !== null) {
                 $distribuicao[$indice['classe']]++;
@@ -282,19 +288,19 @@ class IndiceQualidadeService
             return null;
         }
 
-        mt_srand(crc32($semente));
+        // Gerador próprio: não mexe no estado aleatório global do PHP (Faker, shuffle etc.).
+        $gerador = new \Random\Randomizer(new \Random\Engine\Mt19937(crc32($semente)));
         $valores = [];
         for ($b = 0; $b < self::REAMOSTRAS; $b++) {
             $amostra = [];
             for ($i = 0; $i < $n; $i++) {
-                $amostra[] = $unidades[mt_rand(0, $n - 1)];
+                $amostra[] = $unidades[$gerador->getInt(0, $n - 1)];
             }
             $valor = $estatistica($amostra);
             if ($valor !== null) {
                 $valores[] = $valor;
             }
         }
-        mt_srand();
 
         if ($valores === []) {
             return null;
