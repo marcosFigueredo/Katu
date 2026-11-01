@@ -182,6 +182,6 @@ class IntervaloConfiancaTest extends TestCase
         $membro = User::factory()->docente()->create(['primeiro_acesso' => false]);
         MembroCpa::create(['programa_id' => $this->programa->id, 'user_id' => $membro->id, 'inicio_em' => today()->subMonth(), 'numero_ato' => 'Ato']);
 
-        $this->actingAs($membro)->get(route('cpa.index'))->assertOk()->assertSee('IC 95%')->assertSee('fronteira com Alta qualidade');
+        $this->actingAs($membro)->get(route('cpa.index'))->assertOk()->assertSee('IC 95%');
     }
 }

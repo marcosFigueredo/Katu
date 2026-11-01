@@ -193,7 +193,7 @@ class IndiceQualidadeService
      * as fontes com os pesos de "fonte"; o índice é a média geométrica ponderada pelos pesos de "dimensao".
      * Intervalo de 95% (informativo à CPA) por bootstrap das defesas.
      */
-    public function indicePrograma(PeriodoQualidade $periodo): array
+    public function indicePrograma(PeriodoQualidade $periodo, ?callable $filtro = null): array
     {
         $defesas = Banca::where('tipo', 'defesa')
             ->where('status', 'finalizada')
@@ -201,10 +201,13 @@ class IndiceQualidadeService
             ->whereHas('trabalhoAcademico', fn ($q) => $q->where('programa_id', $periodo->programa_id))
             ->whereDate('data_hora', '>=', $periodo->inicio_em)
             ->whereDate('data_hora', '<=', $periodo->fim_em)
-            ->with('trabalhoAcademico.programa', 'trabalhoAcademico.publicacoes', 'trabalhoAcademico.discenteVinculo.discenteProfile.user')
+            ->with('trabalhoAcademico.programa', 'trabalhoAcademico.publicacoes', 'trabalhoAcademico.linhaPesquisa.areaConcentracao', 'trabalhoAcademico.discenteVinculo.bolsas')
             ->orderBy('data_hora')
             ->orderBy('id')
             ->get();
+        if ($filtro) {
+            $defesas = $defesas->filter($filtro)->values();
+        }
 
         $trabalhos = [];
         $distribuicao = array_fill_keys(array_keys(self::CLASSES), 0);

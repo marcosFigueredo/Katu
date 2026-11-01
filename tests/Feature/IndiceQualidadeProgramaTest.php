@@ -175,7 +175,7 @@ class IndiceQualidadeProgramaTest extends TestCase
         $this->actingAs($this->membroCpa())->get(route('cpa.index'))
             ->assertOk()
             ->assertSee('Alta qualidade')
-            ->assertSee($this->discente->name)
+            ->assertDontSee($this->discente->name)
             ->assertSee('Quadriênio');
     }
 
