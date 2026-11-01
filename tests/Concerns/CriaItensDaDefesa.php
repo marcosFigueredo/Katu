@@ -23,5 +23,14 @@ trait CriaItensDaDefesa
                 'atividade_formativa_id' => $a->id,
                 'descricao' => "Realizada: {$a->nome}",
             ]));
+
+        $trabalho->publicacoes()->create([
+            'tipo' => 'artigo',
+            'titulo' => 'Artigo derivado da dissertação',
+            'ano' => 2025,
+            'veiculo' => 'Annals of Epidemiology',
+            'doi' => '10.1016/j.annepidem.2025.06.012',
+        ]);
+        $trabalho->update(['producao_confirmada_em' => now()]);
     }
 }

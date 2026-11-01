@@ -15,8 +15,8 @@ class ProgramaCurso extends Model
 
     /** Prazos (meses) e regra de banca [min, max, internos, externos à instituição] por nível. */
     public const PADROES = [
-        'mestrado' => ['prazo_qualificacao_meses' => 18, 'prazo_defesa_meses' => 24, 'regra' => [2, 5, 1, 1]],
-        'doutorado' => ['prazo_qualificacao_meses' => 30, 'prazo_defesa_meses' => 48, 'regra' => [5, 5, 2, 2]],
+        'mestrado' => ['prazo_qualificacao_meses' => 18, 'prazo_defesa_meses' => 24, 'min_publicacoes_defesa' => 1, 'regra' => [2, 5, 1, 1]],
+        'doutorado' => ['prazo_qualificacao_meses' => 30, 'prazo_defesa_meses' => 48, 'min_publicacoes_defesa' => 4, 'regra' => [5, 5, 2, 2]],
     ];
 
     protected $table = 'programa_cursos';
@@ -27,6 +27,7 @@ class ProgramaCurso extends Model
         'modalidade',
         'prazo_qualificacao_meses',
         'prazo_defesa_meses',
+        'min_publicacoes_defesa',
         'ativo',
     ];
 
@@ -35,6 +36,7 @@ class ProgramaCurso extends Model
         return [
             'ativo' => 'boolean',
             'prazo_qualificacao_meses' => 'integer',
+            'min_publicacoes_defesa' => 'integer',
             'prazo_defesa_meses' => 'integer',
         ];
     }

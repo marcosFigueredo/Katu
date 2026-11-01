@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Banca;
 use App\Models\EspelhoDiscente;
+use App\Models\ProgramaCurso;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,17 @@ class PedidoHomologacaoService
             ->where('status', '!=', 'cancelada')
             ->whereIn('homologacao_status', ['aguardando', 'homologada'])
             ->exists();
+    }
+
+    /** Publicações exigidas para a defesa: do curso do discente; sem curso, o padrão do nível. */
+    public function minimoPublicacoes(TrabalhoAcademico $trabalho): int
+    {
+        $curso = $trabalho->discenteVinculo?->programaCurso;
+        if ($curso) {
+            return (int) $curso->min_publicacoes_defesa;
+        }
+
+        return (ProgramaCurso::PADROES[$trabalho->nivel] ?? ProgramaCurso::PADROES['mestrado'])['min_publicacoes_defesa'];
     }
 
     /** A banca não cancelada mais recente que ainda aceita trabalho e envio à homologação. */
@@ -110,6 +122,25 @@ class PedidoHomologacaoService
             throw ValidationException::withMessages([
                 'homologacao' => 'Preencha o impacto da dissertação em Meu trabalho antes de enviar a defesa à homologação.',
             ]);
+        }
+
+        if ($banca->tipo === 'defesa') {
+            $trabalho = $banca->trabalhoAcademico;
+            if ($trabalho->producao_confirmada_em === null) {
+                throw ValidationException::withMessages([
+                    'homologacao' => 'Confirme a produção associada em Meu trabalho antes de enviar a defesa à homologação.',
+                ]);
+            }
+
+            $minimo = $this->minimoPublicacoes($trabalho);
+            $informadas = $trabalho->publicacoes()->count();
+            if ($informadas < $minimo) {
+                throw ValidationException::withMessages([
+                    'homologacao' => "Para enviar a defesa, o seu curso exige pelo menos {$minimo} "
+                        .($minimo === 1 ? 'publicação' : 'publicações')
+                        ." na produção associada; você informou {$informadas}.",
+                ]);
+            }
         }
 
         $this->verificacao->exigir($this->verificacao->verificarBanca($banca), 'homologacao');

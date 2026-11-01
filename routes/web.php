@@ -36,6 +36,7 @@ use App\Http\Controllers\OrientacaoAvaliacaoController;
 use App\Http\Controllers\TrabalhoImpactoController;
 use App\Http\Controllers\AtividadeFormativaController;
 use App\Http\Controllers\AtividadesRealizadasController;
+use App\Http\Controllers\ProducaoAssociadaController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\CriterioCpaController;
@@ -337,6 +338,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('meu-trabalho.atividades.store');
     Route::delete('/meu-trabalho/atividades-formativas/{atividadeRealizada}', [AtividadesRealizadasController::class, 'destroy'])
         ->name('meu-trabalho.atividades.destroy');
+
+    Route::get('/meu-trabalho/producao', [ProducaoAssociadaController::class, 'index'])
+        ->name('meu-trabalho.producao.index');
+    Route::post('/meu-trabalho/producao/confirmar', [ProducaoAssociadaController::class, 'confirmar'])
+        ->name('meu-trabalho.producao.confirmar');
+    Route::post('/meu-trabalho/producao/{tipo}', [ProducaoAssociadaController::class, 'store'])
+        ->name('meu-trabalho.producao.store');
+    Route::delete('/meu-trabalho/producao/{tipo}/{id}', [ProducaoAssociadaController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('meu-trabalho.producao.destroy');
 
     Route::get('/meu-trabalho/dados-pesquisa', [TrabalhoDadosPesquisaController::class, 'edit'])
         ->name('meu-trabalho.dados-pesquisa.edit');

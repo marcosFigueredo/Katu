@@ -91,14 +91,19 @@
                                    value="{{ $curso->prazo_defesa_meses }}" required>
                         </div>
                         <div class="col-md-3">
+                            <label class="form-label">Publicações mínimas para a defesa</label>
+                            <input name="min_publicacoes_defesa" type="number" min="0" max="20" class="form-control"
+                                   value="{{ $curso->min_publicacoes_defesa }}" required>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">Situação</label>
                             <select name="ativo" class="form-select">
                                 <option value="1" @selected($curso->ativo)>Ativo</option>
                                 <option value="0" @selected(! $curso->ativo)>Inativo</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-primary w-100">Salvar curso</button>
+                        <div class="col-md-12">
+                            <button class="btn btn-outline-primary">Salvar curso</button>
                         </div>
                     </form>
 

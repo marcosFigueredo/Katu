@@ -61,6 +61,7 @@ class ProgramaCursoController extends Controller
         $dados = $request->validate([
             'prazo_qualificacao_meses' => ['required', 'integer', 'min:1', 'max:120'],
             'prazo_defesa_meses' => ['required', 'integer', 'min:1', 'max:120', 'gte:prazo_qualificacao_meses'],
+            'min_publicacoes_defesa' => ['sometimes', 'integer', 'min:0', 'max:20'],
             'ativo' => ['required', 'boolean'],
         ]);
 

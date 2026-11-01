@@ -19,6 +19,7 @@ class CursoProgramaService
                 'modalidade' => $modalidade,
                 'prazo_qualificacao_meses' => $prazoQualificacao ?? $padrao['prazo_qualificacao_meses'],
                 'prazo_defesa_meses' => $prazoDefesa ?? $padrao['prazo_defesa_meses'],
+                'min_publicacoes_defesa' => $padrao['min_publicacoes_defesa'],
                 'ativo' => true,
             ]);
 

@@ -14,6 +14,8 @@ use App\Models\DocenteProgramaVinculo;
 use App\Models\EspelhoDiscente;
 use App\Models\Instituicao;
 use App\Models\Orientacao;
+use App\Models\ProducaoPublicacao;
+use App\Models\ProgramaCurso;
 use App\Models\Programa;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoDocumento;
@@ -391,6 +393,54 @@ class PedidoHomologacaoTest extends TestCase
         AtividadeRealizada::create([
             'trabalho_academico_id' => $trabalho->id, 'atividade_formativa_id' => $extensao->id, 'descricao' => 'Oficina',
         ]);
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
+    }
+
+    public function test_pedido_de_defesa_exige_producao_confirmada(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $trabalho->update(['producao_confirmada_em' => null]);
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Confirme a produção associada em Meu trabalho antes de enviar a defesa à homologação.']);
+        $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
+    }
+
+    public function test_pedido_de_defesa_exige_minimo_de_publicacoes_do_curso(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        ProducaoPublicacao::where('trabalho_academico_id', $trabalho->id)->delete();
+        $trabalho->update(['producao_confirmada_em' => now()]);
+
+        // Sem curso no vínculo vale o padrão do nível (mestrado: 1).
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Para enviar a defesa, o seu curso exige pelo menos 1 publicação na produção associada; você informou 0.']);
+
+        // Curso com mínimo 0 passa sem publicação.
+        $curso = ProgramaCurso::create([
+            'programa_id' => $trabalho->programa_id, 'nivel' => 'mestrado', 'modalidade' => 'academico',
+            'prazo_qualificacao_meses' => 18, 'prazo_defesa_meses' => 24, 'min_publicacoes_defesa' => 0, 'ativo' => true,
+        ]);
+        $trabalho->discenteVinculo->update(['programa_curso_id' => $curso->id]);
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
+    }
+
+    public function test_pedido_de_defesa_com_o_minimo_de_publicacoes_passa(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $curso = ProgramaCurso::create([
+            'programa_id' => $trabalho->programa_id, 'nivel' => 'mestrado', 'modalidade' => 'academico',
+            'prazo_qualificacao_meses' => 18, 'prazo_defesa_meses' => 24, 'min_publicacoes_defesa' => 1, 'ativo' => true,
+        ]);
+        $trabalho->discenteVinculo->update(['programa_curso_id' => $curso->id]);
+
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
             ->assertSessionHasNoErrors();
         $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);

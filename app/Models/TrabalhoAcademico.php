@@ -28,6 +28,7 @@ class TrabalhoAcademico extends Model
         'outras_informacoes_en',
         'visibilidade',
         'setor_cnae_id',
+        'producao_confirmada_em',
     ];
 
     protected function casts(): array
@@ -36,6 +37,7 @@ class TrabalhoAcademico extends Model
             'data_inicio' => 'date',
             'data_prevista_qualificacao' => 'date',
             'data_prevista_defesa' => 'date',
+            'producao_confirmada_em' => 'datetime',
         ];
     }
 
@@ -104,6 +106,21 @@ class TrabalhoAcademico extends Model
     public function dadosPesquisa(): HasOne
     {
         return $this->hasOne(TrabalhoDadosPesquisa::class);
+    }
+
+    public function publicacoes(): HasMany
+    {
+        return $this->hasMany(ProducaoPublicacao::class);
+    }
+
+    public function extensoes(): HasMany
+    {
+        return $this->hasMany(ProducaoExtensao::class);
+    }
+
+    public function popularizacoes(): HasMany
+    {
+        return $this->hasMany(ProducaoPopularizacao::class);
     }
 
     public function atividadesRealizadas(): HasMany
