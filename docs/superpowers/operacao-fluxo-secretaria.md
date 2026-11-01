@@ -87,13 +87,15 @@ Senha de todos: **`uneb@123`** (sem troca de senha no primeiro acesso).
 
 | E-mail | Situação |
 | --- | --- |
-| `discente.completo@ppgmsb.test` | Juliana Ribeiro Santos — com ORCID; orientadora Beatriz Carvalho Mendes (`permanente1`) e coorientador Rafael Teixeira Nunes (`permanente2`) — banca pode ser cadastrada. Projeto LaTeX fictício pronto em `dissertacao-teste.zip`; dados da pesquisa, impacto, atividades (publicação e extensão lançadas), produção (1 artigo, 1 extensão, 1 popularização) e Informações adicionais já preenchidos (o espelho da defesa fica para responder) |
+| `discente.completo@ppgmsb.test` | Juliana Ribeiro Santos — com ORCID; orientadora Beatriz Carvalho Mendes (`permanente1`) e coorientador Rafael Teixeira Nunes (`permanente2`) — banca pode ser cadastrada. Projeto LaTeX fictício pronto em `dissertacao-teste.zip`; dados da pesquisa, impacto, atividades (publicação e extensão lançadas), produção (1 artigo, 1 extensão, 1 popularização) e Informações adicionais já preenchidos (o espelho da defesa fica para responder); vinculada ao projeto ativo da Beatriz com objetivo informado; bolsa CAPES |
 | `discente.sem.orcid@ppgmsb.test` | Com orientador e **sem ORCID** — cadastro de banca deve ser recusado até ele informar o ORCID em Meu perfil |
 | `discente.sem.orientador@ppgmsb.test` | Com ORCID e sem orientador — selo "sem orientador" e registro do orientador na edição |
 | `discente.com.troca@ppgmsb.test` | Orientadora trocada há 2 meses (SEI fictício) — linha do tempo da orientação |
 | `discente.outro@ppgmsb.test` | Aluno do programa PPGTI — não deve aparecer para a Secretaria do PPGMSB |
 
 ### Roteiro sugerido
+
+- Projetos e bolsa: entre como `permanente1@ppgmsb.test` → **Meu projeto de pesquisa** (um ativo e um concluído) e cadastre um novo — os orientandos passam a ele. Como `discente.com.troca@ppgmsb.test`, em **Meu trabalho → Projeto de pesquisa**, diga se mantém o objetivo antigo; `discente.sem.orcid@ppgmsb.test` tem o objetivo pendente (selo "Pendente" em Meu trabalho; sem ele o pedido à homologação é recusado). Como Secretaria, em Usuários → edição da Juliana, veja e registre **Bolsas**; na edição da Beatriz, o projeto aparece só leitura.
 
 0. Defesa da Juliana (`discente.completo`): como ela, em **Meu trabalho** responda as **Recomendações da qualificação** (duas) e o **Espelho da avaliação** (notas de 0 a 10), envie o `.zip` marcando as 4 declarações e envie o pedido à homologação; como Secretaria, na homologação confira as atividades (registre a proficiência), marque o artigo como "conta para o mínimo" e homologue a banca de defesa; entre como `permanente1@ppgmsb.test` (orientadora) — em **Verificação das referências** só aparecem as dela; o bloco **Autoavaliação** fica antes de "Status dos avaliadores"; responda as 15 afirmações e a **Avaliação do orientando** (5 elementos); depois que `colaborador@` e `externo.ufba@` enviarem as avaliações, finalize — ata e folha vão por e-mail aos avaliadores e o **certificado de participação** a avaliadores e presidente (`storage/logs/laravel.log`). Para testar o plágio, marque "Identifiquei plágio" no formulário sigiloso de um só avaliador: a finalização fica bloqueada até o alinhamento no quadro "Plágio" da tela da banca.
 

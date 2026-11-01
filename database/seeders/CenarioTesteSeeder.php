@@ -21,7 +21,10 @@ use App\Models\DocenteProgramaVinculo;
 use App\Models\Instituicao;
 use App\Models\LinhaPesquisa;
 use App\Models\OrcidWork;
+use App\Models\Bolsa;
 use App\Models\Orientacao;
+use App\Models\ProjetoPesquisa;
+use App\Models\TrabalhoProjetoVinculo;
 use App\Models\Programa;
 use App\Models\ProgramaCurso;
 use App\Models\TrabalhoAcademico;
@@ -94,6 +97,8 @@ class CenarioTesteSeeder extends Seeder
             'processo_sei' => '0601.2026/000123-4',
             'justificativa' => 'Afastamento da orientadora para pós-doutorado (exemplo fictício).',
         ]);
+
+        $this->projetosEBolsas($permanente1, $permanente2, $completo, $semOrcid, $comTroca);
 
         $this->baremasDeTeste($programa);
         $this->baremaAutoavaliacaoDeTeste($programa);
@@ -256,6 +261,56 @@ class CenarioTesteSeeder extends Seeder
                 'fim_em' => $fim?->format('Y-m-d'),
                 ...$extra,
             ],
+        );
+    }
+
+    /**
+     * Projetos de pesquisa dos permanentes (Beatriz com um concluído e um ativo; Rafael com um ativo; a colaboradora sem),
+     * vínculos dos orientandos (Juliana com objetivo; Sem ORCID pendente; Com Troca precisa dizer se mantém) e a bolsa da Juliana.
+     */
+    private function projetosEBolsas(
+        DocenteProgramaVinculo $beatriz,
+        DocenteProgramaVinculo $rafael,
+        DiscenteProgramaVinculo $juliana,
+        DiscenteProgramaVinculo $semOrcid,
+        DiscenteProgramaVinculo $comTroca,
+    ): void {
+        $projeto = fn (DocenteProgramaVinculo $docente, string $titulo, string $descricao, string $inicio, ?string $fim, string $situacao) => ProjetoPesquisa::updateOrCreate(
+            ['docente_programa_vinculo_id' => $docente->id, 'titulo' => $titulo],
+            ['descricao' => $descricao, 'inicio_em' => $inicio, 'fim_em' => $fim, 'situacao' => $situacao, 'registrado_por' => $docente->docenteProfile?->user_id],
+        );
+
+        $antigoBeatriz = $projeto($beatriz, 'Vigilância epidemiológica de arboviroses na Bahia',
+            "Objetivo 1: mapear a incidência de dengue por município.
+Objetivo 2: avaliar a cobertura da notificação.",
+            '2021-03-01', now()->subMonths(6)->toDateString(), 'concluido');
+        $ativoBeatriz = $projeto($beatriz, 'Modelagem matemática de arboviroses e mudanças climáticas',
+            "Objetivo 1: estimar o número reprodutivo básico (R0) sob cenários climáticos.
+Objetivo 2: calibrar modelos compartimentais com dados de vigilância.
+Objetivo 3: apoiar a gestão com cenários de intervenção.",
+            now()->subMonths(6)->toDateString(), null, 'ativo');
+        $ativoRafael = $projeto($rafael, 'Ciência de dados aplicada à atenção primária',
+            "Objetivo 1: prever internações por condições sensíveis à atenção primária.
+Objetivo 2: avaliar a equidade no acesso.",
+            '2024-02-01', null, 'ativo');
+
+        $vincular = fn (DiscenteProgramaVinculo $discente, ProjetoPesquisa $p, string $motivo, bool $ativo, ?string $objetivo, ?bool $mantem = null) => TrabalhoProjetoVinculo::updateOrCreate(
+            ['trabalho_academico_id' => $discente->trabalhoAcademico->id, 'projeto_pesquisa_id' => $p->id],
+            [
+                'motivo' => $motivo, 'inicio_em' => $p->inicio_em, 'ativo' => $ativo, 'fim_em' => $ativo ? null : now()->subMonths(2)->toDateString(),
+                'objetivo' => $objetivo, 'mantem_objetivo' => $mantem, 'objetivo_informado_em' => $objetivo ? now()->subMonth() : null,
+            ],
+        );
+
+        $vincular($juliana, $antigoBeatriz, 'orientador', false, 'Objetivo 2: avaliar a cobertura da notificação.');
+        $vincular($juliana, $ativoBeatriz, 'novo_projeto', true, 'Objetivo 2: calibrar modelos compartimentais com dados de vigilância.', false);
+        $vincular($semOrcid, $ativoRafael, 'orientador', true, null);
+        $vincular($comTroca, $ativoBeatriz, 'orientador', false, 'Objetivo 1: estimar o R0 sob cenários climáticos.');
+        $vincular($comTroca, $ativoRafael, 'troca_orientador', true, null);
+
+        Bolsa::updateOrCreate(
+            ['discente_programa_vinculo_id' => $juliana->id, 'agencia' => 'capes'],
+            ['modalidade' => 'mestrado', 'numero_processo' => '88887.000000/2025-00', 'inicio_em' => now()->subMonths(11)->toDateString(), 'fim_em' => now()->addMonths(13)->toDateString()],
         );
     }
 
