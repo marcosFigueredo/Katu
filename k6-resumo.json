@@ -1,0 +1,41 @@
+{
+  "rotas": [
+    {
+      "min_ms": 2429,
+      "p95_ms": 21329,
+      "rota": "Login",
+      "max_ms": 21749,
+      "p50_ms": 7639,
+      "avg_ms": 11174
+    },
+    {
+      "min_ms": 1123,
+      "p95_ms": 17862,
+      "rota": "Baremas",
+      "max_ms": 20227,
+      "p50_ms": 6287,
+      "avg_ms": 7267
+    },
+    {
+      "min_ms": 1406,
+      "p95_ms": 21249,
+      "rota": "Bancas",
+      "max_ms": 21570,
+      "p50_ms": 7200,
+      "avg_ms": 8352
+    },
+    {
+      "min_ms": 1394,
+      "p95_ms": 21623,
+      "rota": "MABAC",
+      "max_ms": 22213,
+      "p50_ms": 8592,
+      "avg_ms": 10859
+    }
+  ],
+  "taxa_falha_pct": 0,
+  "observacao": "Servidor de desenvolvimento single-thread (php artisan serve). Em produção com Nginx+PHP-FPM os tempos seriam ~10-20x menores.",
+  "checks_ok_pct": 100,
+  "cenario": "ramp 0→5→20→50→0 VUs em 160s",
+  "total_reqs": 408
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Dashboard for C:\projetos\defesa-ppgmsb\app\Services</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="../_css/bootstrap.min.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="../_css/nv.d3.min.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="../_css/style.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="../_css/custom.css" rel="stylesheet" type="text/css">
+ </head>
+ <body>
+  <header>
+   <div class="container-fluid">
+    <div class="row">
+     <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+       <ol class="breadcrumb">
+         <li class="breadcrumb-item"><a href="../index.html">C:\projetos\defesa-ppgmsb\app</a></li>
+         <li class="breadcrumb-item"><a href="index.html">Services</a></li>
+         <li class="breadcrumb-item active">(Dashboard)</li>
+
+       </ol>
+      </nav>
+     </div>
+    </div>
+   </div>
+  </header>
+  <div class="container-fluid">
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Classes</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="classCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="classComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#8">App\Services\ArquivoTrabalhoService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AutoavaliacaoIndicadorService.php.html#13">App\Services\AutoavaliacaoIndicadorService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#16">App\Services\BancaIndicadorService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#11">App\Services\BibliometriaService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#17">App\Services\DocumentoAnaliseService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="IeoService.php.html#12">App\Services\IeoService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#11">App\Services\OllamaResumoService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#12">App\Services\OrcidService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwaraService.php.html#12">App\Services\SwaraService</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="MabacService.php.html#13">App\Services\MabacService</a></td><td class="text-right">60%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="DocumentoAnaliseService.php.html#17">App\Services\DocumentoAnaliseService</a></td><td class="text-right">18632</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#16">App\Services\BancaIndicadorService</a></td><td class="text-right">992</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#11">App\Services\OllamaResumoService</a></td><td class="text-right">870</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#11">App\Services\BibliometriaService</a></td><td class="text-right">506</td></tr>
+       <tr><td><a href="OrcidService.php.html#12">App\Services\OrcidService</a></td><td class="text-right">306</td></tr>
+       <tr><td><a href="AutoavaliacaoIndicadorService.php.html#13">App\Services\AutoavaliacaoIndicadorService</a></td><td class="text-right">240</td></tr>
+       <tr><td><a href="IeoService.php.html#12">App\Services\IeoService</a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="SwaraService.php.html#12">App\Services\SwaraService</a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="MabacService.php.html#13">App\Services\MabacService</a></td><td class="text-right">48</td></tr>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#8">App\Services\ArquivoTrabalhoService</a></td><td class="text-right">42</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Methods</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="methodCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="methodComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#10"><abbr title="App\Services\ArquivoTrabalhoService::gerarNomePdf">gerarNomePdf</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#25"><abbr title="App\Services\ArquivoTrabalhoService::gerarPathPdf">gerarPathPdf</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#30"><abbr title="App\Services\ArquivoTrabalhoService::extrairUltimoNome">extrairUltimoNome</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AutoavaliacaoIndicadorService.php.html#15"><abbr title="App\Services\AutoavaliacaoIndicadorService::calcular">calcular</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="AutoavaliacaoIndicadorService.php.html#127"><abbr title="App\Services\AutoavaliacaoIndicadorService::upsert">upsert</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#18"><abbr title="App\Services\BancaIndicadorService::calcular">calcular</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#57"><abbr title="App\Services\BancaIndicadorService::calcularB1">calcularB1</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#76"><abbr title="App\Services\BancaIndicadorService::calcularB2">calcularB2</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#81"><abbr title="App\Services\BancaIndicadorService::calcularB3">calcularB3</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#90"><abbr title="App\Services\BancaIndicadorService::calcularB5">calcularB5</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#99"><abbr title="App\Services\BancaIndicadorService::calcularB6">calcularB6</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#126"><abbr title="App\Services\BancaIndicadorService::calcularB7">calcularB7</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#139"><abbr title="App\Services\BancaIndicadorService::calcularAdherenciaOllama">calcularAdherenciaOllama</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#178"><abbr title="App\Services\BancaIndicadorService::consultarOllama">consultarOllama</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#208"><abbr title="App\Services\BancaIndicadorService::ehExternoUneb">ehExternoUneb</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#215"><abbr title="App\Services\BancaIndicadorService::descreverTema">descreverTema</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#18"><abbr title="App\Services\BibliometriaService::sincronizar">sincronizar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#89"><abbr title="App\Services\BibliometriaService::buscarPublicacoesOpenAlex">buscarPublicacoesOpenAlex</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#124"><abbr title="App\Services\BibliometriaService::buscarCitacoesCrossref">buscarCitacoesCrossref</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#141"><abbr title="App\Services\BibliometriaService::extrairOrcidId">extrairOrcidId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#20"><abbr title="App\Services\DocumentoAnaliseService::analisar">analisar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#246"><abbr title="App\Services\DocumentoAnaliseService::localizarChecklist">localizarChecklist</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#264"><abbr title="App\Services\DocumentoAnaliseService::extrairTextosPorPagina">extrairTextosPorPagina</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#273"><abbr title="App\Services\DocumentoAnaliseService::analisarItensChecklist">analisarItensChecklist</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#306"><abbr title="App\Services\DocumentoAnaliseService::verificarItem">verificarItem</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#341"><abbr title="App\Services\DocumentoAnaliseService::buscarTermosNoDocumento">buscarTermosNoDocumento</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#371"><abbr title="App\Services\DocumentoAnaliseService::buscarOcorrenciaSimples">buscarOcorrenciaSimples</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#388"><abbr title="App\Services\DocumentoAnaliseService::buscarRotuloComConteudo">buscarRotuloComConteudo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#427"><abbr title="App\Services\DocumentoAnaliseService::detectarRangeDoSumario">detectarRangeDoSumario</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#454"><abbr title="App\Services\DocumentoAnaliseService::buscarTituloComConteudo">buscarTituloComConteudo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#496"><abbr title="App\Services\DocumentoAnaliseService::buscarNasUltimasPaginas">buscarNasUltimasPaginas</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#520"><abbr title="App\Services\DocumentoAnaliseService::linhaPareceTitulo">linhaPareceTitulo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#538"><abbr title="App\Services\DocumentoAnaliseService::paginaEhSumario">paginaEhSumario</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#543"><abbr title="App\Services\DocumentoAnaliseService::textoDepoisDoTermo">textoDepoisDoTermo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#554"><abbr title="App\Services\DocumentoAnaliseService::temConteudoMinimo">temConteudoMinimo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#568"><abbr title="App\Services\DocumentoAnaliseService::extrairTrechoEvidencia">extrairTrechoEvidencia</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#583"><abbr title="App\Services\DocumentoAnaliseService::extrairDadosDaCapa">extrairDadosDaCapa</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#622"><abbr title="App\Services\DocumentoAnaliseService::extrairTituloESubtitulo">extrairTituloESubtitulo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#700"><abbr title="App\Services\DocumentoAnaliseService::orientadorExisteNoBanco">orientadorExisteNoBanco</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#716"><abbr title="App\Services\DocumentoAnaliseService::registrarItem">registrarItem</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#742"><abbr title="App\Services\DocumentoAnaliseService::consolidarAnalise">consolidarAnalise</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#783"><abbr title="App\Services\DocumentoAnaliseService::registrarFalha">registrarFalha</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#798"><abbr title="App\Services\DocumentoAnaliseService::textoContem">textoContem</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#811"><abbr title="App\Services\DocumentoAnaliseService::normalizarBusca">normalizarBusca</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="IeoService.php.html#22"><abbr title="App\Services\IeoService::calcularItem11Objetivo">calcularItem11Objetivo</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="IeoService.php.html#47"><abbr title="App\Services\IeoService::calcular">calcular</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="IeoService.php.html#74"><abbr title="App\Services\IeoService::mediaSegura">mediaSegura</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="MabacService.php.html#89"><abbr title="App\Services\MabacService::montarMatriz">montarMatriz</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#17"><abbr title="App\Services\OllamaResumoService::analisar">analisar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#71"><abbr title="App\Services\OllamaResumoService::extrairSecao">extrairSecao</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#101"><abbr title="App\Services\OllamaResumoService::extrairPalavrasChave">extrairPalavrasChave</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#161"><abbr title="App\Services\OllamaResumoService::construirPrompt">construirPrompt</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#215"><abbr title="App\Services\OllamaResumoService::chamarOllama">chamarOllama</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#240"><abbr title="App\Services\OllamaResumoService::extrairJson">extrairJson</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#264"><abbr title="App\Services\OllamaResumoService::normalizar">normalizar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#20"><abbr title="App\Services\OrcidService::extrairId">extrairId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#25"><abbr title="App\Services\OrcidService::sincronizar">sincronizar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#95"><abbr title="App\Services\OrcidService::consultarOpenAlex">consultarOpenAlex</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#120"><abbr title="App\Services\OrcidService::consultarPerfil">consultarPerfil</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="OrcidService.php.html#133"><abbr title="App\Services\OrcidService::extrairObras">extrairObras</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwaraService.php.html#24"><abbr title="App\Services\SwaraService::criarSessao">criarSessao</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwaraService.php.html#67"><abbr title="App\Services\SwaraService::calcular">calcular</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="SwaraService.php.html#102"><abbr title="App\Services\SwaraService::aplicar">aplicar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="MabacService.php.html#18"><abbr title="App\Services\MabacService::analisar">analisar</abbr></a></td><td class="text-right">15%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="DocumentoAnaliseService.php.html#20"><abbr title="App\Services\DocumentoAnaliseService::analisar">analisar</abbr></a></td><td class="text-right">1560</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#622"><abbr title="App\Services\DocumentoAnaliseService::extrairTituloESubtitulo">extrairTituloESubtitulo</abbr></a></td><td class="text-right">272</td></tr>
+       <tr><td><a href="AutoavaliacaoIndicadorService.php.html#15"><abbr title="App\Services\AutoavaliacaoIndicadorService::calcular">calcular</abbr></a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#18"><abbr title="App\Services\BibliometriaService::sincronizar">sincronizar</abbr></a></td><td class="text-right">210</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#454"><abbr title="App\Services\DocumentoAnaliseService::buscarTituloComConteudo">buscarTituloComConteudo</abbr></a></td><td class="text-right">132</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#583"><abbr title="App\Services\DocumentoAnaliseService::extrairDadosDaCapa">extrairDadosDaCapa</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#742"><abbr title="App\Services\DocumentoAnaliseService::consolidarAnalise">consolidarAnalise</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#71"><abbr title="App\Services\OllamaResumoService::extrairSecao">extrairSecao</abbr></a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#388"><abbr title="App\Services\DocumentoAnaliseService::buscarRotuloComConteudo">buscarRotuloComConteudo</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#427"><abbr title="App\Services\DocumentoAnaliseService::detectarRangeDoSumario">detectarRangeDoSumario</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="OrcidService.php.html#133"><abbr title="App\Services\OrcidService::extrairObras">extrairObras</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="IeoService.php.html#22"><abbr title="App\Services\IeoService::calcularItem11Objetivo">calcularItem11Objetivo</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#101"><abbr title="App\Services\OllamaResumoService::extrairPalavrasChave">extrairPalavrasChave</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#99"><abbr title="App\Services\BancaIndicadorService::calcularB6">calcularB6</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#178"><abbr title="App\Services\BancaIndicadorService::consultarOllama">consultarOllama</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#341"><abbr title="App\Services\DocumentoAnaliseService::buscarTermosNoDocumento">buscarTermosNoDocumento</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="MabacService.php.html#89"><abbr title="App\Services\MabacService::montarMatriz">montarMatriz</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#17"><abbr title="App\Services\OllamaResumoService::analisar">analisar</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="SwaraService.php.html#67"><abbr title="App\Services\SwaraService::calcular">calcular</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="MabacService.php.html#18"><abbr title="App\Services\MabacService::analisar">analisar</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="ArquivoTrabalhoService.php.html#30"><abbr title="App\Services\ArquivoTrabalhoService::extrairUltimoNome">extrairUltimoNome</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#57"><abbr title="App\Services\BancaIndicadorService::calcularB1">calcularB1</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#139"><abbr title="App\Services\BancaIndicadorService::calcularAdherenciaOllama">calcularAdherenciaOllama</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#215"><abbr title="App\Services\BancaIndicadorService::descreverTema">descreverTema</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#89"><abbr title="App\Services\BibliometriaService::buscarPublicacoesOpenAlex">buscarPublicacoesOpenAlex</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#371"><abbr title="App\Services\DocumentoAnaliseService::buscarOcorrenciaSimples">buscarOcorrenciaSimples</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#496"><abbr title="App\Services\DocumentoAnaliseService::buscarNasUltimasPaginas">buscarNasUltimasPaginas</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#520"><abbr title="App\Services\DocumentoAnaliseService::linhaPareceTitulo">linhaPareceTitulo</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#240"><abbr title="App\Services\OllamaResumoService::extrairJson">extrairJson</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="OrcidService.php.html#25"><abbr title="App\Services\OrcidService::sincronizar">sincronizar</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="BibliometriaService.php.html#124"><abbr title="App\Services\BibliometriaService::buscarCitacoesCrossref">buscarCitacoesCrossref</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#306"><abbr title="App\Services\DocumentoAnaliseService::verificarItem">verificarItem</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#798"><abbr title="App\Services\DocumentoAnaliseService::textoContem">textoContem</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#215"><abbr title="App\Services\OllamaResumoService::chamarOllama">chamarOllama</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="OrcidService.php.html#95"><abbr title="App\Services\OrcidService::consultarOpenAlex">consultarOpenAlex</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="SwaraService.php.html#24"><abbr title="App\Services\SwaraService::criarSessao">criarSessao</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#18"><abbr title="App\Services\BancaIndicadorService::calcular">calcular</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#126"><abbr title="App\Services\BancaIndicadorService::calcularB7">calcularB7</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="BancaIndicadorService.php.html#208"><abbr title="App\Services\BancaIndicadorService::ehExternoUneb">ehExternoUneb</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#264"><abbr title="App\Services\DocumentoAnaliseService::extrairTextosPorPagina">extrairTextosPorPagina</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#273"><abbr title="App\Services\DocumentoAnaliseService::analisarItensChecklist">analisarItensChecklist</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#543"><abbr title="App\Services\DocumentoAnaliseService::textoDepoisDoTermo">textoDepoisDoTermo</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#554"><abbr title="App\Services\DocumentoAnaliseService::temConteudoMinimo">temConteudoMinimo</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#568"><abbr title="App\Services\DocumentoAnaliseService::extrairTrechoEvidencia">extrairTrechoEvidencia</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="DocumentoAnaliseService.php.html#700"><abbr title="App\Services\DocumentoAnaliseService::orientadorExisteNoBanco">orientadorExisteNoBanco</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="IeoService.php.html#47"><abbr title="App\Services\IeoService::calcular">calcular</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="IeoService.php.html#74"><abbr title="App\Services\IeoService::mediaSegura">mediaSegura</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="OllamaResumoService.php.html#161"><abbr title="App\Services\OllamaResumoService::construirPrompt">construirPrompt</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="OrcidService.php.html#120"><abbr title="App\Services\OrcidService::consultarPerfil">consultarPerfil</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="SwaraService.php.html#102"><abbr title="App\Services\SwaraService::aplicar">aplicar</abbr></a></td><td class="text-right">6</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <footer>
+    <hr/>
+    <p>
+     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 11.0.12</a> using <a href="https://www.php.net/" target="_top">PHP 8.2.12</a> and <a href="https://phpunit.de/">PHPUnit 11.5.55</a> at Sun Jun 28 22:09:59 UTC 2026.</small>
+    </p>
+   </footer>
+  </div>
+  <script src="../_js/jquery.min.js?v=11.0.12" type="text/javascript"></script>
+  <script src="../_js/d3.min.js?v=11.0.12" type="text/javascript"></script>
+  <script src="../_js/nv.d3.min.js?v=11.0.12" type="text/javascript"></script>
+  <script type="text/javascript">
+$(document).ready(function() {
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#classCoverageDistribution svg')
+      .datum(getCoverageDistributionData([9,0,0,0,0,0,0,1,0,0,0,0], "Class Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#methodCoverageDistribution svg')
+      .datum(getCoverageDistributionData([63,0,1,0,0,0,0,0,0,0,1,1], "Method Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getCoverageDistributionData(data, label) {
+    var labels = [
+      '0%',
+      '0-10%',
+      '10-20%',
+      '20-30%',
+      '30-40%',
+      '40-50%',
+      '50-60%',
+      '60-70%',
+      '70-80%',
+      '80-90%',
+      '90-100%',
+      '100%'
+    ];
+    var values = [];
+    $.each(labels, function(key) {
+      values.push({x: labels[key], y: data[key]});
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Cyclomatic Complexity');
+
+    d3.select('#classComplexity svg')
+      .datum(getComplexityData([[0,6,"<a href=\"ArquivoTrabalhoService.php.html#8\">App\\Services\\ArquivoTrabalhoService<\/a>"],[0,15,"<a href=\"AutoavaliacaoIndicadorService.php.html#13\">App\\Services\\AutoavaliacaoIndicadorService<\/a>"],[0,31,"<a href=\"BancaIndicadorService.php.html#16\">App\\Services\\BancaIndicadorService<\/a>"],[0,22,"<a href=\"BibliometriaService.php.html#11\">App\\Services\\BibliometriaService<\/a>"],[0,136,"<a href=\"DocumentoAnaliseService.php.html#17\">App\\Services\\DocumentoAnaliseService<\/a>"],[0,10,"<a href=\"IeoService.php.html#12\">App\\Services\\IeoService<\/a>"],[60.43956043956044,21,"<a href=\"MabacService.php.html#13\">App\\Services\\MabacService<\/a>"],[0,29,"<a href=\"OllamaResumoService.php.html#11\">App\\Services\\OllamaResumoService<\/a>"],[0,17,"<a href=\"OrcidService.php.html#12\">App\\Services\\OrcidService<\/a>"],[0,10,"<a href=\"SwaraService.php.html#12\">App\\Services\\SwaraService<\/a>"]], 'Class Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Method Complexity');
+
+    d3.select('#methodComplexity svg')
+      .datum(getComplexityData([[0,1,"<a href=\"ArquivoTrabalhoService.php.html#10\">App\\Services\\ArquivoTrabalhoService::gerarNomePdf<\/a>"],[0,1,"<a href=\"ArquivoTrabalhoService.php.html#25\">App\\Services\\ArquivoTrabalhoService::gerarPathPdf<\/a>"],[0,4,"<a href=\"ArquivoTrabalhoService.php.html#30\">App\\Services\\ArquivoTrabalhoService::extrairUltimoNome<\/a>"],[0,14,"<a href=\"AutoavaliacaoIndicadorService.php.html#15\">App\\Services\\AutoavaliacaoIndicadorService::calcular<\/a>"],[0,1,"<a href=\"AutoavaliacaoIndicadorService.php.html#127\">App\\Services\\AutoavaliacaoIndicadorService::upsert<\/a>"],[0,2,"<a href=\"BancaIndicadorService.php.html#18\">App\\Services\\BancaIndicadorService::calcular<\/a>"],[0,4,"<a href=\"BancaIndicadorService.php.html#57\">App\\Services\\BancaIndicadorService::calcularB1<\/a>"],[0,1,"<a href=\"BancaIndicadorService.php.html#76\">App\\Services\\BancaIndicadorService::calcularB2<\/a>"],[0,1,"<a href=\"BancaIndicadorService.php.html#81\">App\\Services\\BancaIndicadorService::calcularB3<\/a>"],[0,1,"<a href=\"BancaIndicadorService.php.html#90\">App\\Services\\BancaIndicadorService::calcularB5<\/a>"],[0,5,"<a href=\"BancaIndicadorService.php.html#99\">App\\Services\\BancaIndicadorService::calcularB6<\/a>"],[0,2,"<a href=\"BancaIndicadorService.php.html#126\">App\\Services\\BancaIndicadorService::calcularB7<\/a>"],[0,4,"<a href=\"BancaIndicadorService.php.html#139\">App\\Services\\BancaIndicadorService::calcularAdherenciaOllama<\/a>"],[0,5,"<a href=\"BancaIndicadorService.php.html#178\">App\\Services\\BancaIndicadorService::consultarOllama<\/a>"],[0,2,"<a href=\"BancaIndicadorService.php.html#208\">App\\Services\\BancaIndicadorService::ehExternoUneb<\/a>"],[0,4,"<a href=\"BancaIndicadorService.php.html#215\">App\\Services\\BancaIndicadorService::descreverTema<\/a>"],[0,14,"<a href=\"BibliometriaService.php.html#18\">App\\Services\\BibliometriaService::sincronizar<\/a>"],[0,4,"<a href=\"BibliometriaService.php.html#89\">App\\Services\\BibliometriaService::buscarPublicacoesOpenAlex<\/a>"],[0,3,"<a href=\"BibliometriaService.php.html#124\">App\\Services\\BibliometriaService::buscarCitacoesCrossref<\/a>"],[0,1,"<a href=\"BibliometriaService.php.html#141\">App\\Services\\BibliometriaService::extrairOrcidId<\/a>"],[0,39,"<a href=\"DocumentoAnaliseService.php.html#20\">App\\Services\\DocumentoAnaliseService::analisar<\/a>"],[0,1,"<a href=\"DocumentoAnaliseService.php.html#246\">App\\Services\\DocumentoAnaliseService::localizarChecklist<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#264\">App\\Services\\DocumentoAnaliseService::extrairTextosPorPagina<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#273\">App\\Services\\DocumentoAnaliseService::analisarItensChecklist<\/a>"],[0,3,"<a href=\"DocumentoAnaliseService.php.html#306\">App\\Services\\DocumentoAnaliseService::verificarItem<\/a>"],[0,5,"<a href=\"DocumentoAnaliseService.php.html#341\">App\\Services\\DocumentoAnaliseService::buscarTermosNoDocumento<\/a>"],[0,4,"<a href=\"DocumentoAnaliseService.php.html#371\">App\\Services\\DocumentoAnaliseService::buscarOcorrenciaSimples<\/a>"],[0,7,"<a href=\"DocumentoAnaliseService.php.html#388\">App\\Services\\DocumentoAnaliseService::buscarRotuloComConteudo<\/a>"],[0,7,"<a href=\"DocumentoAnaliseService.php.html#427\">App\\Services\\DocumentoAnaliseService::detectarRangeDoSumario<\/a>"],[0,11,"<a href=\"DocumentoAnaliseService.php.html#454\">App\\Services\\DocumentoAnaliseService::buscarTituloComConteudo<\/a>"],[0,4,"<a href=\"DocumentoAnaliseService.php.html#496\">App\\Services\\DocumentoAnaliseService::buscarNasUltimasPaginas<\/a>"],[0,4,"<a href=\"DocumentoAnaliseService.php.html#520\">App\\Services\\DocumentoAnaliseService::linhaPareceTitulo<\/a>"],[0,1,"<a href=\"DocumentoAnaliseService.php.html#538\">App\\Services\\DocumentoAnaliseService::paginaEhSumario<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#543\">App\\Services\\DocumentoAnaliseService::textoDepoisDoTermo<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#554\">App\\Services\\DocumentoAnaliseService::temConteudoMinimo<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#568\">App\\Services\\DocumentoAnaliseService::extrairTrechoEvidencia<\/a>"],[0,8,"<a href=\"DocumentoAnaliseService.php.html#583\">App\\Services\\DocumentoAnaliseService::extrairDadosDaCapa<\/a>"],[0,16,"<a href=\"DocumentoAnaliseService.php.html#622\">App\\Services\\DocumentoAnaliseService::extrairTituloESubtitulo<\/a>"],[0,2,"<a href=\"DocumentoAnaliseService.php.html#700\">App\\Services\\DocumentoAnaliseService::orientadorExisteNoBanco<\/a>"],[0,1,"<a href=\"DocumentoAnaliseService.php.html#716\">App\\Services\\DocumentoAnaliseService::registrarItem<\/a>"],[0,8,"<a href=\"DocumentoAnaliseService.php.html#742\">App\\Services\\DocumentoAnaliseService::consolidarAnalise<\/a>"],[0,1,"<a href=\"DocumentoAnaliseService.php.html#783\">App\\Services\\DocumentoAnaliseService::registrarFalha<\/a>"],[0,3,"<a href=\"DocumentoAnaliseService.php.html#798\">App\\Services\\DocumentoAnaliseService::textoContem<\/a>"],[0,1,"<a href=\"DocumentoAnaliseService.php.html#811\">App\\Services\\DocumentoAnaliseService::normalizarBusca<\/a>"],[0,6,"<a href=\"IeoService.php.html#22\">App\\Services\\IeoService::calcularItem11Objetivo<\/a>"],[0,2,"<a href=\"IeoService.php.html#47\">App\\Services\\IeoService::calcular<\/a>"],[0,2,"<a href=\"IeoService.php.html#74\">App\\Services\\IeoService::mediaSegura<\/a>"],[15.384615384615385,5,"<a href=\"MabacService.php.html#18\">App\\Services\\MabacService::analisar<\/a>"],[92.85714285714286,3,"<a href=\"MabacService.php.html#64\">App\\Services\\MabacService::coletarBancas<\/a>"],[0,5,"<a href=\"MabacService.php.html#89\">App\\Services\\MabacService::montarMatriz<\/a>"],[100,8,"<a href=\"MabacService.php.html#118\">App\\Services\\MabacService::calcularMabac<\/a>"],[0,5,"<a href=\"OllamaResumoService.php.html#17\">App\\Services\\OllamaResumoService::analisar<\/a>"],[0,8,"<a href=\"OllamaResumoService.php.html#71\">App\\Services\\OllamaResumoService::extrairSecao<\/a>"],[0,6,"<a href=\"OllamaResumoService.php.html#101\">App\\Services\\OllamaResumoService::extrairPalavrasChave<\/a>"],[0,2,"<a href=\"OllamaResumoService.php.html#161\">App\\Services\\OllamaResumoService::construirPrompt<\/a>"],[0,3,"<a href=\"OllamaResumoService.php.html#215\">App\\Services\\OllamaResumoService::chamarOllama<\/a>"],[0,4,"<a href=\"OllamaResumoService.php.html#240\">App\\Services\\OllamaResumoService::extrairJson<\/a>"],[0,1,"<a href=\"OllamaResumoService.php.html#264\">App\\Services\\OllamaResumoService::normalizar<\/a>"],[0,1,"<a href=\"OrcidService.php.html#20\">App\\Services\\OrcidService::extrairId<\/a>"],[0,4,"<a href=\"OrcidService.php.html#25\">App\\Services\\OrcidService::sincronizar<\/a>"],[0,3,"<a href=\"OrcidService.php.html#95\">App\\Services\\OrcidService::consultarOpenAlex<\/a>"],[0,2,"<a href=\"OrcidService.php.html#120\">App\\Services\\OrcidService::consultarPerfil<\/a>"],[0,7,"<a href=\"OrcidService.php.html#133\">App\\Services\\OrcidService::extrairObras<\/a>"],[0,3,"<a href=\"SwaraService.php.html#24\">App\\Services\\SwaraService::criarSessao<\/a>"],[0,5,"<a href=\"SwaraService.php.html#67\">App\\Services\\SwaraService::calcular<\/a>"],[0,2,"<a href=\"SwaraService.php.html#102\">App\\Services\\SwaraService::aplicar<\/a>"]], 'Method Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getComplexityData(data, label) {
+    var values = [];
+    $.each(data, function(key) {
+      var value = Math.round(data[key][0]*100) / 100;
+      values.push({
+        x: value,
+        y: data[key][1],
+        class: data[key][2],
+        size: 0.05,
+        shape: 'diamond'
+      });
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+});
+  </script>
+ </body>
+</html>

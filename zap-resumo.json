@@ -1,0 +1,28 @@
+{
+  "data_scan": "2026-06-28",
+  "alvo": "http://localhost:8000",
+  "urls_escaneadas": 12,
+  "resultado": {
+    "warn": 9,
+    "info": 4,
+    "pass": 57,
+    "fail": 0
+  },
+  "alertas_medio": [
+    "Content Security Policy (CSP) Header Not Set",
+    "Missing Anti-clickjacking Header",
+    "Sub Resource Integrity Attribute Missing"
+  ],
+  "alertas_baixo": [
+    "Big Redirect Detected",
+    "Cookie No HttpOnly Flag",
+    "Cross-Origin-Embedder-Policy Header Missing",
+    "Cross-Origin-Opener-Policy Header Missing",
+    "Cross-Origin-Resource-Policy Header Missing",
+    "Permissions Policy Header Not Set",
+    "Server Leaks Information via X-Powered-By",
+    "X-Content-Type-Options Header Missing"
+  ],
+  "vulnerabilidades_criticas": 0,
+  "observacao": "Todos os alertas são de headers HTTP ausentes — configuráveis no servidor web (Nginx/Apache) antes da produção. Nenhuma vulnerabilidade de injeção, XSS ou autenticação detectada."
+}

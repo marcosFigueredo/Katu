@@ -31,3 +31,32 @@ paper-rbpg-estrutura.md
 
 # Artefatos temporários dos planos de execução
 .superpowers/
+
+# Executável do k6 (baixar em https://k6.io)
+k6.exe
+
+# Arquivos temporários de compilação LaTeX
+dissertacao/*.aux
+dissertacao/**/*.aux
+dissertacao/*.log
+dissertacao/*.out
+dissertacao/*.toc
+dissertacao/*.lof
+dissertacao/*.lot
+dissertacao/*.loa
+dissertacao/*.bbl
+dissertacao/*.blg
+dissertacao/*.fdb_latexmk
+dissertacao/*.fls
+dissertacao/*.synctex.gz
+dissertacao/*.glg
+dissertacao/*.glo
+dissertacao/*.gls
+dissertacao/*.ist
+dissertacao/*.acn
+dissertacao/*.acr
+dissertacao/*.alg
+dissertacao/*.slg
+dissertacao/*.sls
+dissertacao/*.slo
+dissertacao/*.xdy

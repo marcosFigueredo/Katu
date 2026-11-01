@@ -1,0 +1,95 @@
+%% brazilian.apc - Brazilian Portuguese language terms for apacite
+\ProvidesFile{brazilian.apc}
+  [2026/06/25 v1.0 Brazilian Portuguese apacite language file for classPPGMSB]
+\edef\APACrestoreAtCode{%
+  \catcode`@=\the\catcode`@\relax
+}%
+\makeatletter
+\renewcommand{\onemaskedcitationmsg}[1]{\emph{(#1\ citação removida para avaliação cega)}}%
+\renewcommand{\maskedcitationsmsg}[1]{\emph{(#1\ citações removidas para avaliação cega)}}%
+\renewcommand{\refname}{Referências}%
+\renewcommand{\bibname}{Referências}%
+\renewcommand{\authorindexname}{Índice de Autores}%
+\renewcommand{\APACmetaprenote}{Referências marcadas com asterisco indicam estudos incluídos na meta-análise.}%
+\renewcommand{\bibmessage}{Mensagem}%
+\renewcommand{\bibcomputerprogram}{Programa de computador}%
+\renewcommand{\bibcomputerprogrammanual}{Manual de programa de computador}%
+\renewcommand{\bibcomputerprogramandmanual}{Programa de computador e manual}%
+\renewcommand{\bibcomputersoftware}{Software}%
+\renewcommand{\bibcomputersoftwaremanual}{Manual de software}%
+\renewcommand{\bibcomputersoftwareandmanual}{Software e manual}%
+\renewcommand{\bibprogramminglanguage}{Linguagem de programação}%
+\renewcommand{\bibnodate}{s.d.\hbox{}}%
+\renewcommand{\BIP}{no prelo}%
+\renewcommand{\BOthers}[1]{et al.\hbox{}}%
+\renewcommand{\BOthersPeriod}[1]{et al.\hbox{}}%
+\renewcommand{\BIn}{Em}%
+\renewcommand{\Bby}{por}%
+\renewcommand{\BED}{Ed.\hbox{}}%
+\renewcommand{\BEDS}{Eds.\hbox{}}%
+\renewcommand{\BTRANS}{Trad.\hbox{}}%
+\renewcommand{\BTRANSS}{Trads.\hbox{}}%
+\renewcommand{\BTRANSL}{trad.\hbox{}}%
+\renewcommand{\BCHAIR}{Coord.}%
+\renewcommand{\BCHAIRS}{Coords.}%
+\renewcommand{\BVOL}{v.\hbox{}}%
+\renewcommand{\BVOLS}{v.\hbox{}}%
+\renewcommand{\BNUM}{n.\hbox{}}%
+\renewcommand{\BNUMS}{n.\hbox{}}%
+\renewcommand{\BEd}{ed.\hbox{}}%
+\renewcommand{\BCHAP}{cap.\hbox{}}%
+\renewcommand{\BCHAPS}{caps.\hbox{}}%
+\renewcommand{\BPG}{p.\hbox{}}%
+\renewcommand{\BPGS}{pp.\hbox{}}%
+\renewcommand{\BTR}{Rel.\ téc.\hbox{}}%
+\renewcommand{\BPhD}{Tese de doutorado}%
+\renewcommand{\BUPhD}{Tese de doutorado não publicada}%
+\renewcommand{\BMTh}{Dissertação de mestrado}%
+\renewcommand{\BUMTh}{Dissertação de mestrado não publicada}%
+\renewcommand{\BAuthor}{Autor}%
+\renewcommand{\BOWP}{Trabalho original publicado}%
+\renewcommand{\BREPR}{Reimpresso de}%
+\renewcommand{\BAvailFrom}{Disponível em\ }%
+\renewcommand{\BRetrieved}[1]{Recuperado em {#1}, de\ }%
+\renewcommand{\BRetrievedFrom}{Recuperado de\ }%
+\renewcommand{\BMsgPostedTo}{Mensagem publicada em\ }%
+\renewcommand{\BBOP}{(}%
+\renewcommand{\BBCP}{)}%
+\renewcommand{\BBOQ}{}%
+\renewcommand{\BBCQ}{}%
+\renewcommand{\BBAA}{\&}%
+\renewcommand{\BBAB}{e}%
+\renewcommand{\BAnd}{\&}%
+\DeclareRobustCommand{\BPBI}{.~}%
+\DeclareRobustCommand{\BHBI}{.-}%
+\renewcommand{\BAP}{ }%
+\renewcommand{\BBAY}{, }%
+\renewcommand{\BBYY}{, }%
+\renewcommand{\BBC}{; }%
+\renewcommand{\BBN}{, }%
+\renewcommand{\BCBT}{,}%
+\renewcommand{\BCBL}{,}%
+\if@APAC@natbib@apa
+  \renewcommand{\BBAY}{,}%
+  \renewcommand{\BBYY}{,}%
+  \renewcommand{\BBC}{;}%
+\fi
+\renewcommand{\APACmonth}[1]{\ifcase #1\or janeiro\or fevereiro\or março\or abril\or maio\or junho\or julho\or agosto\or setembro\or outubro\or novembro\or dezembro\else {#1}\fi}%
+\renewcommand{\APACrefYearMonthDay}[3]{%
+  {\BBOP}{#1}%
+  \ifx\@empty#2\@empty
+    \ifx\@empty#3\@empty
+    \else
+      \unskip, {#3}%
+    \fi
+  \else
+    \unskip, {#2}%
+    \ifx\@empty#3\@empty
+    \else
+      \unskip~{#3}%
+    \fi
+  \fi
+  {\BBCP}%
+}%
+\APACrestoreAtCode
+\endinput

@@ -1,0 +1,44 @@
+[
+  {
+    "pagina": "login",
+    "performance": 89,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  },
+  {
+    "pagina": "recuperar-senha",
+    "performance": 100,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  },
+  {
+    "pagina": "baremas",
+    "performance": 98,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  },
+  {
+    "pagina": "bancas",
+    "performance": 97,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  },
+  {
+    "pagina": "mabac",
+    "performance": 98,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  },
+  {
+    "pagina": "avaliacoes",
+    "performance": 98,
+    "acessibilidade": 100,
+    "boasPraticas": 100,
+    "seo": 91
+  }
+]

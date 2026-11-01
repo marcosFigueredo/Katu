@@ -1,0 +1,43 @@
+{
+  "_instrucoes": {
+    "descricao": "Template de coleta SUS — substitua pelos dados reais dos participantes",
+    "formula_score": "Ímpares (Q1,Q3,Q5,Q7,Q9): contribuicao = resposta - 1 | Pares (Q2,Q4,Q6,Q8,Q10): contribuicao = 5 - resposta | Score = soma_contribuicoes * 2.5",
+    "interpretacao": {
+      "abaixo_de_50": "Insatisfatório (Grade F)",
+      "50_a_69": "Marginal / OK (Grade D–C)",
+      "70_a_79": "Bom (Grade B)",
+      "80_a_89": "Ótimo (Grade A)",
+      "90_ou_mais": "Excelente (Grade A+)"
+    },
+    "perfis": ["Secretaria", "Docente", "Discente"],
+    "recomendacao_n_minimo": "5 participantes por perfil para validade estatística"
+  },
+  "sistema": "Sistema de Gestão de Bancas PPGMSB/UNEB",
+  "n_total": 0,
+  "participantes": [
+    {
+      "_exemplo": true,
+      "codigo": "P01",
+      "perfil": "Secretaria",
+      "respostas": { "Q1": 5, "Q2": 1, "Q3": 4, "Q4": 2, "Q5": 5, "Q6": 1, "Q7": 4, "Q8": 2, "Q9": 5, "Q10": 1 },
+      "score": 90.0,
+      "classificacao": "Excelente"
+    },
+    {
+      "_exemplo": true,
+      "codigo": "D01",
+      "perfil": "Docente",
+      "respostas": { "Q1": 4, "Q2": 2, "Q3": 4, "Q4": 2, "Q5": 4, "Q6": 1, "Q7": 4, "Q8": 1, "Q9": 4, "Q10": 2 },
+      "score": 80.0,
+      "classificacao": "Ótimo"
+    },
+    {
+      "_exemplo": true,
+      "codigo": "M01",
+      "perfil": "Discente",
+      "respostas": { "Q1": 4, "Q2": 2, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 3 },
+      "score": 67.5,
+      "classificacao": "Marginal"
+    }
+  ]
+}

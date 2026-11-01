@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Calculadora SUS — Sistema PPGMSB</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 14px; color: #222; background: #f0f2f5; min-height: 100vh; }
+  .container { max-width: 900px; margin: auto; padding: 24px 16px; }
+  h1 { font-size: 20px; color: #00303A; margin-bottom: 6px; }
+  p.sub { color: #555; font-size: 13px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px #0002; padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 15px; color: #00303A; margin-bottom: 16px; border-bottom: 2px solid #00303A; padding-bottom: 6px; }
+  .perfil-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 20px; border: 2px solid #00303A; color: #00303A; cursor: pointer; font-size: 13px; font-weight: bold; background: white; transition: all .2s; }
+  .tab.active { background: #00303A; color: white; }
+  .participante { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; align-items: end; }
+  .campo label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; letter-spacing: .5px; }
+  .campo input, .campo select { width: 100%; border: 1px solid #ccc; padding: 8px 10px; font-size: 13px; border-radius: 6px; }
+  .questoes { display: grid; gap: 12px; }
+  .questao-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: #f9fafb; border-radius: 6px; padding: 12px; border: 1px solid #e5e7eb; }
+  .questao-texto { font-size: 13px; line-height: 1.5; }
+  .questao-texto .num { font-weight: bold; color: #00303A; margin-right: 6px; }
+  .questao-texto .tipo { font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
+  .tipo-pos { background: #d1fae5; color: #065f46; }
+  .tipo-neg { background: #fee2e2; color: #991b1b; }
+  .escala-input { display: flex; gap: 4px; }
+  .escala-input label { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: #666; cursor: pointer; }
+  .escala-input input[type=radio] { width: 18px; height: 18px; cursor: pointer; accent-color: #00303A; }
+  .escala-input .valor { font-size: 13px; font-weight: bold; color: #333; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn { padding: 10px 22px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; }
+  .btn-primary { background: #00303A; color: white; }
+  .btn-primary:hover { background: #004d5e; }
+  .btn-outline { background: white; color: #00303A; border: 2px solid #00303A; }
+  .btn-outline:hover { background: #f0f9ff; }
+  .btn-danger { background: #dc2626; color: white; }
+  .resultado-score { font-size: 48px; font-weight: bold; text-align: center; padding: 16px; border-radius: 8px; margin: 12px 0; }
+  .score-aceitavel  { background: #d1fae5; color: #065f46; }
+  .score-bom        { background: #dbeafe; color: #1e40af; }
+  .score-otimo      { background: #e0e7ff; color: #3730a3; }
+  .score-excelente  { background: #fef3c7; color: #92400e; }
+  .score-insatisf   { background: #fee2e2; color: #991b1b; }
+  .detalhe-calc { font-size: 12px; color: #666; margin: 8px 0; background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; }
+  .tabela-resultados { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .tabela-resultados th { background: #00303A; color: white; padding: 8px 12px; text-align: left; font-size: 12px; }
+  .tabela-resultados td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  .tabela-resultados tr:nth-child(even) td { background: #f9fafb; }
+  .badge-score { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+  .legenda { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+  .legenda-item { text-align: center; padding: 6px; border-radius: 6px; font-size: 11px; }
+  .separador { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+  .media-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .media-card { text-align: center; padding: 14px; border-radius: 8px; border: 2px solid #e5e7eb; }
+  .media-card .perfil-nome { font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+  .media-card .score-val { font-size: 28px; font-weight: bold; color: #00303A; }
+  .media-card .n { font-size: 11px; color: #888; }
+  .media-geral { text-align: center; padding: 16px; border-radius: 8px; background: #00303A; color: white; margin-top: 12px; }
+  .media-geral .score-val { font-size: 36px; font-weight: bold; }
+  .exportar { margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Calculadora SUS — Sistema de Gestão de Bancas PPGMSB</h1>
+  <p class="sub">Insira as respostas de cada participante e obtenha o score individual. Ao final, veja a consolidação por perfil.</p>
+
+  <!-- Formulário de entrada -->
+  <div class="card">
+    <h2>Registrar Respostas de um Participante</h2>
+
+    <div class="perfil-tabs">
+      <div class="tab active" onclick="selecionarPerfil('Secretaria', this)">Secretaria</div>
+      <div class="tab" onclick="selecionarPerfil('Docente', this)">Docente / Avaliador</div>
+      <div class="tab" onclick="selecionarPerfil('Discente', this)">Discente / Mestrando</div>
+    </div>
+
+    <div class="participante">
+      <div class="campo">
+        <label>Código do participante</label>
+        <input type="text" id="cod" placeholder="Ex.: P01">
+      </div>
+      <div class="campo">
+        <label>Perfil selecionado</label>
+        <input type="text" id="perfil" value="Secretaria" readonly style="background:#f5f5f5">
+      </div>
+    </div>
+
+    <div class="questoes">
+      <!-- Q1 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">1.</span>Eu acho que gostaria de usar este sistema com frequência.
+          <span class="tipo tipo-pos">positiva</span>
+        </div>
+        <div class="escala-input" id="q1">
+          <label><span class="valor">1</span><input type="radio" name="q1" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q1" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q1" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q1" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q1" value="5"></label>
+        </div>
+      </div>
+      <!-- Q2 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">2.</span>Eu achei o sistema desnecessariamente complexo.
+          <span class="tipo tipo-neg">negativa</span>
+        </div>
+        <div class="escala-input" id="q2">
+          <label><span class="valor">1</span><input type="radio" name="q2" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q2" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q2" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q2" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q2" value="5"></label>
+        </div>
+      </div>
+      <!-- Q3 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">3.</span>Eu achei o sistema fácil de usar.
+          <span class="tipo tipo-pos">positiva</span>
+        </div>
+        <div class="escala-input" id="q3">
+          <label><span class="valor">1</span><input type="radio" name="q3" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q3" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q3" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q3" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q3" value="5"></label>
+        </div>
+      </div>
+      <!-- Q4 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">4.</span>Eu acho que precisaria de ajuda técnica para conseguir usar este sistema.
+          <span class="tipo tipo-neg">negativa</span>
+        </div>
+        <div class="escala-input" id="q4">
+          <label><span class="valor">1</span><input type="radio" name="q4" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q4" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q4" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q4" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q4" value="5"></label>
+        </div>
+      </div>
+      <!-- Q5 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">5.</span>Eu achei que as diferentes funções do sistema estavam bem integradas.
+          <span class="tipo tipo-pos">positiva</span>
+        </div>
+        <div class="escala-input" id="q5">
+          <label><span class="valor">1</span><input type="radio" name="q5" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q5" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q5" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q5" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q5" value="5"></label>
+        </div>
+      </div>
+      <!-- Q6 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">6.</span>Eu achei que havia muita inconsistência neste sistema.
+          <span class="tipo tipo-neg">negativa</span>
+        </div>
+        <div class="escala-input" id="q6">
+          <label><span class="valor">1</span><input type="radio" name="q6" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q6" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q6" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q6" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q6" value="5"></label>
+        </div>
+      </div>
+      <!-- Q7 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">7.</span>Eu imagino que a maioria das pessoas aprenderia a usar este sistema rapidamente.
+          <span class="tipo tipo-pos">positiva</span>
+        </div>
+        <div class="escala-input" id="q7">
+          <label><span class="valor">1</span><input type="radio" name="q7" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q7" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q7" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q7" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q7" value="5"></label>
+        </div>
+      </div>
+      <!-- Q8 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">8.</span>Eu achei o sistema muito confuso e difícil de navegar.
+          <span class="tipo tipo-neg">negativa</span>
+        </div>
+        <div class="escala-input" id="q8">
+          <label><span class="valor">1</span><input type="radio" name="q8" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q8" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q8" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q8" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q8" value="5"></label>
+        </div>
+      </div>
+      <!-- Q9 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">9.</span>Eu me senti confiante ao utilizar este sistema.
+          <span class="tipo tipo-pos">positiva</span>
+        </div>
+        <div class="escala-input" id="q9">
+          <label><span class="valor">1</span><input type="radio" name="q9" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q9" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q9" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q9" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q9" value="5"></label>
+        </div>
+      </div>
+      <!-- Q10 -->
+      <div class="questao-row">
+        <div class="questao-texto">
+          <span class="num">10.</span>Eu precisei aprender muitas coisas antes de conseguir usar este sistema.
+          <span class="tipo tipo-neg">negativa</span>
+        </div>
+        <div class="escala-input" id="q10">
+          <label><span class="valor">1</span><input type="radio" name="q10" value="1"></label>
+          <label><span class="valor">2</span><input type="radio" name="q10" value="2"></label>
+          <label><span class="valor">3</span><input type="radio" name="q10" value="3"></label>
+          <label><span class="valor">4</span><input type="radio" name="q10" value="4"></label>
+          <label><span class="valor">5</span><input type="radio" name="q10" value="5"></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultado individual -->
+    <div id="resultado-individual" style="display:none; margin-top:20px;">
+      <hr class="separador">
+      <strong>Score calculado para este participante:</strong>
+      <div class="resultado-score" id="score-display"></div>
+      <div class="detalhe-calc" id="detalhe-calc"></div>
+      <p id="interpretacao" style="text-align:center; font-weight:bold; font-size:15px; margin-top:8px;"></p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcular()">Calcular Score</button>
+      <button class="btn btn-outline" onclick="adicionarParticipante()">Calcular e Adicionar</button>
+      <button class="btn btn-danger" onclick="limparFormulario()">Limpar</button>
+    </div>
+  </div>
+
+  <!-- Tabela de resultados consolidados -->
+  <div class="card" id="card-tabela" style="display:none;">
+    <h2>Resultados Consolidados</h2>
+    <table class="tabela-resultados" id="tabela-resultados">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Código</th>
+          <th>Perfil</th>
+          <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th>
+          <th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>Q10</th>
+          <th>Score SUS</th>
+          <th>Classificação</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody-resultados"></tbody>
+    </table>
+
+    <hr class="separador">
+    <h2>Médias por Perfil</h2>
+    <div class="media-box" id="media-box"></div>
+    <div class="media-geral" id="media-geral"></div>
+
+    <div class="exportar">
+      <button class="btn btn-outline" onclick="exportarCSV()">Exportar CSV</button>
+      <button class="btn btn-outline" onclick="exportarJSON()">Exportar JSON</button>
+    </div>
+  </div>
+
+  <!-- Legenda -->
+  <div class="card">
+    <h2>Escala de Interpretação do Score SUS (Brooke, 1996)</h2>
+    <div class="legenda">
+      <div class="legenda-item" style="background:#fee2e2;color:#991b1b"><strong>&lt; 50</strong><br>Insatisfatório<br>Grade F</div>
+      <div class="legenda-item" style="background:#fef3c7;color:#92400e"><strong>50–69</strong><br>Marginal / OK<br>Grade D–C</div>
+      <div class="legenda-item" style="background:#dbeafe;color:#1e40af"><strong>70–79</strong><br>Bom<br>Grade B</div>
+      <div class="legenda-item" style="background:#e0e7ff;color:#3730a3"><strong>80–89</strong><br>Ótimo<br>Grade A</div>
+      <div class="legenda-item" style="background:#d1fae5;color:#065f46"><strong>≥ 90</strong><br>Excelente<br>Grade A+</div>
+    </div>
+    <p style="font-size:11px; color:#666; margin-top:12px;">
+      <strong>Fórmula:</strong> Questões ímpares (positivas): contribuição = resposta − 1 | Questões pares (negativas): contribuição = 5 − resposta | Score = Σ contribuições × 2,5
+    </p>
+  </div>
+</div>
+
+<script>
+let perfilAtual = 'Secretaria';
+let participantes = [];
+
+function selecionarPerfil(perfil, el) {
+  perfilAtual = perfil;
+  document.getElementById('perfil').value = perfil;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function getRespostas() {
+  const qs = {};
+  for (let i = 1; i <= 10; i++) {
+    const sel = document.querySelector(`input[name="q${i}"]:checked`);
+    if (!sel) return null;
+    qs[i] = parseInt(sel.value);
+  }
+  return qs;
+}
+
+function calcularScore(qs) {
+  let soma = 0;
+  for (let i = 1; i <= 10; i++) {
+    if (i % 2 === 1) soma += (qs[i] - 1);   // ímpares: positivas
+    else             soma += (5 - qs[i]);     // pares: negativas
+  }
+  return soma * 2.5;
+}
+
+function classificar(score) {
+  if (score >= 90) return { label: 'Excelente',      classe: 'score-excelente', badge: '#d1fae5', cor: '#065f46' };
+  if (score >= 80) return { label: 'Ótimo',          classe: 'score-otimo',     badge: '#e0e7ff', cor: '#3730a3' };
+  if (score >= 70) return { label: 'Bom',            classe: 'score-bom',       badge: '#dbeafe', cor: '#1e40af' };
+  if (score >= 50) return { label: 'Marginal',       classe: 'score-aceitavel', badge: '#fef3c7', cor: '#92400e' };
+  return              { label: 'Insatisfatório',  classe: 'score-insatisf',  badge: '#fee2e2', cor: '#991b1b' };
+}
+
+function calcular() {
+  const qs = getRespostas();
+  if (!qs) { alert('Responda todas as 10 questões antes de calcular.'); return; }
+  const score = calcularScore(qs);
+  const cls   = classificar(score);
+
+  const div = document.getElementById('resultado-individual');
+  const sd  = document.getElementById('score-display');
+  const dc  = document.getElementById('detalhe-calc');
+  const ip  = document.getElementById('interpretacao');
+
+  sd.textContent = score.toFixed(1);
+  sd.className   = 'resultado-score ' + cls.classe;
+
+  let det = 'Contribuições: ';
+  for (let i = 1; i <= 10; i++) {
+    const c = i % 2 === 1 ? (qs[i]-1) : (5-qs[i]);
+    det += `Q${i}(${c})`;
+    if (i < 10) det += ' + ';
+  }
+  const soma = Object.keys(qs).reduce((s,i) => {
+    const c = parseInt(i) % 2 === 1 ? (qs[i]-1) : (5-qs[i]);
+    return s + c;
+  }, 0);
+  det += ` = ${soma} × 2,5 = ${score.toFixed(1)}`;
+  dc.textContent = det;
+  ip.textContent = `Classificação: ${cls.label}`;
+  ip.style.color = cls.cor;
+  div.style.display = 'block';
+  return { score, qs };
+}
+
+function adicionarParticipante() {
+  const qs = getRespostas();
+  if (!qs) { alert('Responda todas as 10 questões antes de adicionar.'); return; }
+  const score = calcularScore(qs);
+  const cod   = document.getElementById('cod').value || `P${(participantes.length+1).toString().padStart(2,'0')}`;
+
+  participantes.push({ cod, perfil: perfilAtual, qs, score });
+  calcular();
+  atualizarTabela();
+  limparFormulario();
+  document.getElementById('cod').value = '';
+}
+
+function removerParticipante(idx) {
+  participantes.splice(idx, 1);
+  atualizarTabela();
+}
+
+function atualizarTabela() {
+  if (participantes.length === 0) { document.getElementById('card-tabela').style.display = 'none'; return; }
+  document.getElementById('card-tabela').style.display = 'block';
+
+  const tbody = document.getElementById('tbody-resultados');
+  tbody.innerHTML = '';
+  participantes.forEach((p, i) => {
+    const cls = classificar(p.score);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${p.cod}</td>
+      <td>${p.perfil}</td>
+      ${[1,2,3,4,5,6,7,8,9,10].map(q => `<td>${p.qs[q]}</td>`).join('')}
+      <td style="font-weight:bold; font-size:15px">${p.score.toFixed(1)}</td>
+      <td><span class="badge-score" style="background:${cls.badge};color:${cls.cor}">${cls.label}</span></td>
+      <td><button onclick="removerParticipante(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:18px">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Médias por perfil
+  const perfis = ['Secretaria', 'Docente', 'Discente'];
+  const perfilMap = { 'Secretaria': [], 'Docente': [], 'Discente': [] };
+  participantes.forEach(p => {
+    if (p.perfil === 'Secretaria') perfilMap['Secretaria'].push(p.score);
+    else if (p.perfil === 'Docente') perfilMap['Docente'].push(p.score);
+    else perfilMap['Discente'].push(p.score);
+  });
+
+  const mb = document.getElementById('media-box');
+  mb.innerHTML = perfis.map(perf => {
+    const arr = perfilMap[perf];
+    const media = arr.length ? (arr.reduce((a,b) => a+b, 0) / arr.length) : null;
+    return `<div class="media-card">
+      <div class="perfil-nome">${perf}</div>
+      <div class="score-val">${media !== null ? media.toFixed(1) : '—'}</div>
+      <div class="n">n = ${arr.length} participante${arr.length !== 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('');
+
+  const todos = participantes.map(p => p.score);
+  const mediaGeral = todos.reduce((a,b) => a+b, 0) / todos.length;
+  const clsG = classificar(mediaGeral);
+  document.getElementById('media-geral').innerHTML =
+    `<div style="font-size:12px;letter-spacing:.5px;text-transform:uppercase;opacity:.8">Média Geral (n=${todos.length})</div>
+     <div class="score-val">${mediaGeral.toFixed(1)}</div>
+     <div style="font-size:14px;margin-top:4px">${clsG.label}</div>`;
+}
+
+function limparFormulario() {
+  for (let i = 1; i <= 10; i++) {
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r => r.checked = false);
+  }
+  document.getElementById('resultado-individual').style.display = 'none';
+}
+
+function exportarCSV() {
+  const header = ['#','Código','Perfil','Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Score_SUS','Classificacao'];
+  const rows = participantes.map((p, i) => {
+    const cls = classificar(p.score);
+    return [i+1, p.cod, p.perfil, ...[1,2,3,4,5,6,7,8,9,10].map(q=>p.qs[q]), p.score.toFixed(1), cls.label];
+  });
+  const csv = [header, ...rows].map(r => r.join(';')).join('\n');
+  baixar('sus-resultados.csv', csv, 'text/csv;charset=utf-8;');
+}
+
+function exportarJSON() {
+  const dados = {
+    sistema: 'Sistema de Gestão de Bancas PPGMSB/UNEB',
+    data: new Date().toLocaleDateString('pt-BR'),
+    n_total: participantes.length,
+    media_geral: participantes.length ? (participantes.reduce((s,p)=>s+p.score,0)/participantes.length).toFixed(1) : 0,
+    participantes: participantes.map((p, i) => ({
+      ordem: i+1, codigo: p.cod, perfil: p.perfil,
+      respostas: p.qs, score: p.score, classificacao: classificar(p.score).label
+    }))
+  };
+  baixar('sus-resultados.json', JSON.stringify(dados, null, 2), 'application/json');
+}
+
+function baixar(nome, conteudo, tipo) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([conteudo], { type: tipo }));
+  a.download = nome;
+  a.click();
+}
+</script>
+</body>
+</html>

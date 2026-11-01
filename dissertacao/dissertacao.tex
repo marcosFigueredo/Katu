@@ -1,0 +1,434 @@
+%**********************************************************
+%                1. CLASSE E OPÇÃO DO DOCUMENTO
+%
+% Ative UMA das opções abaixo conforme o tipo de documento.
+% Mantenha as demais comentadas.
+% NÃO modifique o arquivo classPPGMSB.cls.
+%**********************************************************
+
+% --- Documentos em PORTUGUÊS ---
+\documentclass[diss]{classPPGMSB}   % Dissertação de mestrado  ← PADRÃO
+%\documentclass[tese]{classPPGMSB}  % Tese de doutorado
+%\documentclass[qlf]{classPPGMSB}   % Exame de qualificação
+
+% --- Documentos em INGLÊS ---
+%\documentclass[diss=en]{classPPGMSB}  % Master's dissertation
+%\documentclass[tese=en]{classPPGMSB}  % Doctoral thesis
+% Nota: [diss,ing] é sintaxe equivalente a [diss=en] (legada)
+
+
+%***************************************************
+%                     PACOTES INICIAIS
+%***************************************************
+\usepackage{lipsum}
+
+% O pacote hyperref já é carregado pela classe classPPGMSB.
+% Use apenas \hypersetup para configurar as cores dos links.
+\hypersetup{
+	colorlinks = true,
+	linkcolor = ppgmsbC1,
+	citecolor = ppgmsbC1,
+	urlcolor = ppgmsbC1
+}
+%=====================================================
+     %     ELEMENTOS PARA CRIAÇÃO DE SIGLAS
+%           CRIE AQUI SUA LISTA DE SIGLAS
+%=====================================================
+% A classe já carrega o pacote glossaries-extra e o estilo das listas.
+% NÃO use \usepackage{glossaries-extra}, \makeglossaries nem \printglossary:
+% as listas são geradas só pelo LaTeX (pdflatex/xelatex/lualatex ou latexmk),
+% sem makeglossaries e sem nenhum passo extra de compilação.
+%
+% Defina símbolos e abreviações nos arquivos abaixo, sempre aqui no preâmbulo.
+% Só aparecem nas listas as entradas usadas no texto com \gls{...}.
+%================ ACESSE ESSES ARQUIVOS =============
+%*************** INCLUA AS SIGLAS E ABREVIAÇÕES =====
+% Incluir os arquivos de siglas e abreviações
+\input{preTextual/simbolos}
+\input{preTextual/abreviacoes}
+
+%====INSTRUÇÕES DE USO=========
+% Usando uma abreviação no texto pela primeira vez
+% A primeira vez que \gls{ai} é usado, aparece "Inteligência Artificial (AI)"
+
+% Usando uma abreviação no texto novamente
+% Uso subsequente de \gls{ai} mostra apenas "AI"
+
+% Usando um símbolo no texto
+% Usando \gls{pi} no texto mostra o símbolo \pi com sua descrição na lista de símbolos"
+
+%********************************************************
+%======== COMANDO INTERNO DA CLASSE===============
+\opcoesDocumento
+% ================================================
+
+\begin{document}
+%=====================================================
+%     INÍCIO DOS DADOS GERAIS DO DOCUMENTO
+%=====================================================
+
+
+%=====================================================
+% INFORMAÇÕES AUTOR E DA DISSERTAÇÃO
+%=====================================================
+
+%========== INFORMAÇÕES DA INSTITUIÇÃO =================
+\Universidade{Universidade do Estado da Bahia}
+\Departamento{Departamento de Ciências Exatas e da Terra --- Campus II}
+\Programa{Programa de Pós-Graduação em Modelagem e Simulação de Biossistemas}
+\UrlUNEB{https://www.uneb.br}
+\UrlMSB{https://ppgmsb.uneb.br}
+
+%========== LOGOS DA INSTITUIÇÃO ======================
+% Coloque os arquivos de imagem na pasta indicada.
+% Baixe os logos em: https://ppgmsb.uneb.br
+% Se o arquivo não existir, um quadrado com X é exibido no lugar.
+
+\LogoUniversidade{figuras/logo_uneb.jpg}
+\LogoPrograma{figuras/ppgmsbLogo.png}
+\LogoCabecalho{figuras/logoso.png}
+
+% Dados da Gestão da Universidade
+\ReitorNome{Adriana Marmori Lima}
+\ProreitorNome{Elizeu Clementino de Souza}
+\DiretorNome{Issac Douglas Moreira}
+\CoordenadorNome{Marcos Batista Figueredo}
+
+%========== DADOS DO AUTOR DO TRABALHO ====================
+
+%========== NOME COMPLETO SEM ABREVIAÇÕES =================
+% --- Autor(a) ---
+\NomeAutor{Juliana Ribeiro Santos}
+\EmailAutor{discente.completo@ppgmsb.test}
+\AutorNacionalidade{Brasileiro(a)}
+\AutorMunicipio{Alagoinhas}
+\AutorEstado{BA}
+\LinkLattes{http://lattes.cnpq.br/8000000000000008}
+\LinkOrcid{0000-0002-1825-0097}
+\DataNascimento{12/04/1996}
+
+%============= TITULO DA DISSERTAÇÃO =================
+%---- Título não deve execeder 150 caracteres --------
+%========TITULO EM PORTUGUES
+\TituloBR{Modelagem Computacional e Simulação Estocástica de Biossistemas Aplicadas à Vigilância Epidemiológica}
+%=========TÍTULO EM INGLES==========
+\TituloEN{Computational Modeling and Stochastic Simulation of Biosystems Applied to Epidemiological Surveillance}
+%=====================SUBTITULO===================
+%-----------Caso não tenha comente a linha -----
+%----------- limitado a 80 caracteres ----------
+%\SubTituloBR{limitado a 80 caracteres}
+%\SubTituloEN{subtitle within the 80-character limit.}
+
+%=====================SUBTITULO===================
+% Palavras-chave (PT e EN) — entre 3 e 7 termos, separados por ";"
+\palavrasChavePT{modelagem computacional; simulação estocástica; biossistemas; aprendizado de máquina; vigilância epidemiológica}
+\palavrasChaveEN{computational modeling; stochastic simulation; biosystems; machine learning; epidemiological surveillance}
+\palavrasChaveBusca{modelagem computacional; simulação estocástica; vigilância epidemiológica; UNEB; PPGMSB}
+
+
+
+
+%===================== ORIENTADOR DO TRABALHO ===================
+\OrientadorNome{Beatriz Carvalho Mendes}
+\OrientadorFiliacao{Universidade do Estado da Bahia}
+\OrientadorSigla{UNEB}
+\OrientadorLattes{http://lattes.cnpq.br/9000000000000003}
+\OrientadorOrcid{0000-0002-9000-0003}
+%===================== ODS DO TRABALHO ===================
+\odsSelecionadas{3,7,11,13,15}
+
+%===================== DADOS DE ADERÊNCIA DO TRABALHO 
+\AreaDeConcentracaoBR{Área de Teste}
+\AreaDeConcentracaoEN{Test Area}
+\LinhaPesquisaBR{Linha de Teste}
+\LinhaPesquisaEN{Test Research Line}
+\GrupoDePesquisaBR{Grupo de Modelagem e Simulação de Biossistemas}
+\GrupoDePesquisaEN{Biosystems Modeling and Simulation Group}
+%===================== DADOS ADICIONAIS ===============
+
+\DataDefesa{30/11/2026}
+\HoraDefesa{14:00h}
+\LocalDefesa{Alagoinhas/BA}
+
+%========== LICENÇA (NOVO) =================
+\Licenca[https://creativecommons.org/licenses/by-nc-sa/4.0/]{CC BY-NC-SA 4.0}
+
+%========== FINANCIAMENTO (NOVO) =================
+% Agências de fomento, bolsas, projetos
+\Financiamento{%
+	CAPES --- Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (Bolsa de Mestrado)
+}
+
+%========== REPOSITÓRIO DE CÓDIGO (NOVO) =================
+% Se houver código fonte disponível
+\Repositorio{https://github.com/usuario/repositorio}
+
+%========== VOLUMES (NOVO) =================
+% Número de volumes do trabalho (padrão: 1)
+\Volumes{1}
+
+%=============== INFORMADO PELA SECRETARIA ============
+\UrlTrabalho{https://doi.org/xxxxxxxx}     % se houver página/handle/doi
+\Msbdoi{10.1234/ppgmsb.xxxxx}              % se aplicável
+
+%========================================================
+%      INDICAÇÃO DOS COORIENTADORES
+%========================================================
+
+% ================== COORIENTADORES (A até C) ==================
+% A — obrigatório só se existir coorientador
+\CoorientadorANome{Rafael Teixeira Nunes}
+\CoorientadorAFiliacao{Universidade do Estado da Bahia}
+\CoorientadorASigla{UNEB}
+\CoorientadorAFormacao{Ciência da Computação}
+\CoorientadorAAtuacao{Aprendizado de Máquina e Modelagem Epidemiológica}
+\CoorientadorAOrcid{0000-0002-9000-0004}
+\CoorientadorALattes{http://lattes.cnpq.br/9000000000000004}
+
+% B — se houver
+%\CoorientadorBNome{Nome do Coorientador B}
+%\CoorientadorBFiliacao{Instituição do Coorientador B}
+%\CoorientadorBSigla{SIGLA-B}
+%\CoorientadorBFormacao{Área de formação B}
+%\CoorientadorBAtuacao{Área de atuação B}
+%\CoorientadorBOrcid{0000-0000-0000-0000}
+%\CoorientadorBLattes{http://lattes.cnpq.br/BBBBBBBBBBBBBBBB}
+
+% C — se houver
+%\CoorientadorCNome{Nome do Coorientador C}
+%\CoorientadorCFiliacao{Instituição do Coorientador C}
+%\CoorientadorCSigla{SIGLA-C}
+%\CoorientadorCFormacao{Área de formação C}
+%\CoorientadorCAtuacao{Área de atuação C}
+%\CoorientadorCOrcid{0000-0000-0000-0000}
+%\CoorientadorCLattes{http://lattes.cnpq.br/CCCCCCCCCCCCCCCC}
+
+%*******************************************************
+%      MEMBROS DA BANCA DA DEFESA E/OU QUALIFICAÇÃO
+%*******************************************************
+%
+%Indique o numero de membros da banca considerando: 
+% Maximo 5 Para mestrado/Doutorado
+% Mínimo 3 Para mestrado (Orientador, Membro Interno e Externo)
+
+%Indique 1 para interno
+%indique 2 para externo
+%Lembre que o orientador sempre será membro da banca
+%========================================
+\numeroMembrosBanca{3}
+%=========================================
+% ================== MEMBROS DA BANCA EXAMINADORA ==================
+
+% Tipo: 1 = Membro Interno | outro valor = Membro Externo
+
+% --- Membro A ---
+\MembroANome{Luciana Prado Freitas}
+\MembroAFiliacao{Universidade do Estado da Bahia}
+\MembroASigla{UNEB}
+\MembroAFormacao{Matemática Aplicada}
+\MembroAAtuacao{Modelagem Matemática em Saúde}
+\MembroAOrcid{0000-0002-9000-0005}
+\MembroALattes{http://lattes.cnpq.br/9000000000000005}
+\MembroATipo{1}
+
+% --- Membro B ---
+\MembroBNome{Eduardo Moura Bastos}
+\MembroBFiliacao{Universidade Federal da Bahia}
+\MembroBSigla{UFBA}
+\MembroBFormacao{Estatística}
+\MembroBAtuacao{Inferência Bayesiana e Processos Estocásticos}
+\MembroBOrcid{0000-0002-9000-0006}
+\MembroBLattes{http://lattes.cnpq.br/9000000000000006}
+\MembroBTipo{2}
+
+% --- Membro C ---
+%\MembroCNome{Profa. Ana Paula Menezes}
+%\MembroCFiliacao{Universidade Estadual de Feira de Santana}
+%\MembroCSigla{UEFS}
+%\MembroCFormacao{Matemática}
+%\MembroCAtuacao{Métodos Numéricos e Inteligência Artificial}
+%\MembroCOrcid{0000-0001-6358-2274}
+%\MembroCLattes{http://lattes.cnpq.br/3333333333333333}
+%\MembroCTipo{1}
+
+% --- Membro D ---
+%\MembroDNome{Prof. Ricardo Tavares de Oliveira}
+%\MembroDFiliacao{Instituto Federal da Bahia}
+%\MembroDSigla{IFBA}
+%\MembroDFormacao{Ciência da Computação}
+%\MembroDAtuacao{Aprendizado de Máquina e Processamento de Sinais}
+%\MembroDOrcid{0000-0002-1944-5566}
+%\MembroDLattes{http://lattes.cnpq.br/4444444444444444}
+%\MembroDTipo{2}
+
+% --- Membro E ---
+%\MembroENome{Profa. Mariana Castro Nogueira}
+%\MembroEFiliacao{Universidade Federal do Recôncavo da Bahia}
+%\MembroESigla{UFRB}
+%\MembroEFormacao{Engenharia Ambiental}
+%\MembroEAtuacao{Sistemas Complexos e Modelagem Hidrológica}
+%\MembroEOrcid{0000-0003-6701-8472}
+%\MembroELattes{http://lattes.cnpq.br/5555555555555555}
+%\MembroETipo{2}
+
+%=====================================================
+
+
+%=====================================================
+%     INÍCIO DO PRÉ-TEXTO
+%
+% Durante o processo de escrita recomendamos que os elementos pré-textuais fiquem comentados, o que acelera bastante o processo de compilação
+%=====================================================
+%===================CAPA============================
+%              GERAÇÃO AUTOMÁTICA 
+%=====================================================
+\makeCapa
+%===================================================
+
+%===================CONTRA-CAPA============================
+%              GERAÇÃO AUTOMÁTICA 
+\makeContraCapa
+%===================================================
+
+%===================FOLHA APROVAÇÃO================
+%              GERAÇÃO AUTOMÁTICA 
+\folhaAprovacao
+%===================================================
+%\pretextual
+\frontmatter
+%===================AGRADECIMENTOS================
+\begin{agradecimentos}
+	\lipsum[1-2]
+\end{agradecimentos}
+
+%===================================================
+
+%===================DEDICATÓRIA================
+\begin{dedicar}
+	\lipsum[3][1-4]
+\end{dedicar}
+
+%===================================================
+
+%===================RESUMO================
+% COMENTAR CASO DA VERSÃO EM INGLES
+%===================RESUMO================
+% INSERIR AQUI SEU RESUMO E 
+\begin{resumo}
+	A modelagem computacional e a simulação estocástica de biossistemas desempenham papel fundamental na compreensão de fenômenos epidemiológicos complexos e no suporte à tomada de decisão em saúde pública. Neste trabalho fictício de teste para o sistema de gestão de bancas do PPGMSB, propomos uma arquitetura híbrida que integra equações diferenciais estocásticas e algoritmos de aprendizado de máquina para a predição espaço-temporal de surtos epidemiológicos em cenários com dados ruidosos. O método compreende três etapas principais: pré-processamento e filtragem adaptativa de séries temporais, calibração paramétrica via inferência bayesiana e simulação de cenários de intervenção. Os experimentos numéricos sintéticos demonstram estabilidade numérica, redução do erro quadrático médio de predição e elevada aderência aos critérios de reprodutibilidade científica do programa.
+\end{resumo}
+% 
+%===================================================
+
+%=================== ABSTRACT ==============
+
+\begin{newAbstract}
+	Computational modeling and stochastic simulation of biosystems play a fundamental role in understanding complex epidemiological phenomena and in supporting decision-making in public health. In this fictitious test work for the PPGMSB defense management system, we propose a hybrid architecture that combines stochastic differential equations and machine learning algorithms for the spatio-temporal prediction of epidemiological outbreaks in noisy data scenarios. The method comprises three main stages: preprocessing and adaptive filtering of time series, parametric calibration through Bayesian inference, and simulation of intervention scenarios. Synthetic numerical experiments show numerical stability, a reduction of the mean squared prediction error, and high adherence to the scientific reproducibility criteria of the program.
+\end{newAbstract}
+%===================================================
+
+%===================listas =========================
+%              GERAÇÃO AUTOMÁTICA 
+%===================================================
+
+% Lista de Símbolos (não é impressa se nenhum símbolo for usado no texto)
+\listaDeSimbolos
+% Lista de Abreviações (não é impressa se nenhuma abreviação for usada no texto)
+\listaDeAbreviacoes
+%lista de Figuras
+\listaDeIlustracoes
+%Lista de Tabelas
+\listaDeTabelas
+%Lista de Algoritmos
+\listaDeAlgoritmos
+
+% Desativar a numeração de páginas para a tabela de conteúdos
+\pagestyle{empty} % Remove a numeração da página atual
+
+% Sumário automático
+\setlength{\beforechapskip}{-50pt}
+\tableofcontents*
+
+% Reiniciar a numeração de páginas e voltar ao estilo normal
+\clearpage % Finalizar a página atual
+\pagestyle{plain} % Estilo de página com numeração
+\setcounter{page}{1} % Reiniciar a numeração de páginas
+
+%**********************************************************
+%                FIM ELEMENTOS PRÉ-TEXTUAIS
+%**********************************************************
+
+\mainmatter
+\pagestyle{ppgmsbPages}
+%**********************************************************
+%                INÍCIO DOS ELEMENTOS TEXTUAIS
+%*******************************************************
+%===================================================
+
+%====================== CAPITULOS =====================
+% Para redigir seu documento abra os arquivos e modifique o texto
+% Você pode modificar os elmentos textuais conforme orientação. Mas observe sempre os critérios mínimos.
+\include{textual/introducao}
+\include{textual/revisao}
+\include{textual/modelo}
+\include{textual/resultados}
+\include{textual/conclusao}
+
+
+
+
+%====================== FIM DOS CAPITULOS =====================
+
+%============ELEMENTOS PÓS-TEXTUAIS==========
+
+%%----------------------------------------------------------------------------
+%% Configurar as referencias bibliograficas
+%%----------------------------------------------------------------------------
+\clearpage % Garante que a bibliografia comece em uma nova página
+%\addcontentsline{toc}{chapter}{Referências}
+
+\bibliography{posTextual/referencias}
+
+%Voce pode alterar o arquivo de referencias a vontade desde que coloque na pasta corretamente
+%Para citações use:% Exemplo de citação no texto
+
+%\cite{<<autor>>} -> para citação direta.
+
+%\citep{<<autor>>} -> para citação indireta.
+
+%Para figuras use o comando \fonte
+%% Exemplo de uso do comando \fonte
+%\begin{figure}[h]
+%	\centering
+%    \caption{Exemplo de figura}
+%	\includegraphics[width=0.5\textwidth]{figura_exemplo}
+%	\fonte{Próprio autor} ou \fonte{\citep{<<autor>>}}
+%\end{figure}
+
+% Para as ODS, use \odsSelecionadas no bloco de metadados:
+% \odsSelecionadas{3,7,13,15}
+% A página de metadados chama \ODSFiguras automaticamente.
+
+
+
+
+%==========================================
+% POS TEXTUAL APENDICES
+%==========================================
+%\begin{appendices}
+%	\include{posTextual/apendice}
+%\end{appendices}
+
+%==========================================
+%\renewcommand{\restoreapp}{}
+%\renewcommand\appendixname{ANEXOS}
+%\renewcommand\appendixpagename{ANEXOS}
+%\begin{appendices}
+%	\include{posTextual/anexos}
+%\end{appendices}
+\paginaMetadados
+
+\end{document}
+
+%=====================================================
+

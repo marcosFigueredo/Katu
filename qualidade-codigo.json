@@ -1,0 +1,35 @@
+{
+  "classes_analisadas": 96,
+  "loc_total": 4507,
+  "cloc_total": 328,
+  "percentual_comentario": 7.3,
+  "metodos_total": 412,
+  "cc_media": 7.67,
+  "cc_maxima": 111,
+  "phpstan_erros": [
+    {
+      "erros": 37,
+      "nivel": 0
+    },
+    {
+      "erros": 38,
+      "nivel": 1
+    },
+    {
+      "erros": 172,
+      "nivel": 2
+    },
+    {
+      "erros": 174,
+      "nivel": 3
+    },
+    {
+      "erros": 216,
+      "nivel": 4
+    },
+    {
+      "erros": 221,
+      "nivel": 5
+    }
+  ]
+}

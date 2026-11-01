@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Questionário SUS — Sistema PPGMSB</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #222; padding: 30px; max-width: 800px; margin: auto; }
+  h1 { font-size: 17px; text-align: center; margin-bottom: 4px; }
+  h2 { font-size: 13px; text-align: center; font-weight: normal; color: #444; margin-bottom: 20px; }
+  .instrucao { background: #f5f5f5; border-left: 4px solid #00303A; padding: 10px 14px; margin-bottom: 24px; font-size: 12px; line-height: 1.6; }
+  .dados { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .campo label { font-size: 11px; font-weight: bold; display: block; margin-bottom: 3px; }
+  .campo input, .campo select { width: 100%; border: 1px solid #ccc; padding: 5px 8px; font-size: 12px; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  thead th { background: #00303A; color: white; padding: 8px 6px; font-size: 11px; text-align: center; }
+  thead th:first-child { text-align: left; width: 55%; }
+  tbody tr:nth-child(even) { background: #f9f9f9; }
+  tbody td { padding: 10px 6px; vertical-align: middle; border-bottom: 1px solid #e5e5e5; font-size: 12px; line-height: 1.4; }
+  tbody td:not(:first-child) { text-align: center; }
+  .escala-header { font-size: 10px; color: #555; }
+  .num { font-size: 14px; font-weight: bold; color: #00303A; margin-right: 6px; }
+  input[type=radio] { width: 16px; height: 16px; cursor: pointer; }
+  .assinatura { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+  .assinatura div { border-top: 1px solid #666; padding-top: 4px; font-size: 11px; text-align: center; color: #555; }
+  @media print {
+    body { padding: 15px; }
+    .no-print { display: none; }
+  }
+  .btn { display: inline-block; margin: 10px 5px 20px; padding: 8px 20px; background: #00303A; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btn:hover { background: #004d5e; }
+</style>
+</head>
+<body>
+
+<h1>Questionário de Usabilidade — Sistema de Gestão de Bancas PPGMSB/UNEB</h1>
+<h2>System Usability Scale (SUS) — Adaptado ao contexto do programa</h2>
+
+<div class="instrucao">
+  <strong>Instruções:</strong> Para cada afirmação abaixo, marque o número que melhor reflete sua opinião sobre o sistema,
+  considerando a experiência que você teve ao utilizá-lo. Não há respostas certas ou erradas — responda com
+  sinceridade. A escala vai de <strong>1 (Discordo totalmente)</strong> a <strong>5 (Concordo totalmente)</strong>.
+  Responda todas as 10 questões.
+</div>
+
+<div class="dados">
+  <div class="campo">
+    <label>Data da aplicação</label>
+    <input type="text" placeholder="dd/mm/aaaa">
+  </div>
+  <div class="campo">
+    <label>Perfil do participante</label>
+    <select>
+      <option value="">Selecione...</option>
+      <option>Secretaria</option>
+      <option>Docente / Avaliador</option>
+      <option>Discente / Mestrando</option>
+    </select>
+  </div>
+  <div class="campo">
+    <label>Tempo de uso do sistema (aproximado)</label>
+    <select>
+      <option value="">Selecione...</option>
+      <option>Menos de 1 mês</option>
+      <option>1 a 3 meses</option>
+      <option>3 a 6 meses</option>
+      <option>Mais de 6 meses</option>
+    </select>
+  </div>
+  <div class="campo">
+    <label>Código do participante (opcional)</label>
+    <input type="text" placeholder="Ex.: P01">
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Afirmação</th>
+      <th class="escala-header">1<br>Discordo<br>totalmente</th>
+      <th class="escala-header">2</th>
+      <th class="escala-header">3<br>Neutro</th>
+      <th class="escala-header">4</th>
+      <th class="escala-header">5<br>Concordo<br>totalmente</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="num">1.</span>Eu acho que gostaria de usar este sistema com frequência.</td>
+      <td><input type="radio" name="q1" value="1"></td>
+      <td><input type="radio" name="q1" value="2"></td>
+      <td><input type="radio" name="q1" value="3"></td>
+      <td><input type="radio" name="q1" value="4"></td>
+      <td><input type="radio" name="q1" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">2.</span>Eu achei o sistema desnecessariamente complexo.</td>
+      <td><input type="radio" name="q2" value="1"></td>
+      <td><input type="radio" name="q2" value="2"></td>
+      <td><input type="radio" name="q2" value="3"></td>
+      <td><input type="radio" name="q2" value="4"></td>
+      <td><input type="radio" name="q2" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">3.</span>Eu achei o sistema fácil de usar.</td>
+      <td><input type="radio" name="q3" value="1"></td>
+      <td><input type="radio" name="q3" value="2"></td>
+      <td><input type="radio" name="q3" value="3"></td>
+      <td><input type="radio" name="q3" value="4"></td>
+      <td><input type="radio" name="q3" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">4.</span>Eu acho que precisaria de ajuda técnica para conseguir usar este sistema.</td>
+      <td><input type="radio" name="q4" value="1"></td>
+      <td><input type="radio" name="q4" value="2"></td>
+      <td><input type="radio" name="q4" value="3"></td>
+      <td><input type="radio" name="q4" value="4"></td>
+      <td><input type="radio" name="q4" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">5.</span>Eu achei que as diferentes funções do sistema estavam bem integradas.</td>
+      <td><input type="radio" name="q5" value="1"></td>
+      <td><input type="radio" name="q5" value="2"></td>
+      <td><input type="radio" name="q5" value="3"></td>
+      <td><input type="radio" name="q5" value="4"></td>
+      <td><input type="radio" name="q5" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">6.</span>Eu achei que havia muita inconsistência neste sistema.</td>
+      <td><input type="radio" name="q6" value="1"></td>
+      <td><input type="radio" name="q6" value="2"></td>
+      <td><input type="radio" name="q6" value="3"></td>
+      <td><input type="radio" name="q6" value="4"></td>
+      <td><input type="radio" name="q6" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">7.</span>Eu imagino que a maioria das pessoas aprenderia a usar este sistema rapidamente.</td>
+      <td><input type="radio" name="q7" value="1"></td>
+      <td><input type="radio" name="q7" value="2"></td>
+      <td><input type="radio" name="q7" value="3"></td>
+      <td><input type="radio" name="q7" value="4"></td>
+      <td><input type="radio" name="q7" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">8.</span>Eu achei o sistema muito confuso e difícil de navegar.</td>
+      <td><input type="radio" name="q8" value="1"></td>
+      <td><input type="radio" name="q8" value="2"></td>
+      <td><input type="radio" name="q8" value="3"></td>
+      <td><input type="radio" name="q8" value="4"></td>
+      <td><input type="radio" name="q8" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">9.</span>Eu me senti confiante ao utilizar este sistema.</td>
+      <td><input type="radio" name="q9" value="1"></td>
+      <td><input type="radio" name="q9" value="2"></td>
+      <td><input type="radio" name="q9" value="3"></td>
+      <td><input type="radio" name="q9" value="4"></td>
+      <td><input type="radio" name="q9" value="5"></td>
+    </tr>
+    <tr>
+      <td><span class="num">10.</span>Eu precisei aprender muitas coisas antes de conseguir usar este sistema.</td>
+      <td><input type="radio" name="q10" value="1"></td>
+      <td><input type="radio" name="q10" value="2"></td>
+      <td><input type="radio" name="q10" value="3"></td>
+      <td><input type="radio" name="q10" value="4"></td>
+      <td><input type="radio" name="q10" value="5"></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="assinatura">
+  <div>Assinatura do participante</div>
+  <div>Assinatura do aplicador</div>
+</div>
+
+<br>
+<button class="btn no-print" onclick="window.print()">🖨️ Imprimir questionário</button>
+
+</body>
+</html>
