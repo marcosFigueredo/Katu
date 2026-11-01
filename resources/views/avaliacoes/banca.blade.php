@@ -119,6 +119,8 @@
             </div>
         @endif
 
+        @include('avaliacoes.partials.informacoes-estudante')
+
         {{-- ================================================================
              ÁREA DO AVALIADOR — Meus baremas
         ================================================================ --}}

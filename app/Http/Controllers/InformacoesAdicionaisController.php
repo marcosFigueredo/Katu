@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banca;
 use App\Models\TrabalhoAcademico;
+use App\Services\ContextoSecretaria;
 use App\Models\TrabalhoInformacoesAdicionais;
 use App\Services\PedidoHomologacaoService;
 use Illuminate\Http\Request;
@@ -97,6 +99,25 @@ class InformacoesAdicionaisController extends Controller
     public function etica(Request $request)
     {
         $trabalho = $this->trabalho();
+
+        return self::baixar($trabalho->informacoesAdicionais, (string) $request->query('documento'));
+    }
+
+    /** PDFs de ética para quem vê o pedido: membros ativos da banca, orientador vigente e Secretaria do programa. */
+    public function eticaBanca(Request $request, Banca $banca)
+    {
+        $user = auth()->user();
+        $trabalho = $banca->trabalhoAcademico;
+
+        if ($user->categoria === 'sec') {
+            abort_unless(app(ContextoSecretaria::class)->programa($user)?->id === $trabalho->programa_id, 404);
+        } else {
+            abort_unless($user->categoria === 'docente', 403);
+            $vinculos = $user->docenteProfile?->vinculosPrograma()->pluck('id') ?? collect();
+            $ehMembro = $banca->membros()->where('ativo', true)->whereIn('docente_programa_vinculo_id', $vinculos)->exists();
+            $ehOrientador = $trabalho->orientacoes()->whereIn('docente_programa_vinculo_id', $vinculos)->exists();
+            abort_unless($ehMembro || $ehOrientador, 403);
+        }
 
         return self::baixar($trabalho->informacoesAdicionais, (string) $request->query('documento'));
     }

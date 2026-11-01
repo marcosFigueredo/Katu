@@ -79,6 +79,8 @@
             </div>
         </div>
 
+        @include('avaliacoes.partials.informacoes-estudante')
+
         {{-- Formulário --}}
         <form method="POST" action="{{ route('avaliacoes.salvar', [$banca, $barema]) }}"
               id="form-avaliacao">

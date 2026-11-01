@@ -16,7 +16,7 @@
         <h1 class="h3 fw-bold mt-2 mb-1" style="color:#00303A;">Dados da pesquisa</h1>
         <p class="text-muted mb-3">
             Código, dados e ética da sua pesquisa. É preciso preencher antes de enviar o pedido à homologação;
-            cada pedido guarda uma cópia do que estava preenchido no momento do envio.
+            cada pedido guarda uma cópia do que estava preenchido no envio, e é essa cópia que a banca vê.
         </p>
 
         @if (session('success'))

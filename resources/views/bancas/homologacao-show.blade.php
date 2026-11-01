@@ -248,6 +248,7 @@
         </div>
 
         @include('bancas._conferencia-estudante')
+        @include('avaliacoes.partials.informacoes-estudante')
 
         {{-- 3. Critérios da CPA (Sim / Não) --}}
         <div class="card border-0 shadow-sm mb-4">
