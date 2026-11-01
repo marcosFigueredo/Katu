@@ -240,7 +240,12 @@
             </div>
         @endif
 
-        @if ($banca->status === 'finalizada')
+        @php
+            $vinculoAtual = auth()->user()->docenteProfile?->vinculosPrograma()->first();
+            $recebeCertificado = $ehMembro || ($vinculoAtual && $banca->trabalhoAcademico->orientacoes()
+                ->where('tipo', 'orientador')->where('docente_programa_vinculo_id', $vinculoAtual->id)->exists());
+        @endphp
+        @if ($banca->status === 'finalizada' && $recebeCertificado)
             <div class="mb-3">
                 <a href="{{ route('avaliacoes.certificado', $banca) }}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-award me-1"></i>Baixar meu certificado de participação
@@ -375,12 +380,17 @@
                                     @csrf
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Resultado da banca</label>
+                                        @if ($situacaoIntegridade === 'unanime')
+                                            <div class="alert alert-danger small mb-0">A banca identificou plágio por unanimidade; o resultado será Reprovado.</div>
+                                            <input type="hidden" name="resultado" value="reprovado">
+                                        @else
                                         <select name="resultado" class="form-select" required>
                                             <option value="" disabled selected>Selecione o resultado…</option>
                                             <option value="aprovado">Aprovado</option>
                                             <option value="aprovado_modificacoes">Aprovado com modificações</option>
                                             <option value="reprovado">Reprovado</option>
                                         </select>
+                                        @endif
                                         @error('resultado')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
                                         @enderror
@@ -426,6 +436,9 @@
                             @endif
                             @if ($banca->nota_media !== null)
                                 — Nota média: <strong>{{ number_format($banca->nota_media, 1, ',', '') }}</strong>
+                            @endif
+                            @if ($banca->reprovada_por_plagio)
+                                <div class="small text-danger mt-1">Reprovada por plágio identificado pela banca (decisão unânime).</div>
                             @endif
                         </div>
                     </div>

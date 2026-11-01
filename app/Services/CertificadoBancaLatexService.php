@@ -70,7 +70,41 @@ class CertificadoBancaLatexService
         ])->render();
     }
 
+    /** Letras gregas, índices e símbolos comuns em títulos de modelagem, que o pdflatex não aceita direto. */
+    private const UNICODE = [
+        'α' => '\\ensuremath{\\alpha}', 'β' => '\\ensuremath{\\beta}', 'γ' => '\\ensuremath{\\gamma}', 'δ' => '\\ensuremath{\\delta}',
+        'ε' => '\\ensuremath{\\varepsilon}', 'ζ' => '\\ensuremath{\\zeta}', 'η' => '\\ensuremath{\\eta}', 'θ' => '\\ensuremath{\\theta}',
+        'ι' => '\\ensuremath{\\iota}', 'κ' => '\\ensuremath{\\kappa}', 'λ' => '\\ensuremath{\\lambda}', 'μ' => '\\ensuremath{\\mu}',
+        'ν' => '\\ensuremath{\\nu}', 'ξ' => '\\ensuremath{\\xi}', 'π' => '\\ensuremath{\\pi}', 'ρ' => '\\ensuremath{\\rho}',
+        'σ' => '\\ensuremath{\\sigma}', 'τ' => '\\ensuremath{\\tau}', 'φ' => '\\ensuremath{\\varphi}', 'χ' => '\\ensuremath{\\chi}',
+        'ψ' => '\\ensuremath{\\psi}', 'ω' => '\\ensuremath{\\omega}', 'Γ' => '\\ensuremath{\\Gamma}', 'Δ' => '\\ensuremath{\\Delta}',
+        'Θ' => '\\ensuremath{\\Theta}', 'Λ' => '\\ensuremath{\\Lambda}', 'Π' => '\\ensuremath{\\Pi}', 'Σ' => '\\ensuremath{\\Sigma}',
+        'Φ' => '\\ensuremath{\\Phi}', 'Ψ' => '\\ensuremath{\\Psi}', 'Ω' => '\\ensuremath{\\Omega}',
+        '≤' => '\\ensuremath{\\leq}', '≥' => '\\ensuremath{\\geq}', '≠' => '\\ensuremath{\\neq}', '≈' => '\\ensuremath{\\approx}',
+        '±' => '\\ensuremath{\\pm}', '×' => '\\ensuremath{\\times}', '÷' => '\\ensuremath{\\div}', '→' => '\\ensuremath{\\rightarrow}',
+        '∞' => '\\ensuremath{\\infty}', '−' => '-',
+        '₀' => '\\textsubscript{0}', '₁' => '\\textsubscript{1}', '₂' => '\\textsubscript{2}', '₃' => '\\textsubscript{3}',
+        '₄' => '\\textsubscript{4}', '₅' => '\\textsubscript{5}', '₆' => '\\textsubscript{6}', '₇' => '\\textsubscript{7}',
+        '₈' => '\\textsubscript{8}', '₉' => '\\textsubscript{9}',
+        '⁰' => '\\textsuperscript{0}', '¹' => '\\textsuperscript{1}', '²' => '\\textsuperscript{2}', '³' => '\\textsuperscript{3}',
+        '⁴' => '\\textsuperscript{4}', '⁵' => '\\textsuperscript{5}', '⁶' => '\\textsuperscript{6}', '⁷' => '\\textsuperscript{7}',
+        '⁸' => '\\textsuperscript{8}', '⁹' => '\\textsuperscript{9}',
+    ];
+
     private function tex(string $value): string
+    {
+        $value = $this->escapar($value);
+        $value = strtr($value, self::UNICODE);
+
+        // O que sobrar fora do latim (com acentos) e da pontuação tipográfica vira o equivalente ASCII, ou "?".
+        return preg_replace_callback('/[^\x{0000}-\x{017F}\x{2013}\x{2014}\x{2018}\x{2019}\x{201C}\x{201D}\x{2026}]/u', function ($m) {
+            $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT', $m[0]);
+
+            return $ascii !== false && $ascii !== '' && ! str_contains($ascii, '?') ? $this->escapar($ascii) : '?';
+        }, $value);
+    }
+
+    private function escapar(string $value): string
     {
         return strtr($value, [
             '\\' => '\\textbackslash{}',

@@ -119,6 +119,24 @@ class PlagioBancaTest extends TestCase
         $this->actingAs($orientador)->get(route('avaliacoes.ata', $banca))
             ->assertOk()
             ->assertSee('Reprovado por plágio identificado pela banca (decisão unânime)');
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
+            ->assertSee('Reprovada por plágio identificado pela banca (decisão unânime)');
+    }
+
+    public function test_orientador_e_avisado_antes_de_finalizar_com_plagio_unanime(): void
+    {
+        [, $banca, $orientador, $avaliadores] = $this->cenario();
+        foreach ($avaliadores as $avaliador) {
+            $this->marcar($banca, $avaliador, 'Cap. 2 copiado.');
+        }
+        $this->concluirAutoavaliacao($banca, $orientador);
+
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
+            ->assertSee('A banca identificou plágio por unanimidade; o resultado será Reprovado.')
+            ->assertSee('<input type="hidden" name="resultado" value="reprovado">', false);
+
+        $this->actingAs($orientador)->post(route('avaliacoes.finalizar', $banca), ['resultado' => 'aprovado'])
+            ->assertSessionHas('success', fn ($msg) => str_contains($msg, 'plágio'));
     }
 
     public function test_avaliacao_enviada_nao_pode_ser_alterada_pelo_formulario(): void

@@ -555,8 +555,11 @@ class AvaliacaoController extends Controller
         }
 
         // Certificado de participação a cada avaliador e ao presidente; a falha não desfaz a finalização.
+        // O presidente é o orientador (não quem clicou em finalizar, que pode ser um coorientador).
+        $presidente = $banca->trabalhoAcademico->orientacoes()->where('tipo', 'orientador')
+            ->with('docenteProgramaVinculo.docenteProfile.user')->first()?->docenteProgramaVinculo?->docenteProfile?->user;
         $participantes = $avaliadores->map(fn ($m) => [$m->docenteProgramaVinculo?->docenteProfile?->user, 'avaliador'])
-            ->push([$user, 'presidente']);
+            ->push([$presidente, 'presidente']);
         $falhasCertificado = 0;
         foreach ($participantes as [$participante, $papel]) {
             if (! $participante?->email) {
@@ -574,6 +577,9 @@ class AvaliacaoController extends Controller
         $mensagem = $falhasEnvio === 0
             ? 'Banca finalizada. A ata e a folha de aprovação foram enviadas aos membros e o discente foi notificado por e-mail.'
             : "Banca finalizada e discente notificado, mas o envio da ata e da folha falhou para {$falhasEnvio} membro(s). Procure a Secretaria.";
+        if ($reprovadaPorPlagio) {
+            $mensagem .= ' A banca foi reprovada por plágio identificado por todos os avaliadores (decisão unânime).';
+        }
         if ($falhasCertificado > 0) {
             $mensagem .= " O certificado de participação não pôde ser gerado ou enviado para {$falhasCertificado} participante(s); ele pode ser baixado depois na página da banca.";
         }
@@ -613,7 +619,13 @@ class AvaliacaoController extends Controller
         $ehAvaliador = $vinculo && $banca->avaliadores()->where('docente_programa_vinculo_id', $vinculo->id)->exists();
         abort_unless($ehPresidente || $ehAvaliador, 403);
 
-        $path = $service->gerarPdf($banca, $user, $ehPresidente ? 'presidente' : 'avaliador');
+        try {
+            $path = $service->gerarPdf($banca, $user, $ehPresidente ? 'presidente' : 'avaliador');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['certificado' => 'Não foi possível gerar o certificado agora. Tente mais tarde ou procure a Secretaria.']);
+        }
 
         return Storage::disk('local')->download($path, "certificado-banca-{$banca->id}.pdf", ['Content-Type' => 'application/pdf']);
     }
