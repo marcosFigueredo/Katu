@@ -222,6 +222,24 @@
         {{-- ================================================================
              ÁREA DO ORIENTADOR — Status de todos os avaliadores
         ================================================================ --}}
+        @php
+            $integridadeBanca = app(\App\Services\IntegridadeBancaService::class);
+            $situacaoIntegridade = $integridadeBanca->situacao($banca);
+        @endphp
+        @if ($situacaoIntegridade === 'parcial' && $banca->status !== 'finalizada')
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-octagon me-1"></i>{{ \App\Services\IntegridadeBancaService::PENDENCIA }}
+                @if ($ehMembro)
+                    {{-- Os avaliadores veem onde foi indicado, sem saber quem marcou. --}}
+                    <ul class="mb-0 mt-2 small">
+                        @foreach ($integridadeBanca->indicacoes($banca) as $indicacao)
+                            <li>{{ $indicacao }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        @endif
+
         @if ($ehOrientador && $banca->tipo === 'defesa')
             @include('avaliacoes.partials.autoavaliacao-bloco')
         @endif

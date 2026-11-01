@@ -17,6 +17,8 @@ class BancaAvaliacao extends Model
         'status',
         'nota_final',
         'observacoes_gerais',
+        'plagio_identificado',
+        'plagio_indicacao',
         'enviada_em',
     ];
 
@@ -25,6 +27,7 @@ class BancaAvaliacao extends Model
         return [
             'nota_final' => 'float',
             'enviada_em' => 'datetime',
+            'plagio_identificado' => 'boolean',
         ];
     }
 

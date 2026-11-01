@@ -179,6 +179,27 @@
                 </div>
             </div>
 
+            @if (str_ends_with((string) $barema->tipo, '_confidencial'))
+                @php $plagioMarcado = (bool) old('plagio_identificado', $avaliacao->plagio_identificado ?? false); @endphp
+                <div class="card border-0 shadow-sm mb-4" x-data="{ plagio: {{ $plagioMarcado ? 'true' : 'false' }} }">
+                    <div class="card-body">
+                        <input type="hidden" name="plagio_identificado" value="0">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="plagio_identificado" id="plagio_identificado" value="1"
+                                   x-model="plagio" @checked($plagioMarcado) @disabled($somenteLeitura)>
+                            <label class="form-check-label fw-semibold text-danger" for="plagio_identificado">Identifiquei plágio</label>
+                        </div>
+                        <p class="small text-muted mb-2">Se todos os avaliadores marcarem, a banca é reprovada. Se só parte marcar, a banca não pode ser finalizada até se alinhar.</p>
+                        <div x-show="plagio" x-cloak>
+                            <label class="form-label small" for="plagio_indicacao">Onde está o plágio (trechos, páginas, fontes)</label>
+                            <textarea name="plagio_indicacao" id="plagio_indicacao" class="form-control @error('plagio_indicacao') is-invalid @enderror" rows="3" maxlength="3000"
+                                      {{ $somenteLeitura ? 'readonly' : '' }}>{{ old('plagio_indicacao', $avaliacao->plagio_indicacao ?? '') }}</textarea>
+                            @error('plagio_indicacao')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Resumo da nota --}}
             <div class="card border-0 shadow-sm mb-4" style="border-left:4px solid #00303A !important;">
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">

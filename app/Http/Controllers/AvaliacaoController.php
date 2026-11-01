@@ -12,6 +12,7 @@ use App\Models\BancaAvaliacaoNota;
 use App\Models\Barema;
 use App\Models\Orientacao;
 use App\Services\BaremasDaBancaService;
+use App\Services\IntegridadeBancaService;
 use App\Services\DadosLattesBancaService;
 use App\Services\FolhaAprovacaoLatexService;
 use Illuminate\Http\Request;
@@ -279,16 +280,24 @@ class AvaliacaoController extends Controller
             ->get()
             ->flatMap->itens;
 
+        $confidencial = str_ends_with((string) $barema->tipo, '_confidencial');
         $rules = [
             'acao'               => ['required', 'in:rascunho,enviar'],
             'observacoes_gerais' => ['nullable', 'string', 'max:3000'],
         ];
+        if ($confidencial) {
+            // Plágio só no formulário sigiloso; a indicação de onde é obrigatória quando marcado.
+            $rules['plagio_identificado'] = ['nullable', 'boolean'];
+            $rules['plagio_indicacao'] = ['exclude_unless:plagio_identificado,1', 'required', 'string', 'max:3000'];
+        }
         foreach ($todosItens as $item) {
             $rules["notas.{$item->id}"]       = ['nullable', 'numeric', 'min:0', "max:{$item->nota_maxima}"];
             $rules["observacoes.{$item->id}"]  = ['nullable', 'string', 'max:1000'];
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'plagio_indicacao.required' => 'Indique onde está o plágio (trechos, páginas, fontes).',
+        ]);
 
         foreach ($todosItens as $item) {
             BancaAvaliacaoNota::updateOrCreate(
@@ -302,7 +311,12 @@ class AvaliacaoController extends Controller
             );
         }
 
-        $avaliacao->update(['observacoes_gerais' => $validated['observacoes_gerais'] ?? null]);
+        $plagio = $confidencial && $request->boolean('plagio_identificado');
+        $avaliacao->update([
+            'observacoes_gerais' => $validated['observacoes_gerais'] ?? null,
+            'plagio_identificado' => $plagio,
+            'plagio_indicacao' => $plagio ? $validated['plagio_indicacao'] : null,
+        ]);
 
         if ($validated['acao'] === 'enviar') {
             $faltam = $todosItens->filter(fn ($i) => $i->obrigatorio)
@@ -421,6 +435,14 @@ class AvaliacaoController extends Controller
             return back()->withErrors(['finalizar' => 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.']);
         }
 
+        $integridade = app(IntegridadeBancaService::class)->situacao($banca);
+        if ($integridade === 'parcial') {
+            return back()->withErrors(['finalizar' => IntegridadeBancaService::PENDENCIA]);
+        }
+        // Plágio identificado por todos os avaliadores reprova a banca, qualquer que seja o resultado escolhido.
+        $reprovadaPorPlagio = $integridade === 'unanime';
+        $resultado = $reprovadaPorPlagio ? 'reprovado' : $request->resultado;
+
         // Nota média visível (orientador, discente, Secretaria, relatórios): só as avaliações padrão,
         // para que a confidencial não possa ser deduzida. A média com todas fica para a CPA.
         $enviadas = BancaAvaliacao::whereIn('banca_membro_id', $avaliadores->pluck('id'))
@@ -435,14 +457,15 @@ class AvaliacaoController extends Controller
 
         $banca->update([
             'status'         => 'finalizada',
-            'resultado'      => $request->resultado,
+            'resultado'      => $resultado,
+            'reprovada_por_plagio' => $reprovadaPorPlagio,
             'nota_media'     => $notaMedia,
             'nota_media_cpa' => $notaMediaCpa,
             'ata_enviada_em' => now(),
         ]);
 
         // Atualiza status do trabalho acadêmico
-        if (in_array($request->resultado, ['aprovado', 'aprovado_modificacoes'])) {
+        if (in_array($resultado, ['aprovado', 'aprovado_modificacoes'])) {
             $novoStatus = str_starts_with($banca->tipo, 'defesa') ? 'defendido' : 'qualificado';
             $banca->trabalhoAcademico->update(['status' => $novoStatus]);
         }
@@ -627,6 +650,8 @@ class AvaliacaoController extends Controller
     private function autorizarAta(Banca $banca): void
     {
         $user = auth()->user();
+
+        abort_if(app(IntegridadeBancaService::class)->situacao($banca) === 'parcial', 403, IntegridadeBancaService::PENDENCIA);
 
         if ($user->categoria === 'sec') {
             $this->garantirProgramaDaSecretaria($banca->trabalhoAcademico?->programa_id);

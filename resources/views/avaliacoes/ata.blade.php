@@ -330,6 +330,9 @@
             REPROVADO
             <span style="font-weight:400; font-size:9pt;">(anexar parecer circunstanciado elaborado pela Comissão Examinadora)</span>
         </div>
+        @if ($banca->reprovada_por_plagio)
+            <div class="resultado-opcao" style="font-weight:700;">Reprovado por plágio identificado pela banca (decisão unânime)</div>
+        @endif
     </div>
 
     {{-- Instrução --}}

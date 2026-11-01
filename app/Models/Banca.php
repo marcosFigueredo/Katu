@@ -17,6 +17,7 @@ class Banca extends Model
         'dados_pesquisa_enviados',
         'homologacao_tentativa',
         'resultado',
+        'reprovada_por_plagio',
         'nota_media',
         'nota_media_cpa',
         'data_hora',
@@ -45,6 +46,7 @@ class Banca extends Model
             'devolvida_em'          => 'datetime',
             'homologacao_tentativa' => 'integer',
             'dados_pesquisa_enviados' => 'array',
+            'reprovada_por_plagio' => 'boolean',
         ];
     }
 
