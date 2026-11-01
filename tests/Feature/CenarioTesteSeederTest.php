@@ -105,6 +105,25 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertFalse($dados->seres_humanos);
     }
 
+    public function test_cenario_tem_portaria_e_recomendacoes_da_qualificacao(): void
+    {
+        $this->programaDoUsuario();
+
+        $this->seed(CenarioTesteSeeder::class);
+
+        $trabalho = User::where('email', 'discente.completo@ppgmsb.test')->firstOrFail()
+            ->discenteProfile->vinculosPrograma->first()->trabalhoAcademico;
+        $this->assertNotNull($trabalho->programa->portaria_coordenador);
+        $this->assertNotNull($trabalho->programa->coordenador_id);
+
+        $recomendacoes = app(\App\Services\PedidoHomologacaoService::class)->recomendacoesDaQualificacao($trabalho);
+        $this->assertCount(2, $recomendacoes);
+        $this->assertSame(0, \App\Models\RecomendacaoResposta::whereIn('banca_recomendacao_id', $recomendacoes->pluck('id'))->count());
+
+        $this->seed(CenarioTesteSeeder::class);
+        $this->assertCount(2, app(\App\Services\PedidoHomologacaoService::class)->recomendacoesDaQualificacao($trabalho));
+    }
+
     public function test_trabalho_da_juliana_tem_itens_da_defesa(): void
     {
         $this->programaDoUsuario();

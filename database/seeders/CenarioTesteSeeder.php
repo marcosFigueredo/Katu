@@ -521,6 +521,30 @@ class CenarioTesteSeeder extends Seeder
             );
         }
 
+        // Recomendações da qualificação, para a Juliana responder antes de enviar a defesa
+        foreach ([
+            [$membroInterno, 'Ampliar a revisão de literatura sobre modelos estocásticos aplicados à vigilância.'],
+            [$membroExterno, 'Justificar a escolha dos parâmetros de calibração bayesiana.'],
+        ] as [$docente, $texto]) {
+            $membro = BancaMembro::where('banca_id', $qualificacao->id)->where('docente_programa_vinculo_id', $docente->id)->first();
+            if ($membro) {
+                \App\Models\BancaRecomendacao::updateOrCreate(
+                    ['banca_id' => $qualificacao->id, 'banca_membro_id' => $membro->id, 'ordem' => 1],
+                    ['texto' => $texto],
+                );
+            }
+        }
+
+        // Coordenação e portaria (certificado de participação na banca)
+        $programa = $trabalho->programa;
+        if ($programa) {
+            $programa->update([
+                'coordenador_id' => $programa->coordenador_id ?? $orientador->docenteProfile?->user_id,
+                'portaria_coordenador' => $programa->portaria_coordenador
+                    ?? 'Portaria nº 123/2025, publicada no Diário Oficial do Estado da Bahia em 10/03/2025 (exemplo)',
+            ]);
+        }
+
         // Banca de defesa proposta, sincronizada com dissertacao/dissertacao.tex
         $defesa = Banca::updateOrCreate(
             ['trabalho_academico_id' => $trabalho->id, 'tipo' => 'defesa'],
