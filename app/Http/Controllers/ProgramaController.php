@@ -45,6 +45,7 @@ class ProgramaController extends Controller
             'ano_inicio' => ['nullable', 'integer', 'digits:4', 'min:1950', 'max:' . now()->year],
             'coordenador_id' => ['nullable', 'integer', $coordenadorPermanente],
             'vice_coordenador_id' => ['nullable', 'integer', 'different:coordenador_id', $coordenadorPermanente],
+            'portaria_coordenador' => ['nullable', 'string', 'max:500'],
             'max_coorientadores' => ['nullable', 'integer', 'min:0', 'max:5'],
             'email' => ['nullable', 'email', 'max:255'],
             'site' => ['nullable', 'string', 'max:255'],

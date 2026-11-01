@@ -240,6 +240,14 @@
             </div>
         @endif
 
+        @if ($banca->status === 'finalizada')
+            <div class="mb-3">
+                <a href="{{ route('avaliacoes.certificado', $banca) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-award me-1"></i>Baixar meu certificado de participação
+                </a>
+            </div>
+        @endif
+
         @php
             $minhaSigilosa = $ehMembro && $meuMembro && ! in_array($banca->status, ['finalizada', 'cancelada'], true)
                 ? \App\Models\BancaAvaliacao::where('banca_membro_id', $meuMembro->id)->where('status', 'enviada')

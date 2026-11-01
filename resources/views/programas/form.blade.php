@@ -118,6 +118,15 @@
                                 <x-input-error :messages="$errors->get('coordenador_id')" class="mt-2" />
                             </div>
 
+                            <div class="md:col-span-2">
+                                <x-input-label for="portaria_coordenador" value="Portaria de designação do(a) coordenador(a)" />
+                                <input id="portaria_coordenador" name="portaria_coordenador" type="text" maxlength="500" class="{{ $campoClasse }}"
+                                       value="{{ old('portaria_coordenador', $programa->portaria_coordenador) }}"
+                                       placeholder="Ex.: Portaria nº 123/2025, publicada no Diário Oficial do Estado da Bahia em 10/03/2025">
+                                <p class="text-xs text-gray-500 mt-1">Sai no certificado de participação na banca, abaixo do nome do(a) coordenador(a).</p>
+                                <x-input-error :messages="$errors->get('portaria_coordenador')" class="mt-2" />
+                            </div>
+
                             <div>
                                 <x-input-label for="vice_coordenador_id" value="Vice-coordenador(a)" />
                                 <select id="vice_coordenador_id" name="vice_coordenador_id" class="{{ $campoClasse }}">

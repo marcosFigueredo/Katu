@@ -15,6 +15,7 @@ class Programa extends Model
         'ano_inicio',
         'coordenador_id',
         'vice_coordenador_id',
+        'portaria_coordenador',
         'max_coorientadores',
         'logo_path',
         'nome',

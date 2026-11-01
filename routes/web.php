@@ -253,6 +253,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('avaliacao-orientando.form');
     Route::post('/bancas/{banca}/avaliacao-orientando', [\App\Http\Controllers\AvaliacaoOrientandoController::class, 'store'])
         ->name('avaliacao-orientando.store');
+    Route::get('/avaliacoes/{banca}/certificado', [AvaliacaoController::class, 'certificado'])
+        ->name('avaliacoes.certificado');
     Route::post('/avaliacoes/{banca}/plagio', [AvaliacaoController::class, 'plagio'])
         ->name('avaliacoes.plagio');
     Route::get('/bancas/{banca}/aprovacao-etica', [InformacoesAdicionaisController::class, 'eticaBanca'])

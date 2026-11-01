@@ -13,6 +13,8 @@ use App\Models\Barema;
 use App\Models\Orientacao;
 use App\Services\BaremasDaBancaService;
 use App\Services\IntegridadeBancaService;
+use App\Services\CertificadoBancaLatexService;
+use App\Mail\CertificadoBancaMail;
 use App\Services\DadosLattesBancaService;
 use App\Services\FolhaAprovacaoLatexService;
 use Illuminate\Http\Request;
@@ -552,9 +554,29 @@ class AvaliacaoController extends Controller
             }
         }
 
+        // Certificado de participação a cada avaliador e ao presidente; a falha não desfaz a finalização.
+        $participantes = $avaliadores->map(fn ($m) => [$m->docenteProgramaVinculo?->docenteProfile?->user, 'avaliador'])
+            ->push([$user, 'presidente']);
+        $falhasCertificado = 0;
+        foreach ($participantes as [$participante, $papel]) {
+            if (! $participante?->email) {
+                continue;
+            }
+            try {
+                $pdf = app(CertificadoBancaLatexService::class)->gerarPdf($banca, $participante, $papel);
+                Mail::to($participante->email)->send(new CertificadoBancaMail($banca, $participante, $papel, $pdf));
+            } catch (\Throwable $e) {
+                report($e);
+                $falhasCertificado++;
+            }
+        }
+
         $mensagem = $falhasEnvio === 0
             ? 'Banca finalizada. A ata e a folha de aprovação foram enviadas aos membros e o discente foi notificado por e-mail.'
             : "Banca finalizada e discente notificado, mas o envio da ata e da folha falhou para {$falhasEnvio} membro(s). Procure a Secretaria.";
+        if ($falhasCertificado > 0) {
+            $mensagem .= " O certificado de participação não pôde ser gerado ou enviado para {$falhasCertificado} participante(s); ele pode ser baixado depois na página da banca.";
+        }
 
         return redirect()
             ->route('avaliacoes.banca', $banca)
@@ -577,6 +599,23 @@ class AvaliacaoController extends Controller
         ]);
 
         return view('avaliacoes.ata', compact('banca'));
+    }
+
+    /** Certificado de participação: avaliadores e presidente, com a banca finalizada. */
+    public function certificado(Banca $banca, CertificadoBancaLatexService $service)
+    {
+        $user = auth()->user();
+        abort_unless($user->categoria === 'docente' && $banca->status === 'finalizada', 403);
+
+        $vinculo = $user->docenteProfile?->vinculosPrograma()->first();
+        $ehPresidente = $vinculo && $banca->trabalhoAcademico->orientacoes()
+            ->where('tipo', 'orientador')->where('docente_programa_vinculo_id', $vinculo->id)->exists();
+        $ehAvaliador = $vinculo && $banca->avaliadores()->where('docente_programa_vinculo_id', $vinculo->id)->exists();
+        abort_unless($ehPresidente || $ehAvaliador, 403);
+
+        $path = $service->gerarPdf($banca, $user, $ehPresidente ? 'presidente' : 'avaliador');
+
+        return Storage::disk('local')->download($path, "certificado-banca-{$banca->id}.pdf", ['Content-Type' => 'application/pdf']);
     }
 
     public function folhaAprovacao(Banca $banca, FolhaAprovacaoLatexService $service)
