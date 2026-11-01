@@ -45,6 +45,7 @@ use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroCpaController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\MeuProjetoPesquisaController;
+use App\Http\Controllers\CpaPeriodoController;
 use App\Http\Controllers\CpaQualidadeController;
 use App\Http\Controllers\CriterioCpaController;
 use App\Http\Controllers\HomologacaoBancaController;
@@ -111,6 +112,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/membros-cpa/{membroCpa}/encerrar', [MembroCpaController::class, 'encerrar'])->name('membros-cpa.encerrar');
 
     Route::get('/cpa', [CpaQualidadeController::class, 'index'])->name('cpa.index');
+    Route::get('/cpa/periodos', [CpaPeriodoController::class, 'periodos'])->name('cpa.periodos.index');
+    Route::post('/cpa/periodos', [CpaPeriodoController::class, 'store'])->name('cpa.periodos.store');
+    Route::put('/cpa/periodos/{periodo}', [CpaPeriodoController::class, 'update'])->name('cpa.periodos.update');
+    Route::get('/cpa/periodos/{periodo}/pesos/{grupo}', [CpaPeriodoController::class, 'pesos'])
+        ->whereIn('grupo', ['dimensao', 'fonte'])->name('cpa.pesos.edit');
+    Route::put('/cpa/periodos/{periodo}/pesos/{grupo}', [CpaPeriodoController::class, 'salvarPesos'])
+        ->whereIn('grupo', ['dimensao', 'fonte'])->name('cpa.pesos.update');
 
     Route::get('/membros-externos', [MembroExternoController::class, 'index'])
         ->name('membros-externos.index');
