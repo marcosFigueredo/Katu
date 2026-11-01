@@ -22,6 +22,8 @@ use App\Models\Instituicao;
 use App\Models\LinhaPesquisa;
 use App\Models\OrcidWork;
 use App\Models\Bolsa;
+use App\Models\MembroCpa;
+use App\Models\PeriodoQualidade;
 use App\Models\Orientacao;
 use App\Models\ProjetoPesquisa;
 use App\Models\TrabalhoProjetoVinculo;
@@ -99,6 +101,16 @@ class CenarioTesteSeeder extends Seeder
         ]);
 
         $this->projetosEBolsas($permanente1, $permanente2, $completo, $semOrcid, $comTroca);
+
+        // CPA: Luciana com mandato vigente e o quadriênio de avaliação (faixas padrão, pesos iguais até a CPA usar o SWARA).
+        MembroCpa::updateOrCreate(
+            ['programa_id' => $programa->id, 'user_id' => $colaborador->docenteProfile->user_id],
+            ['inicio_em' => now()->subMonths(3)->toDateString(), 'fim_em' => null, 'numero_ato' => 'Portaria nº 45/2026 (exemplo)'],
+        );
+        PeriodoQualidade::updateOrCreate(
+            ['programa_id' => $programa->id, 'nome' => 'Quadriênio 2025–2028'],
+            ['inicio_em' => '2025-01-01', 'fim_em' => '2028-12-31'],
+        );
 
         $this->baremasDeTeste($programa);
         $this->baremaAutoavaliacaoDeTeste($programa);
