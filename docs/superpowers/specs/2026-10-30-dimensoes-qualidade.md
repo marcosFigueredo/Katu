@@ -398,6 +398,13 @@ Redefinido em 2026-10-30: **apenas 4 atividades**, informadas pelo estudante na 
 
 Mais as **publicações** do estudante, buscadas no OpenAlex, com opção de indicar as que não estiverem lá.
 
+**Redefinido em 2026-10-31 (Etapa 2b):** a lista de atividades é **definida pela Secretaria** (vale para qualquer curso: nome, detalhes, quantidade exigida, pedido de qualificação ou de defesa, informada pelo estudante ou pela própria Secretaria); as 4 acima são a lista inicial. O estudante lança as realizadas; **faltando atividade, não consegue enviar à homologação**. A Secretaria confere os lançamentos na homologação.
+
+**Publicações (2026-10-31):** o curso define o mínimo para a defesa (ex.: 1 no mestrado, 4 no doutorado) — **não há defesa sem publicação**; contam todos os tipos. Na homologação da defesa a Secretaria marca, para análise futura: saiu da dissertação · situação (publicada, aceita, submetida) · estudante primeiro autor · orientador coautor · coautoria internacional · conta para o mínimo.
+
+### E. Na defesa — Informações adicionais (2026-10-31)
+Sete perguntas obrigatórias, com desdobramento quando a resposta é "Sim": conflito de interesses (descrição) · disponibilidade de dados (uma de quatro; repositório público exige link) · amostras físicas (disponibilidade ou restrições) · aprovação ética (PDF da aprovação) · participantes humanos ou animais (PDF da certidão do comitê de ética) · uso de IA generativa (ferramenta e versão; etapas ou seções) · declaração de originalidade. A banca vê as respostas e os PDFs; o espelho continua privado à CPA.
+
 ### D. No ato da defesa (mestrado ou doutorado) — Publicação dos resultados
 O estudante indica quais publicações saíram da dissertação.
 
@@ -407,14 +414,14 @@ Não construir tudo de uma vez: cada etapa tem plano próprio e entrega algo uti
 
 1. **Dimensões e vínculo (base)** — cadastro das 8 dimensões; toda pergunta de barema ligada a uma dimensão (obrigatório; barema só ativa com vínculo completo); cada nota gravada com a dimensão congelada no momento da avaliação.
 2. **Submissão enriquecida (estudante)** — declarações de submissão (originalidade, template, IA, plágio); código, dados e ética (CAAE, comissão de ética animal); espelho do discente (notas 0–10 nas perguntas da banca); atividades formativas (4, check da Secretaria); produção associada (publicações, extensão, popularização); tipo de impacto na defesa. *A redação oficial da IEEE entra aqui.*
-3. **Banca** — check de plágio no sigiloso (unanimidade reprova; marcação parcial bloqueia finalização e documentos); recomendações da qualificação (registro e resposta); avaliação do orientando pelo orientador (só na defesa).
+3. **Banca** — **certificado de participação na banca** (dívida registrada em 2026-10-31: gerado automaticamente após o encerramento, enviado por e-mail, assinado pelo coordenador do curso, com destaque para a portaria de nomeação no Diário Oficial); check de plágio no sigiloso (unanimidade reprova; marcação parcial bloqueia finalização e documentos); recomendações da qualificação (registro e resposta); avaliação do orientando pelo orientador (só na defesa).
 4. **Cadastros da Secretaria** — projetos dos docentes permanentes (um por orientador, vínculo automático do estudante); bolsa.
 5. **Cálculo das dimensões** — regras de cada dimensão, ponderações configuráveis pela CPA, medidas automáticas (aderência ao projeto pelo Ollama, fator de impacto e citações pelo OpenAlex), acompanhamento das citações em 2 e 5 anos.
 6. **Perfil CPA** — membros com mandato e número do ato, acesso na dashboard, conflito de interesse sinalizado e auditado, dashboard e relatórios (**elementos da dashboard definidos pelo usuário quando chegar a etapa**).
 
 ## Perguntas em aberto
 
-- [ ] Redação oficial da declaração de dados da IEEE: incluir na Etapa 2.
+- [x] Redação oficial da declaração de dados da IEEE: não há texto oficial; substituída pelas **Informações adicionais** da defesa (decidido em 2026-10-31).
 - [ ] Elementos da dashboard da CPA (inclusive se há nota geral por dissertação): o usuário indica na Etapa 6.
 
 ## Referências usadas

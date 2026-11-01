@@ -104,4 +104,32 @@ class CenarioTesteSeederTest extends TestCase
         $this->assertNotNull($dados->codigo_link);
         $this->assertFalse($dados->seres_humanos);
     }
+
+    public function test_trabalho_da_juliana_tem_itens_da_defesa(): void
+    {
+        $this->programaDoUsuario();
+
+        $this->seed(CenarioTesteSeeder::class);
+
+        $trabalho = User::where('email', 'discente.completo@ppgmsb.test')->firstOrFail()
+            ->discenteProfile->vinculosPrograma->first()->trabalhoAcademico;
+
+        $this->assertTrue($trabalho->impacto->impacto_cientifico_aplicavel);
+        $this->assertTrue($trabalho->impacto->impacto_social_aplicavel);
+        $this->assertSame(4, \App\Models\AtividadeFormativa::where('programa_id', $trabalho->programa_id)->count());
+        $this->assertSame(2, $trabalho->atividadesRealizadas()->whereNull('conferencia')->count());
+        $publicacao = $trabalho->publicacoes()->sole();
+        $this->assertSame('artigo', $publicacao->tipo);
+        $this->assertSame('10.1016/j.annepidem.2025.06.012', $publicacao->doi);
+        $this->assertSame(1, $trabalho->extensoes()->count());
+        $this->assertSame(1, $trabalho->popularizacoes()->count());
+        $this->assertNotNull($trabalho->producao_confirmada_em);
+        $this->assertTrue($trabalho->informacoesAdicionais->uso_ia);
+        $this->assertSame('Claude', $trabalho->informacoesAdicionais->ia_ferramentas);
+
+        // Idempotente: rodar de novo não duplica.
+        $this->seed(CenarioTesteSeeder::class);
+        $this->assertSame(1, $trabalho->publicacoes()->count());
+        $this->assertSame(2, $trabalho->atividadesRealizadas()->count());
+    }
 }

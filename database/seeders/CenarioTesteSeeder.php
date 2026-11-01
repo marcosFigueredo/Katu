@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\AreaConcentracao;
+use App\Models\AtividadeFormativa;
+use App\Models\TrabalhoImpacto;
+use App\Models\TrabalhoInformacoesAdicionais;
 use App\Models\AreaCnpq;
 use App\Models\SetorCnae;
 use App\Models\Banca;
@@ -356,6 +359,61 @@ class CenarioTesteSeeder extends Seeder
         }
     }
 
+    /** Impacto, atividades formativas, produção associada e Informações adicionais da Juliana (pedido de defesa). */
+    private function itensDaDefesa(TrabalhoAcademico $trabalho): void
+    {
+        TrabalhoImpacto::updateOrCreate(['trabalho_academico_id' => $trabalho->id], [
+            'impacto_cientifico_aplicavel' => true,
+            'impacto_cientifico_descricao' => 'Arquitetura híbrida de modelagem estocástica e aprendizado de máquina para vigilância epidemiológica.',
+            'impacto_social_aplicavel' => true,
+            'impacto_social_descricao' => 'Apoio às equipes de vigilância do SUS na antecipação de surtos.',
+        ]);
+
+        AtividadeFormativa::criarPadroes($trabalho->programa);
+        foreach ([
+            'Publicação de Produção Científica' => 'Artigo publicado no Annals of Epidemiology (2025).',
+            'Atividade Extensionista' => 'Oficina de modelagem epidemiológica para a rede estadual de ensino.',
+        ] as $nome => $descricao) {
+            $atividade = AtividadeFormativa::where('programa_id', $trabalho->programa_id)->where('nome', $nome)->first();
+            if ($atividade) {
+                $trabalho->atividadesRealizadas()->updateOrCreate(
+                    ['atividade_formativa_id' => $atividade->id],
+                    ['descricao' => $descricao],
+                );
+            }
+        }
+
+        $trabalho->publicacoes()->updateOrCreate(['doi' => '10.1016/j.annepidem.2025.06.012'], [
+            'tipo' => 'artigo',
+            'titulo' => 'Integrated statistical modeling and machine learning techniques with SHAP for epidemiological data analysis',
+            'ano' => 2025,
+            'veiculo' => 'Annals of Epidemiology',
+            'issn' => '1047-2797',
+        ]);
+        $trabalho->extensoes()->updateOrCreate(['titulo' => 'Oficina de modelagem epidemiológica'], [
+            'tipo' => 'oficina', 'publico' => 40, 'parceiro' => 'Colégio Estadual de Alagoinhas', 'carga_horaria' => 8,
+            'inicio' => '2025-05-10', 'fim' => '2025-05-11', 'registro_proex' => 'PROEX 012/2025',
+        ]);
+        $trabalho->popularizacoes()->updateOrCreate(['titulo' => 'Epidemias e modelos no rádio'], [
+            'tipo' => 'podcast', 'veiculo' => 'Rádio UNEB', 'alcance' => 1200, 'data' => '2025-08-01',
+        ]);
+        $trabalho->update(['producao_confirmada_em' => now()]);
+
+        TrabalhoInformacoesAdicionais::updateOrCreate(['trabalho_academico_id' => $trabalho->id], [
+            'conflito_interesses' => false,
+            'disponibilidade_dados' => 'repositorio_publico',
+            'dados_repositorio' => 'https://doi.org/10.5281/zenodo.0000000',
+            'amostras_fisicas' => false,
+            'aprovacao_etica' => false,
+            'participantes' => false,
+            'uso_ia' => true,
+            'ia_ferramentas' => 'Claude',
+            'ia_etapas' => 'Revisão de texto da introdução e do resumo.',
+            'originalidade_confirmada' => true,
+            'preenchido_em' => now(),
+        ]);
+    }
+
     /**
      * Sincroniza os metadados do trabalho e a banca de defesa da discente Juliana Ribeiro Santos
      * com os dados fictícios de dissertacao/dissertacao.tex.
@@ -439,6 +497,8 @@ class CenarioTesteSeeder extends Seeder
             'ceua_protocolo' => null,
             'preenchido_em' => now(),
         ]);
+
+        $this->itensDaDefesa($trabalho);
 
         // Qualificação já aprovada para permitir banca de defesa
         $qualificacao = Banca::updateOrCreate(
