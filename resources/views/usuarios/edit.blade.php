@@ -405,6 +405,10 @@
             @include('usuarios.partials.orientacao')
         @endif
 
+        @if ($projetosDocente !== null)
+            @include('usuarios.partials.projeto-pesquisa')
+        @endif
+
     </div>
 
     <script>

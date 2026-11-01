@@ -41,6 +41,7 @@ use App\Http\Controllers\InformacoesAdicionaisController;
 use App\Http\Controllers\RecomendacoesQualificacaoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
+use App\Http\Controllers\MeuProjetoPesquisaController;
 use App\Http\Controllers\CriterioCpaController;
 use App\Http\Controllers\HomologacaoBancaController;
 
@@ -309,6 +310,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/avaliacoes/{banca}/folha-aprovacao', [AvaliacaoController::class, 'folhaAprovacao'])
         ->name('avaliacoes.folha-aprovacao');
+
+    Route::get('/meu-projeto', [MeuProjetoPesquisaController::class, 'edit'])->name('meu-projeto.edit');
+    Route::post('/meu-projeto', [MeuProjetoPesquisaController::class, 'store'])->name('meu-projeto.store');
+    Route::put('/meu-projeto/{projeto}', [MeuProjetoPesquisaController::class, 'update'])->name('meu-projeto.update');
 });
 
 // Área do discente – envio e análise de documentos

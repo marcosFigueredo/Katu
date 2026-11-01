@@ -527,7 +527,16 @@ class UsuarioController extends Controller
             ? app(OrientacaoService::class)->trocaBloqueada($trabalhoOrientacao)
             : null;
 
+        // Bloco "Projeto de pesquisa" (só leitura) para docente permanente do programa.
+        $vinculoDocente = $programaAtual
+            ? $usuario->docenteProfile?->vinculosPrograma->firstWhere('programa_id', $programaAtual->id)
+            : null;
+        $projetosDocente = $vinculoDocente?->ehPermanente()
+            ? $vinculoDocente->projetos()->orderByDesc('id')->get()
+            : null;
+
         return view('usuarios.edit', compact(
+            'projetosDocente',
             'trabalhoOrientacao',
             'motivoTrocaBloqueada',
             'docentesOrientacao',

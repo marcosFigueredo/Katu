@@ -26,6 +26,23 @@
             </div>
         @else
 
+        @if ($vinculo->ehPermanente())
+            @php $projetoAtivo = $vinculo->projetoAtivo(); @endphp
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="small text-muted"><i class="bi bi-journal-text me-1"></i>Meu projeto de pesquisa</div>
+                        @if ($projetoAtivo)
+                            <div class="fw-semibold">{{ $projetoAtivo->titulo }}</div>
+                        @else
+                            <div class="text-danger fw-semibold">Cadastre seu projeto de pesquisa: seus orientandos precisam dele para enviar a qualificação e a defesa.</div>
+                        @endif
+                    </div>
+                    <a href="{{ route('meu-projeto.edit') }}" class="btn btn-sm btn-outline-primary">{{ $projetoAtivo ? 'Ver ou trocar' : 'Cadastrar' }}</a>
+                </div>
+            </div>
+        @endif
+
         {{-- ================================================================
              BANCAS ONDE É AVALIADOR
         ================================================================ --}}
