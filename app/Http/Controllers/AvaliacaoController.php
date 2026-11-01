@@ -490,6 +490,10 @@ class AvaliacaoController extends Controller
             return back()->withErrors(['finalizar' => 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.']);
         }
 
+        if ($this->avaliacaoOrientandoPendente($banca)) {
+            return back()->withErrors(['finalizar' => 'Conclua a avaliação do orientando para finalizar a banca e liberar a ata e a folha de aprovação.']);
+        }
+
         $integridade = app(IntegridadeBancaService::class)->situacao($banca);
         if ($integridade === 'parcial') {
             return back()->withErrors(['finalizar' => IntegridadeBancaService::PENDENCIA]);
@@ -728,6 +732,7 @@ class AvaliacaoController extends Controller
 
         if ($ehOrientador) {
             abort_if($this->autoavaliacaoPendente($banca, $vinculo->id), 403, 'Conclua sua autoavaliação para finalizar a banca e liberar a ata e a folha de aprovação.');
+            abort_if($this->avaliacaoOrientandoPendente($banca), 403, 'Conclua a avaliação do orientando para finalizar a banca e liberar a ata e a folha de aprovação.');
 
             return;
         }
@@ -741,6 +746,14 @@ class AvaliacaoController extends Controller
     }
 
     /** Na defesa, a ata e a folha só são liberadas depois da autoavaliação do orientador. */
+    /** Na defesa, o orientador também avalia o orientando antes de finalizar (privado à CPA). */
+    private function avaliacaoOrientandoPendente(Banca $banca): bool
+    {
+        return $banca->tipo === 'defesa'
+            && $banca->status !== 'finalizada'
+            && ! \App\Models\AvaliacaoOrientando::where('banca_id', $banca->id)->exists();
+    }
+
     private function autoavaliacaoPendente(Banca $banca, int $vinculoId): bool
     {
         return $banca->tipo === 'defesa'

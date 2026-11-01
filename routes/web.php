@@ -249,6 +249,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('bancas.homologacao.show');
     Route::post('/bancas/{banca}/homologacao/responder', [HomologacaoBancaController::class, 'responder'])
         ->name('bancas.homologacao.responder');
+    Route::get('/bancas/{banca}/avaliacao-orientando', [\App\Http\Controllers\AvaliacaoOrientandoController::class, 'form'])
+        ->name('avaliacao-orientando.form');
+    Route::post('/bancas/{banca}/avaliacao-orientando', [\App\Http\Controllers\AvaliacaoOrientandoController::class, 'store'])
+        ->name('avaliacao-orientando.store');
     Route::post('/avaliacoes/{banca}/plagio', [AvaliacaoController::class, 'plagio'])
         ->name('avaliacoes.plagio');
     Route::get('/bancas/{banca}/aprovacao-etica', [InformacoesAdicionaisController::class, 'eticaBanca'])

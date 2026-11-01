@@ -199,6 +199,12 @@ class PlagioBancaTest extends TestCase
             'barema_id' => Barema::where('tipo', 'autoavaliacao_orientador')->value('id'),
             'nota_final' => 9, 'enviada_em' => now(),
         ]);
+        // Na defesa o presidente também avalia o orientando antes de finalizar.
+        \App\Models\AvaliacaoOrientando::create([
+            'banca_id' => $banca->id,
+            'docente_programa_vinculo_id' => $orientador->docenteProfile->vinculosPrograma()->first()->id,
+            'enviada_em' => now(),
+        ]);
     }
 
     /** Defesa homologada em avaliação; com $enviar, todas as avaliações (padrão e confidencial) já enviadas. */

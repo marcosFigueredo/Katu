@@ -29,3 +29,28 @@
         @endif
     </div>
 </div>
+
+{{-- Avaliação do orientando (só defesa): privada à CPA, aqui só o status. --}}
+@php $avaliacaoOrientando = \App\Models\AvaliacaoOrientando::where('banca_id', $banca->id)->first(); @endphp
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h3 class="h6 fw-bold mb-2" style="color:#00303A;"><i class="bi bi-mortarboard me-1"></i>Avaliação do orientando</h3>
+        @if ($avaliacaoOrientando)
+            <div class="d-flex align-items-center gap-2 text-success">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <span class="fw-semibold">Avaliação do orientando concluída em {{ $avaliacaoOrientando->enviada_em->format('d/m/Y \à\s H:i') }}.</span>
+            </div>
+            <p class="small text-muted mb-0 mt-1">As notas são privadas à CPA.</p>
+        @elseif ($banca->homologacao_status === 'homologada' && ! in_array($banca->status, ['finalizada', 'cancelada'], true))
+            <p class="small text-muted mb-3">
+                Avalie o seu orientando como pesquisador (domínio do tema e do método, capacidade crítica, independência, amadurecimento).
+                Não entra no resultado da banca, mas é condição para finalizá-la. As notas são privadas à CPA.
+            </p>
+            <a href="{{ route('avaliacao-orientando.form', $banca) }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil-square me-1"></i>Avaliar o orientando
+            </a>
+        @else
+            <p class="small text-muted mb-0">A avaliação do orientando fica disponível com a banca homologada.</p>
+        @endif
+    </div>
+</div>
