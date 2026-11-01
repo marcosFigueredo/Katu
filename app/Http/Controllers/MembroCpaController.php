@@ -49,6 +49,15 @@ class MembroCpaController extends Controller
         return redirect()->route('membros-cpa.index')->with('success', 'Membro da CPA designado.');
     }
 
+    /** Registro de acessos dos membros à área da CPA (auditoria). */
+    public function acessos()
+    {
+        $programa = $this->secretaria();
+        $acessos = \App\Models\AcessoCpa::where('programa_id', $programa->id)->with('user')->latest('id')->limit(500)->get();
+
+        return view('cpa.acessos', compact('acessos'));
+    }
+
     public function encerrar(MembroCpa $membroCpa)
     {
         $this->secretaria();

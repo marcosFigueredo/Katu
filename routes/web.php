@@ -115,6 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/membros-cpa', [MembroCpaController::class, 'index'])->name('membros-cpa.index');
     Route::post('/membros-cpa', [MembroCpaController::class, 'store'])->name('membros-cpa.store');
     Route::post('/membros-cpa/{membroCpa}/encerrar', [MembroCpaController::class, 'encerrar'])->name('membros-cpa.encerrar');
+    Route::get('/membros-cpa/acessos', [MembroCpaController::class, 'acessos'])->name('membros-cpa.acessos');
 
     Route::get('/cpa', [CpaQualidadeController::class, 'index'])->name('cpa.index');
     Route::get('/cpa/periodos', [CpaPeriodoController::class, 'periodos'])->name('cpa.periodos.index');

@@ -1,6 +1,9 @@
 <x-app-layout>
     <div class="container-fluid" style="max-width: 1000px;">
-        <h1 class="h3 fw-bold mb-1" style="color:#00303A;">Membros da CPA</h1>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 fw-bold mb-1" style="color:#00303A;">Membros da CPA</h1>
+            <a href="{{ route('membros-cpa.acessos') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-journal-check me-1"></i>Acessos (auditoria)</a>
+        </div>
         <p class="text-muted mb-3">
             A CPA não avalia trabalhos: define os pesos dos instrumentos e acompanha a qualidade das dissertações e teses do programa.
             Só membros com mandato vigente acessam a área da CPA.

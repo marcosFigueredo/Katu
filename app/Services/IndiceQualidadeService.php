@@ -332,6 +332,15 @@ class IndiceQualidadeService
         return $acima < $classe ? $acima : ($abaixo > $classe ? $abaixo : null);
     }
 
+    /** Autoavaliação do orientador e espelho por defesa: [fonte => [banca_id => [codigo => nota 0–10]]]. */
+    public function questionariosPorBanca($bancaIds): array
+    {
+        return [
+            'autoavaliacao_orientador' => $this->dimensoesQuestionario('autoavaliacao_orientador_notas', 'autoavaliacoes_orientador', 'autoavaliacao_orientador_id', $bancaIds),
+            'espelho' => $this->dimensoesQuestionario('espelho_discente_notas', 'espelhos_discente', 'espelho_discente_id', $bancaIds),
+        ];
+    }
+
     /** Questionário com perguntas de barema (autoavaliação, espelho): [banca_id => [codigo => média normalizada 0–10]]. */
     private function dimensoesQuestionario(string $tabelaNotas, string $tabelaAvaliacoes, string $chave, $bancaIds): array
     {

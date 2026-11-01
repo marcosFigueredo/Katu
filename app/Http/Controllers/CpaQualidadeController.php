@@ -46,6 +46,14 @@ class CpaQualidadeController extends Controller
         $programa = auth()->user()->programaCpa();
         abort_unless($programa, 403);
 
+        // Auditoria (conflito de interesse): todo acesso do membro à área da CPA fica registrado.
+        \App\Models\AcessoCpa::create([
+            'user_id' => auth()->id(),
+            'programa_id' => $programa->id,
+            'pagina' => (string) (request()->route()?->getName() ?? request()->path()),
+            'filtros' => request()->query() ?: null,
+        ]);
+
         return $programa;
     }
 }

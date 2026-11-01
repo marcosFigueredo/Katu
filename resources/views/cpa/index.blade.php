@@ -189,7 +189,10 @@
                         </div>
                     @endforeach
                 </div>
+
             @endif
+
+            @include('cpa._analises')
         @endif
     </div>
 </x-app-layout>
