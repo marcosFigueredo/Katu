@@ -36,6 +36,17 @@ class IntegridadeBancaService
         return $this->marcadas($banca, $banca->avaliadores()->pluck('id'))->pluck('plagio_indicacao')->filter()->values();
     }
 
+    /** Para o orientador: quem marcou plágio e onde (registro da banca). */
+    public function indicacoesComAutoria(Banca $banca): Collection
+    {
+        $membros = $banca->avaliadores()->with('docenteProgramaVinculo.docenteProfile.user')->get()->keyBy('id');
+
+        return $this->marcadas($banca, $membros->keys())->map(fn ($a) => [
+            'avaliador' => $membros[$a->banca_membro_id]?->docenteProgramaVinculo?->docenteProfile?->user?->name ?? 'Avaliador',
+            'indicacao' => $a->plagio_indicacao,
+        ])->values();
+    }
+
     private function marcadas(Banca $banca, Collection $avaliadores): Collection
     {
         return BancaAvaliacao::where('banca_id', $banca->id)

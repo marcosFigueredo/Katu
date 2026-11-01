@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Banca;
 use App\Models\BancaAvaliacao;
 use App\Models\Barema;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\Concerns\CriaCenarioDeBanca;
@@ -36,29 +37,37 @@ class PrivacidadeAvaliacoesTest extends TestCase
         return [$secretaria, $banca->fresh(), $orientador, $avaliadores, $padrao, $confidencial];
     }
 
-    public function test_orientador_nao_ve_nota_nem_respostas_confidenciais_na_banca(): void
+    // Decisão de 2026-11-01: o orientador vê as avaliações confidenciais de cada avaliador; a CPA só agregadas.
+    public function test_orientador_ve_nota_confidencial_na_banca(): void
     {
-        [, $banca, $orientador, , , $confidencial] = $this->cenario();
+        [, $banca, $orientador] = $this->cenario();
 
         $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
             ->assertOk()
             ->assertSee('Confidencial')
-            ->assertSee('Enviada')
             ->assertSee('8.0')
-            ->assertDontSee('3.3')
-            ->assertDontSee(route('avaliacoes.relatorio-individual', [$banca, $confidencial]), false);
+            ->assertSee('3.3');
     }
 
-    public function test_consolidado_do_orientador_nao_tem_barema_confidencial(): void
+    public function test_orientador_ve_confidenciais_no_consolidado(): void
     {
         [, $banca, $orientador, , $padrao, $confidencial] = $this->cenario();
 
         $this->actingAs($orientador)->get(route('avaliacoes.relatorio-consolidado', $banca))
             ->assertOk()
             ->assertSee($padrao->nome)
-            ->assertDontSee($confidencial->nome)
-            ->assertDontSee('3,30')
-            ->assertDontSee('3.30');
+            ->assertSee($confidencial->nome);
+    }
+
+    public function test_coorientador_e_avaliador_nao_veem_confidencial_dos_outros(): void
+    {
+        [, $banca, , $avaliadores, $padrao, $confidencial] = $this->cenario();
+        $coorientador = User::where('name', 'Prof. Coorientador')->firstOrFail();
+
+        $this->actingAs($coorientador)->get(route('avaliacoes.relatorio-consolidado', $banca))
+            ->assertOk()->assertSee($padrao->nome)->assertDontSee($confidencial->nome);
+        $this->actingAs($coorientador)->get(route('avaliacoes.banca', $banca))->assertDontSee('3.3');
+        $this->actingAs($avaliadores[0])->get(route('avaliacoes.relatorio-consolidado', $banca))->assertForbidden();
     }
 
     public function test_orientador_recebe_403_no_relatorio_individual_confidencial(): void

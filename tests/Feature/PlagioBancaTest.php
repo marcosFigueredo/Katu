@@ -81,9 +81,12 @@ class PlagioBancaTest extends TestCase
         $this->actingAs($orientador)->get(route('avaliacoes.ata', $banca))->assertForbidden();
         $this->actingAs($orientador)->get(route('avaliacoes.folha-aprovacao', $banca))->assertForbidden();
 
+        // O orientador vê o registro da banca: quem marcou e onde (decisão de 2026-11-01).
         $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))
             ->assertSee('Há uma pendência de integridade a ser resolvida pela banca')
-            ->assertDontSee('copiado de Silva');
+            ->assertSee('Plágio — registro da banca')
+            ->assertSee('copiado de Silva')
+            ->assertSee($avaliadores[0]->name);
         $this->actingAs($avaliadores[1])->get(route('avaliacoes.banca', $banca))
             ->assertSee('copiado de Silva');
     }

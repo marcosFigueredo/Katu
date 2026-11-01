@@ -240,6 +240,20 @@
             </div>
         @endif
 
+        @if ($ehOrientadorPrincipal && $situacaoIntegridade !== 'nenhuma')
+            {{-- Registro da banca para o orientador: quem marcou e onde, para as medidas cabíveis. --}}
+            <div class="card border-danger mb-4">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold text-danger mb-2"><i class="bi bi-shield-exclamation me-1"></i>Plágio — registro da banca</h2>
+                    <ul class="small mb-0">
+                        @foreach ($integridadeBanca->indicacoesComAutoria($banca) as $registro)
+                            <li><strong>{{ $registro['avaliador'] }}</strong>: {{ $registro['indicacao'] ?: 'sem indicação de local' }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        @endif
+
         @php
             $vinculoAtual = auth()->user()->docenteProfile?->vinculosPrograma()->first();
             $recebeCertificado = $ehMembro || ($vinculoAtual && $banca->trabalhoAcademico->orientacoes()
@@ -337,8 +351,8 @@
                                             @endphp
                                             <td class="text-center">
                                                 <span class="badge bg-{{ $badge }}">{{ $label }}</span>
-                                                {{-- Nota da confidencial é da CPA: aqui só o status. --}}
-                                                @if ($av?->nota_final !== null && ! str_ends_with($barema->tipo, '_confidencial'))
+                                                {{-- Nota da confidencial: só o orientador vê (decisão de 2026-11-01). --}}
+                                                @if ($av?->nota_final !== null && ($ehOrientadorPrincipal || ! str_ends_with($barema->tipo, '_confidencial')))
                                                     <br>
                                                     <small class="text-muted">{{ number_format($av->nota_final, 1) }}</small>
                                                 @endif

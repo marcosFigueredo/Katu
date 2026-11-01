@@ -195,6 +195,7 @@ class AvaliacaoController extends Controller
 
         return view('avaliacoes.banca', compact(
             'nivelTrabalho',
+            'ehOrientadorPrincipal',
             'banca', 'baremas', 'meuMembro', 'minhasAvaliacoes',
             'ehMembro', 'ehOrientador', 'podeFinalizar',
             'avaliadores', 'totalEnviadas', 'totalEsperado',
@@ -715,13 +716,15 @@ class AvaliacaoController extends Controller
 
         $user = auth()->user()->load('docenteProfile.vinculosPrograma');
         $vinculo = $user->docenteProfile?->vinculosPrograma?->first();
-        $ehOrientador = $vinculo && $banca->trabalhoAcademico->orientacoes()
+        $orientacao = $vinculo ? $banca->trabalhoAcademico->orientacoes()
             ->where('docente_programa_vinculo_id', $vinculo->id)
             ->where('ativo', true)
-            ->exists();
-        if (! $ehOrientador) {
+            ->first() : null;
+        if (! $orientacao) {
             abort(403);
         }
+        // O orientador vê também as confidenciais de cada avaliador (decisão de 2026-11-01); o coorientador, só as padrão.
+        $comConfidenciais = $orientacao->tipo === 'orientador';
 
         $banca->load([
             'trabalhoAcademico.discenteVinculo.discenteProfile.user',
@@ -729,13 +732,14 @@ class AvaliacaoController extends Controller
             'membros' => fn ($q) => $q->where('ativo', true)
                 ->with([
                     'docenteProgramaVinculo.docenteProfile.user',
-                    'avaliacoes' => fn ($q) => $q->whereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')),
+                    'avaliacoes' => fn ($q) => $comConfidenciais ? $q : $q->whereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')),
                     'avaliacoes.barema',
                     'avaliacoes.notas.baremaItem',
                 ]),
         ]);
 
-        $baremas = $this->baremasParaBanca($banca)->reject(fn (Barema $b) => str_ends_with($b->tipo, '_confidencial'))->values();
+        $baremas = $this->baremasParaBanca($banca)
+            ->reject(fn (Barema $b) => ! $comConfidenciais && str_ends_with($b->tipo, '_confidencial'))->values();
         $baremas->load(['secoes' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')
             ->with(['itens' => fn ($q) => $q->where('ativo', true)->orderBy('ordem')])]);
 
