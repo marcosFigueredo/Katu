@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\AtividadeFormativa;
+use App\Models\AtividadeRealizada;
 use App\Models\Banca;
 use App\Models\BancaMembro;
 use App\Models\Barema;
@@ -366,11 +368,32 @@ class PedidoHomologacaoTest extends TestCase
         [$discente, , $trabalho] = $this->estrutura();
         $banca = $this->proporBanca($discente, $trabalho);
         $documento = $this->documento($trabalho, $discente);
+        // As atividades padrão são exigidas só na defesa.
+        AtividadeFormativa::criarPadroes($trabalho->programa);
 
         $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
             ->assertSessionHasNoErrors();
         $this->assertSame('aguardando', $banca->fresh()->homologacao_status);
         $this->assertDatabaseCount('trabalho_impactos', 0);
+    }
+
+    public function test_pedido_exige_atividades_formativas_da_etapa(): void
+    {
+        [$discente, $trabalho, $defesa, $documento] = $this->defesaProposta();
+        $this->criarItensDaDefesa($trabalho);
+        $extensao = AtividadeFormativa::where('nome', 'Atividade Extensionista')->sole();
+        AtividadeRealizada::where('atividade_formativa_id', $extensao->id)->delete();
+
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasErrors(['homologacao' => 'Faltam atividades formativas para enviar à homologação: Atividade Extensionista (0 de 1).']);
+        $this->assertSame('proposta', $defesa->fresh()->homologacao_status);
+
+        AtividadeRealizada::create([
+            'trabalho_academico_id' => $trabalho->id, 'atividade_formativa_id' => $extensao->id, 'descricao' => 'Oficina',
+        ]);
+        $this->actingAs($discente)->post(route('meu-trabalho.enviar-homologacao', $documento))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('aguardando', $defesa->fresh()->homologacao_status);
     }
 
     /** Qualificação aprovada, defesa proposta com espelho respondido e dissertação anexada; faltam só os itens da defesa. */

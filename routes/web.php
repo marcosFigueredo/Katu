@@ -34,6 +34,8 @@ use App\Http\Controllers\AutoavaliacaoController;
 use App\Http\Controllers\PerguntaEstrategicaController;
 use App\Http\Controllers\OrientacaoAvaliacaoController;
 use App\Http\Controllers\TrabalhoImpactoController;
+use App\Http\Controllers\AtividadeFormativaController;
+use App\Http\Controllers\AtividadesRealizadasController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\MembroExternoController;
 use App\Http\Controllers\CriterioCpaController;
@@ -209,6 +211,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Áreas do CNPq e setores CNAE (dados para o Lattes) – listas únicas mantidas pela Secretaria
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/atividades-formativas', [AtividadeFormativaController::class, 'index'])->name('atividades-formativas.index');
+    Route::post('/atividades-formativas', [AtividadeFormativaController::class, 'store'])->name('atividades-formativas.store');
+    Route::put('/atividades-formativas/{atividadeFormativa}', [AtividadeFormativaController::class, 'update'])->name('atividades-formativas.update');
+    Route::post('/atividades-formativas/{atividadeFormativa}/inativar', [AtividadeFormativaController::class, 'inativar'])->name('atividades-formativas.inativar');
     Route::get('/tabelas-lattes', [TabelaLattesController::class, 'index'])->name('tabelas-lattes.index');
     Route::get('/tabelas-lattes/{lista}/novo', [TabelaLattesController::class, 'create'])->name('tabelas-lattes.create');
     Route::post('/tabelas-lattes/{lista}', [TabelaLattesController::class, 'store'])->name('tabelas-lattes.store');
@@ -324,6 +330,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/meu-trabalho/lattes', [TrabalhoLattesController::class, 'update'])
         ->name('meu-trabalho.lattes.update');
+
+    Route::get('/meu-trabalho/atividades-formativas', [AtividadesRealizadasController::class, 'index'])
+        ->name('meu-trabalho.atividades.index');
+    Route::post('/meu-trabalho/atividades-formativas', [AtividadesRealizadasController::class, 'store'])
+        ->name('meu-trabalho.atividades.store');
+    Route::delete('/meu-trabalho/atividades-formativas/{atividadeRealizada}', [AtividadesRealizadasController::class, 'destroy'])
+        ->name('meu-trabalho.atividades.destroy');
 
     Route::get('/meu-trabalho/dados-pesquisa', [TrabalhoDadosPesquisaController::class, 'edit'])
         ->name('meu-trabalho.dados-pesquisa.edit');

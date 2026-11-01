@@ -429,6 +429,28 @@
                 </div>
             </div>
 
+            @php $atividadesFaltantes = app(\App\Services\AtividadesFormativasService::class)->faltantes($trabalho, 'defesa'); @endphp
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1" style="color:#00303A;">
+                            <i class="bi bi-mortarboard-fill me-2"></i>Atividades formativas
+                            @if ($atividadesFaltantes === [])
+                                <span class="badge bg-success-subtle text-success-emphasis ms-1">Em dia</span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning-emphasis ms-1">Faltam {{ count($atividadesFaltantes) }}</span>
+                            @endif
+                        </h2>
+                        <p class="text-muted small mb-0">
+                            Atividades definidas pela Secretaria. Sem as exigidas, o pedido não pode ser enviado à homologação.
+                        </p>
+                    </div>
+                    <a href="{{ route('meu-trabalho.atividades.index') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-fill me-1"></i>Lançar atividades
+                    </a>
+                </div>
+            </div>
+
             @if ($bancaPedido?->tipo === 'defesa')
                 @php $espelhoEnviado = \App\Models\EspelhoDiscente::where('banca_id', $bancaPedido->id)->exists(); @endphp
                 <div class="card border-0 shadow-sm mt-3">

@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use App\Models\AtividadeFormativa;
 use App\Models\TrabalhoAcademico;
 use App\Models\TrabalhoImpacto;
 
@@ -15,5 +16,12 @@ trait CriaItensDaDefesa
             'impacto_cientifico_aplicavel' => true,
             'impacto_cientifico_descricao' => 'Novo modelo para a vigilância epidemiológica.',
         ]);
+
+        AtividadeFormativa::criarPadroes($trabalho->programa);
+        AtividadeFormativa::where('programa_id', $trabalho->programa_id)->where('informada_por', 'estudante')->get()
+            ->each(fn (AtividadeFormativa $a) => $trabalho->atividadesRealizadas()->create([
+                'atividade_formativa_id' => $a->id,
+                'descricao' => "Realizada: {$a->nome}",
+            ]));
     }
 }

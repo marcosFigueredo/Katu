@@ -33,6 +33,7 @@ class PedidoHomologacaoService
 
     public function __construct(
         private readonly VerificacaoBancaService $verificacao,
+        private readonly AtividadesFormativasService $atividades,
     ) {
     }
 
@@ -89,6 +90,13 @@ class PedidoHomologacaoService
         if (! $dadosPesquisa) {
             throw ValidationException::withMessages([
                 'homologacao' => 'Preencha os dados da pesquisa (código, dados e ética) em Meu trabalho antes de enviar à homologação.',
+            ]);
+        }
+
+        $faltantes = $this->atividades->faltantes($banca->trabalhoAcademico, $banca->tipo);
+        if ($faltantes !== []) {
+            throw ValidationException::withMessages([
+                'homologacao' => 'Faltam atividades formativas para enviar à homologação: '.implode('; ', $faltantes).'.',
             ]);
         }
 
