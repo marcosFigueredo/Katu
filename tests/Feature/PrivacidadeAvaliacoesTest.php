@@ -59,6 +59,15 @@ class PrivacidadeAvaliacoesTest extends TestCase
             ->assertSee($confidencial->nome);
     }
 
+    public function test_orientador_nao_ve_rascunho_confidencial(): void
+    {
+        [, $banca, $orientador, , , $confidencial] = $this->cenario();
+        BancaAvaliacao::where('barema_id', $confidencial->id)->update(['status' => 'rascunho', 'nota_final' => 4.4]);
+
+        $this->actingAs($orientador)->get(route('avaliacoes.relatorio-consolidado', $banca))->assertOk()->assertDontSee('4,40')->assertDontSee('4.40');
+        $this->actingAs($orientador)->get(route('avaliacoes.banca', $banca))->assertDontSee('4.4');
+    }
+
     public function test_coorientador_e_avaliador_nao_veem_confidencial_dos_outros(): void
     {
         [, $banca, , $avaliadores, $padrao, $confidencial] = $this->cenario();

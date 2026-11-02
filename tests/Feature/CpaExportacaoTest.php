@@ -51,6 +51,19 @@ class CpaExportacaoTest extends TestCase
         $this->assertTrue(AcessoCpa::where('pagina', 'cpa.exportar')->exists());
     }
 
+    public function test_celula_com_formula_e_neutralizada(): void
+    {
+        [, $programa] = $this->criarCenarioCompleto('defesa', false);
+        PeriodoQualidade::create(['programa_id' => $programa->id, 'nome' => '=HYPERLINK("http://x")', 'inicio_em' => '2025-01-01', 'fim_em' => '2028-12-31']);
+        $cpa = User::factory()->docente()->create(['primeiro_acesso' => false]);
+        MembroCpa::create(['programa_id' => $programa->id, 'user_id' => $cpa->id, 'inicio_em' => today()->subMonth(), 'numero_ato' => 'Ato']);
+
+        $csv = $this->actingAs($cpa)->get(route('cpa.exportar'))->streamedContent();
+
+        $this->assertStringContainsString("'=HYPERLINK", $csv);
+        $this->assertStringNotContainsString(';=HYPERLINK', $csv);
+    }
+
     public function test_nao_membro_nao_exporta(): void
     {
         $this->actingAs(User::factory()->docente()->create())->get(route('cpa.exportar'))->assertForbidden();

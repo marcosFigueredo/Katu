@@ -146,7 +146,10 @@ class CpaPainelService
     private function projetos(PeriodoQualidade $periodo): array
     {
         return ProjetoPesquisa::whereHas('docenteProgramaVinculo', fn ($q) => $q->where('programa_id', $periodo->programa_id))
-            ->with(['vinculos' => fn ($q) => $q->whereNotNull('objetivo')->orderBy('objetivo_informado_em')])
+            // Plágio = jubilamento: o objetivo do trabalho jubilado não entra.
+            ->with(['vinculos' => fn ($q) => $q->whereNotNull('objetivo')
+                ->whereDoesntHave('trabalhoAcademico.bancas', fn ($b) => $b->where('reprovada_por_plagio', true))
+                ->orderBy('objetivo_informado_em')])
             ->orderBy('titulo')
             ->get()
             ->map(fn (ProjetoPesquisa $p) => [

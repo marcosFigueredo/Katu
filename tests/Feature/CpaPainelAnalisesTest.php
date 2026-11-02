@@ -147,6 +147,11 @@ class CpaPainelAnalisesTest extends TestCase
 
         $projetos = $this->painel()['projetos'];
         $this->assertSame('Projeto Arboviroses', $projetos[0]['titulo']);
+
+        // Plágio = jubilamento: o objetivo do trabalho jubilado sai do painel.
+        $this->banca->update(['reprovada_por_plagio' => true]);
+        $this->assertSame([], $this->painel()['projetos'][0]['objetivos']);
+        $this->banca->update(['reprovada_por_plagio' => false]);
         $this->assertSame(['Avança o objetivo 2'], array_column($projetos[0]['objetivos'], 'objetivo'));
 
         $this->actingAs($this->membro)->get(route('cpa.index'))

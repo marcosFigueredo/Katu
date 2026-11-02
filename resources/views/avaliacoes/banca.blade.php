@@ -352,7 +352,7 @@
                                             <td class="text-center">
                                                 <span class="badge bg-{{ $badge }}">{{ $label }}</span>
                                                 {{-- Nota da confidencial: só o orientador vê (decisão de 2026-11-01). --}}
-                                                @if ($av?->nota_final !== null && ($ehOrientadorPrincipal || ! str_ends_with($barema->tipo, '_confidencial')))
+                                                @if ($av?->nota_final !== null && (! str_ends_with($barema->tipo, '_confidencial') || ($ehOrientadorPrincipal && $av->status === 'enviada')))
                                                     <br>
                                                     <small class="text-muted">{{ number_format($av->nota_final, 1) }}</small>
                                                 @endif

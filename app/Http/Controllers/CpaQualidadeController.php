@@ -89,10 +89,20 @@ class CpaQualidadeController extends Controller
             $saida = fopen('php://output', 'w');
             fwrite($saida, "\xEF\xBB\xBF");
             foreach ($linhas as $linha) {
-                fputcsv($saida, $linha, ';');
+                fputcsv($saida, array_map([self::class, 'celulaSegura'], $linha), ';');
             }
             fclose($saida);
         }, 'cpa-qualidade-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** Texto que começa com = + - @ (ou tab/CR) vira texto literal na planilha, para não ser executado como fórmula; números negativos ficam. */
+    public static function celulaSegura($valor)
+    {
+        if (is_string($valor) && preg_match('/^[=+\-@\t\r]/', $valor) && ! preg_match('/^-?\d+(,\d+)?$/', $valor)) {
+            return "'".$valor;
+        }
+
+        return $valor;
     }
 
     /** [períodos, quadriênio escolhido (ou o que contém hoje, ou o mais recente), filtros]. */

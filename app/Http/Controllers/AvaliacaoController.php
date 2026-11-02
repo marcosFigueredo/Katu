@@ -732,7 +732,10 @@ class AvaliacaoController extends Controller
             'membros' => fn ($q) => $q->where('ativo', true)
                 ->with([
                     'docenteProgramaVinculo.docenteProfile.user',
-                    'avaliacoes' => fn ($q) => $comConfidenciais ? $q : $q->whereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')),
+                    // Confidencial só depois de enviada (rascunho é do avaliador); o coorientador não vê confidenciais.
+                    'avaliacoes' => fn ($q) => $comConfidenciais
+                        ? $q->where(fn ($w) => $w->where('status', 'enviada')->orWhereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')))
+                        : $q->whereHas('barema', fn ($b) => $b->where('tipo', 'not like', '%_confidencial')),
                     'avaliacoes.barema',
                     'avaliacoes.notas.baremaItem',
                 ]),
