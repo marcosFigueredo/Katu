@@ -39,6 +39,10 @@
                 </div>
                 <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Filtrar</button></div>
             </form>
+            <div class="d-flex gap-2 mb-3">
+                <a href="{{ route('cpa.exportar', request()->query()) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Baixar planilha</a>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir / PDF</button>
+            </div>
 
             @if ($painel['conflito'] > 0)
                 <div class="alert alert-warning small">

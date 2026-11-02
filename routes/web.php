@@ -118,6 +118,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/membros-cpa/acessos', [MembroCpaController::class, 'acessos'])->name('membros-cpa.acessos');
 
     Route::get('/cpa', [CpaQualidadeController::class, 'index'])->name('cpa.index');
+    Route::get('/cpa/exportar', [CpaQualidadeController::class, 'exportar'])->name('cpa.exportar');
     Route::get('/cpa/periodos', [CpaPeriodoController::class, 'periodos'])->name('cpa.periodos.index');
     Route::put('/cpa/periodos/{periodo}', [CpaPeriodoController::class, 'update'])->name('cpa.periodos.update');
     Route::get('/cpa/periodos/{periodo}/pesos/{grupo}', [CpaPeriodoController::class, 'pesos'])

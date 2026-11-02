@@ -72,7 +72,7 @@ class CpaPainelService
             ->all();
     }
 
-    /** As 5 perguntas com maior e as 5 com menor mediana no conjunto (mínimo de 3 notas). */
+    /** As 5 perguntas com maior e as 5 com menor mediana no conjunto (mínimo de 2 notas por pergunta). */
     private function pontos(array $notas): array
     {
         $porPergunta = [];

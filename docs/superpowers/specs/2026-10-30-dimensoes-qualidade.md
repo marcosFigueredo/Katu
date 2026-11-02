@@ -444,12 +444,12 @@ Não construir tudo de uma vez: cada etapa tem plano próprio e entrega algo uti
 4. **Cadastros** — projetos dos docentes permanentes (cadastrados pelo próprio docente; um ativo por orientador, vínculo automático do estudante, objetivo indicado pelo estudante); bolsa pela Secretaria. **Feita em 2026-11-01.**
 5. **Cálculo das dimensões** — **versão de teste feita em 2026-11-01** (CPA mínima, períodos, SWARA de dimensões e fontes, índice do trabalho e do programa em 5 classes, nível para o orientador).
    Decidido em 2026-11-01: **OpenAlex só confere** se a produção declarada pelo estudante (com DOI quando houver; pode não ter) é encontrada — não encontrar não invalida a produção e não entra na nota; **aderência pelo Ollama e correção do rigor dos avaliadores foram removidas**; **intervalos de confiança** entram só como informação para a CPA. Falta depois: gravar resultados, acompanhamento das citações em 2 e 5 anos.
-6. **Perfil CPA** — membros com mandato e número do ato, acesso na dashboard, conflito de interesse sinalizado e auditado, dashboard e relatórios (**elementos da dashboard definidos pelo usuário quando chegar a etapa**).
+6. **Perfil CPA** — membros com mandato e número do ato, acesso na dashboard, conflito de interesse sinalizado e auditado, dashboard e relatórios. **Feita em 2026-11-01** conforme "Revisto em 2026-11-01 (Etapa 6)": painel só com dados gerais e calculados, quadriênio da Secretaria, auditoria de acessos, exportação em planilha.
 
 ## Perguntas em aberto
 
 - [x] Redação oficial da declaração de dados da IEEE: não há texto oficial; substituída pelas **Informações adicionais** da defesa (decidido em 2026-10-31).
-- [ ] Elementos da dashboard da CPA (inclusive se há nota geral por dissertação): o usuário indica na Etapa 6.
+- [x] Elementos da dashboard da CPA: definidos em 2026-11-01 (sem nota por dissertação visível à CPA; só dados gerais).
 
 ## Referências usadas
 - IEEE Author Portal — Data Availability Statement (documentação indisponível no momento da consulta): https://rex-docs.atypon.com/ieee-rex/admin/author_portal/c_auth_ethics-das.html
